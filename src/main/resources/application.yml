@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: spotit-backend
+  profiles:
+    active: dev
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:spotitdb}?currentSchema=public
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    type: com.zaxxer.hikari.HikariDataSource
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: always
+
+springdoc:
+  api-docs:
+    path: /api/v1/api-docs
+  swagger-ui:
+    path: /api/v1/swagger-ui.html
+
+spotit:
+  jwt:
+    secret: ${JWT_SECRET:change-this-to-a-long-random-base64-secret-before-deploying-to-production}
+    access-token-ttl-seconds: 3600
+    refresh-token-ttl-seconds: 2592000 # 30 days
+  otp:
+    ttl-seconds: 600 # 10 minutes
+  ads:
+    daily-limit: 5
+  cycle:
+    default-cycle-length: 28
+    default-period-length: 5
+
+logging:
+  level:
+    com.spotit.api: INFO
+    org.hibernate.SQL: WARN

@@ -1,0 +1,36 @@
+package com.spotit.api.common.security;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spotit.api.common.dto.ApiResponse;
+import com.spotit.api.common.dto.ErrorDetail;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+
+/**
+ * Fires for 401s that occur before a controller is reached (bad/missing JWT),
+ * so it never passes through {@link com.spotit.api.common.web.ApiResponseAdvice}
+ * — it has to build the same {code, message, data} envelope by hand.
+ */
+@Component
+@RequiredArgsConstructor
+public class RestAuthEntryPoint implements AuthenticationEntryPoint {
+
+    private final ObjectMapper objectMapper;
+
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+            throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.getWriter().write(objectMapper.writeValueAsString(
+                ApiResponse.of(HttpServletResponse.SC_UNAUTHORIZED, "A valid access token is required.",
+                        new ErrorDetail("unauthorized"))));
+    }
+}
