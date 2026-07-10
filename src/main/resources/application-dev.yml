@@ -1,7 +1,16 @@
 spring:
   jpa:
     show-sql: true
-
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:false}
+  #http://localhost:8025
 logging:
   level:
     com.spotit.api: DEBUG

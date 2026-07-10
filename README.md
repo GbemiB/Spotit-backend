@@ -5,14 +5,31 @@ current Spot it app's cycle tracker, gamification, rewards shop, and billing, wi
 
 ## Structure
 
-Package-by-feature, single Maven module, with a Fineract-style **CQRS split**: every module exposes an
-`XReadService` (queries only, `@Transactional(readOnly = true)`) and an `XWriteService` (all mutations),
-and controllers depend on whichever (or both) they need. A module only gets the side it actually uses —
-e.g. `cycle` and `insight` are pure reads, `device` is pure writes.
+Package-by-feature, single Maven module. Every feature module follows the same 5-folder shape:
+
+```
+<module>/
+├── controller/   # @RestController classes only
+├── service/       # one interface + one *Impl per service (see CQRS below)
+├── dto/           # request/response records
+├── entity/        # JPA entities (only if the module owns data)
+└── repository/    # Spring Data repositories (only if the module owns data)
+```
+
+`cycle` and `insight` have no `entity/`/`repository/` of their own — they're pure read models computed
+from `user` and `log` data, so those two folders don't exist for them. `LevelUtil` (rewards), `CycleUtil`
+/`CyclePhase` (cycle) are stateless static utilities, not services — they sit at the module root rather
+than in any of the 5 folders.
+
+**Fineract-style CQRS**: every service is an interface + a `...Impl` implementation. Each module exposes
+an `XReadService`/`XReadServiceImpl` (queries only, `@Transactional(readOnly = true)`) and/or an
+`XWriteService`/`XWriteServiceImpl` (all mutations) — controllers depend on the interfaces, never the
+impls. A module only gets the side it actually uses (`cycle`/`insight` are pure reads, `device` is pure
+writes).
 
 ```
 com.spotit.api
-├── account/     # cross-cutting GDPR/NDPR account-purge scheduler
+├── account/     # cross-cutting GDPR/NDPR account-purge scheduler (not a CRUD module)
 ├── auth/        # AuthWriteService — signup, OTP verify, login, refresh, logout, account deletion
 ├── billing/     # BillingReadService / BillingWriteService — subscription status/subscribe/cancel/restore
 ├── common/      # response envelope, exception handling, JWT security infra (not a "feature")
@@ -23,7 +40,7 @@ com.spotit.api
 ├── insight/     # InsightReadService — cycle trends, weekly digest, regularity check
 ├── log/         # LogReadService / LogWriteService — daily cycle logs
 ├── rewards/     # RewardsReadService/WriteService, BadgeReadService/WriteService (+ admin CRUD),
-│                # ChallengeReadService/WriteService (+ admin CRUD), PointsWriteService, LevelUtil
+│                # ChallengeReadService/WriteService (+ admin CRUD), PointsWriteService
 ├── shop/        # ShopReadService/WriteService (+ admin product CRUD) — points-redeemable shop
 └── user/        # UserReadService / UserWriteService — profile, notifications, onboarding, export, reset
 ```
@@ -33,15 +50,19 @@ update`). A `ReferenceDataSeeder` (`ApplicationRunner`) seeds badge/challenge de
 and starter content on first boot; from then on those rows are ordinary configuration, editable through
 the endpoints below.
 
+## API base path
+
+Every endpoint is under `/api/v1/...` (e.g. `/api/v1/auth/login`, `/api/v1/rewards/summary`).
+
 ## Global configuration (admin CRUD)
 
 Badges, challenges, shop products, and content items aren't fixed at boot — they're rows an admin (and
-eventually an admin UI) can manage live, under a dedicated `/v1/config/*` namespace:
+eventually an admin UI) can manage live, under a dedicated `/api/v1/config/*` namespace:
 
-- `GET/POST/PATCH/DELETE /v1/config/products` — shop catalog
-- `GET/POST/PATCH/DELETE /v1/config/badges` — badge definitions
-- `GET/POST/PATCH/DELETE /v1/config/challenges` — weekly-challenge definitions
-- `GET/POST/PATCH/DELETE /v1/config/content` — "For you today" feed items
+- `GET/POST/PATCH/DELETE /api/v1/config/products` — shop catalog
+- `GET/POST/PATCH/DELETE /api/v1/config/badges` — badge definitions
+- `GET/POST/PATCH/DELETE /api/v1/config/challenges` — weekly-challenge definitions
+- `GET/POST/PATCH/DELETE /api/v1/config/content` — "For you today" feed items
 
 These endpoints aren't authorization-gated yet (no admin role exists) — add one before exposing them
 publicly.
@@ -56,7 +77,10 @@ controller constructs it directly:
 ```
 
 `code` mirrors the HTTP status. On errors, `message` is the human-readable text and `data` carries
-`{ "errorCode": "invalid_credentials" }` so clients keep a stable machine-readable code too.
+`{ "errorCode": "invalid_credentials" }` so clients keep a stable machine-readable code too. Genuinely
+unmapped routes correctly 404 through this same envelope (`GlobalExceptionHandler` explicitly handles
+`NoResourceFoundException`/`NoHandlerFoundException` before its catch-all, which would otherwise mask
+them as 500s).
 
 ## Requirements
 
@@ -75,18 +99,27 @@ controller constructs it directly:
 ## Running locally
 
 ```bash
-docker run -d --name spotit-pg -e POSTGRES_USER=spotit -e POSTGRES_PASSWORD=spotit \
-  -e POSTGRES_DB=spotit -p 5432:5432 postgres:16
+docker run -d --name spotit-pg -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=spotitdb -p 5433:5432 postgres:16
+
+docker run -d --name spotit-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
 
 export JWT_SECRET=$(openssl rand -base64 48)
 mvn spring-boot:run
 ```
 
-Default config (`application.yml`) points at `localhost:5432/spotit` with user/password `spotit`/`spotit`
-— override via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` env vars. `JWT_SECRET` must be
-set to a real secret before anything but local dev.
+Default config (`application.yml`) points at `localhost:5433/spotitdb` with user/password
+`postgres`/`postgres` — override via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` env vars.
+`JWT_SECRET` must be set to a real secret before anything but local dev.
 
-API docs: `http://localhost:8080/v1/swagger-ui.html`
+OTP emails (signup, password reset) are sent over SMTP. In the `dev` profile this points at
+[Mailpit](https://github.com/axllent/mailpit) on `localhost:1025` with no auth/TLS — view caught
+emails at `http://localhost:8025`. If the mail server is unreachable, sending is logged as a
+warning rather than failing the request (signup/OTP issuance still succeeds). Point at a real
+provider via `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`,
+`MAIL_SMTP_AUTH`, `MAIL_SMTP_STARTTLS`.
+
+API docs: `http://localhost:8080/api/v1/swagger-ui.html`
 
 ## What's real vs. stubbed
 
@@ -94,12 +127,12 @@ Everything is wired end-to-end against Postgres with real business logic (points
 gating, cycle-phase math, period-episode detection for trends, etc.) — see the "Note" lines in each
 service for the few pieces that need a real external integration before production:
 
-- **OTP delivery** (`OtpService`) — logs the code at INFO instead of sending email/SMS.
-- **Rewarded ads** (`PointsWriteService.watchAd`) — awards points on request; no real ad SDK server-side
-  verification.
-- **Billing** (`BillingWriteService`) — accepts any non-blank "receipt"; no real App Store/Play Billing
-  verification.
-- **Push notifications** (`DeviceWriteService`) — stores device tokens; nothing actually sends a push yet.
+- **Rewarded ads** (`rewards/service/PointsWriteService.watchAd`) — awards points on request; no real ad
+  SDK server-side verification.
+- **Billing** (`billing/service/BillingWriteService`) — accepts any non-blank "receipt"; no real App
+  Store/Play Billing verification.
+- **Push notifications** (`device/service/DeviceWriteService`) — stores device tokens; nothing actually
+  sends a push yet.
 
 ## Not covered
 

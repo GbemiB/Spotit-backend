@@ -2,18 +2,17 @@ package com.spotit.api.auth.service;
 
 import com.spotit.api.auth.entity.OtpCode;
 import com.spotit.api.auth.entity.OtpPurpose;
+import com.spotit.api.user.entity.User;
 
 import java.util.UUID;
 
-/**
- * Issues and verifies one-time codes. No email/SMS provider is wired up yet —
- * {@link OtpServiceImpl#issue} logs the code at INFO level as an explicit
- * stand-in for a real delivery integration (see the API spec's "replaces
- * UI-only" note).
- */
+/** Issues and verifies one-time codes, emailing the code to the user on issue. */
 public interface OtpService {
 
-    OtpCode issue(UUID userId, OtpPurpose purpose);
+    OtpCode issue(User user, OtpPurpose purpose);
 
     OtpCode verify(UUID otpId, String code, OtpPurpose expectedPurpose);
+
+    /** Verifies against the user's most recent unconsumed OTP for the purpose, rather than a client-supplied id — used where handing back an otpId would leak account existence (e.g. password reset). */
+    OtpCode verifyLatest(UUID userId, String code, OtpPurpose expectedPurpose);
 }

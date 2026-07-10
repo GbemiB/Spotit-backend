@@ -1,6 +1,7 @@
 package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.dto.BadgeDefinitionAdminResponse;
@@ -58,7 +59,7 @@ public class BadgeWriteServiceImpl implements BadgeWriteService {
     @Transactional
     public BadgeDefinitionAdminResponse createDefinition(CreateBadgeDefinitionRequest request) {
         if (badgeDefinitionRepository.existsById(request.id())) {
-            throw new ApiException(ErrorCode.RESOURCE_ALREADY_EXISTS, "A badge with id '" + request.id() + "' already exists.");
+            throw new ApiException(ErrorCode.RESOURCE_ALREADY_EXISTS, ErrorMessage.badgeAlreadyExists(request.id()));
         }
         BadgeDefinition def = new BadgeDefinition(request.id(), request.name(), request.description());
         badgeDefinitionRepository.save(def);
@@ -69,7 +70,7 @@ public class BadgeWriteServiceImpl implements BadgeWriteService {
     @Transactional
     public BadgeDefinitionAdminResponse updateDefinition(String id, UpdateBadgeDefinitionRequest request) {
         BadgeDefinition def = badgeDefinitionRepository.findById(id)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Badge definition not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.BADGE_NOT_FOUND));
         if (request.name() != null) def.setName(request.name());
         if (request.description() != null) def.setDescription(request.description());
         badgeDefinitionRepository.save(def);
@@ -80,7 +81,7 @@ public class BadgeWriteServiceImpl implements BadgeWriteService {
     @Transactional
     public void deleteDefinition(String id) {
         if (!badgeDefinitionRepository.existsById(id)) {
-            throw new ApiException(ErrorCode.NOT_FOUND, "Badge definition not found.");
+            throw new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.BADGE_NOT_FOUND);
         }
         badgeDefinitionRepository.deleteById(id);
     }

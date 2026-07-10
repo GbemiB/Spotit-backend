@@ -1,6 +1,7 @@
 package com.spotit.api.shop.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.LevelUtil;
 import com.spotit.api.rewards.service.PointsWriteService;
@@ -36,17 +37,17 @@ public class ShopWriteServiceImpl implements ShopWriteService {
         User user = requireUser(userId);
         Product product = productRepository.findById(productId)
                 .filter(Product::isActive)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Product not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
 
         String levelName = LevelUtil.levelFor(user.getPoints()).name();
         if (!LevelUtil.meetsMinLevel(levelName, product.getMinLevel())) {
-            throw new ApiException(ErrorCode.LEVEL_TOO_LOW, "Unlocks at " + product.getMinLevel() + ".");
+            throw new ApiException(ErrorCode.LEVEL_TOO_LOW, ErrorMessage.unlocksAtLevel(product.getMinLevel()));
         }
         if (product.isPremiumOnly() && !user.isPremium()) {
-            throw new ApiException(ErrorCode.PREMIUM_REQUIRED, "This item requires Premium.");
+            throw new ApiException(ErrorCode.PREMIUM_REQUIRED, ErrorMessage.PREMIUM_REQUIRED);
         }
         if (user.getPoints() < product.getCost()) {
-            throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, "Not enough SpotPoints yet.");
+            throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);
         }
 
         long newBalance = pointsWriteService.adjust(userId, -product.getCost(), "🎁", "Redeemed " + product.getName());
@@ -65,7 +66,7 @@ public class ShopWriteServiceImpl implements ShopWriteService {
     @Transactional
     public ProductAdminResponse createProduct(CreateProductRequest request) {
         if (productRepository.existsById(request.id())) {
-            throw new ApiException(ErrorCode.RESOURCE_ALREADY_EXISTS, "A product with id '" + request.id() + "' already exists.");
+            throw new ApiException(ErrorCode.RESOURCE_ALREADY_EXISTS, ErrorMessage.productAlreadyExists(request.id()));
         }
         Product product = Product.builder()
                 .id(request.id())
@@ -84,7 +85,7 @@ public class ShopWriteServiceImpl implements ShopWriteService {
     @Transactional
     public ProductAdminResponse updateProduct(String productId, UpdateProductRequest request) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Product not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
         if (request.name() != null) product.setName(request.name());
         if (request.cost() != null) product.setCost(request.cost());
         if (request.minLevel() != null) product.setMinLevel(request.minLevel());
@@ -99,7 +100,7 @@ public class ShopWriteServiceImpl implements ShopWriteService {
     @Transactional
     public void deleteProduct(String productId) {
         if (!productRepository.existsById(productId)) {
-            throw new ApiException(ErrorCode.NOT_FOUND, "Product not found.");
+            throw new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND);
         }
         productRepository.deleteById(productId);
     }
@@ -110,6 +111,6 @@ public class ShopWriteServiceImpl implements ShopWriteService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

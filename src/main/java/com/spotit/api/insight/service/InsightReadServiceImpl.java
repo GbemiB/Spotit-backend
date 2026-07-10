@@ -1,6 +1,7 @@
 package com.spotit.api.insight.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.insight.dto.CycleTrendsResponse;
 import com.spotit.api.insight.dto.RegularityResponse;
@@ -157,6 +158,6 @@ public class InsightReadServiceImpl implements InsightReadService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

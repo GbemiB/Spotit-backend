@@ -1,6 +1,7 @@
 package com.spotit.api.user.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.config.SpotItProperties;
 import com.spotit.api.log.repository.CycleLogRepository;
@@ -38,18 +39,21 @@ public class UserWriteServiceImpl implements UserWriteService {
     public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
         User user = requireUser(userId);
 
-        if (request.name() != null && !request.name().isBlank()) {
-            user.setName(request.name());
+        if (request.firstName() != null && !request.firstName().isBlank()) {
+            user.setFirstName(request.firstName());
+        }
+        if (request.lastName() != null && !request.lastName().isBlank()) {
+            user.setLastName(request.lastName());
         }
         if (request.cycleLength() != null) {
             if (request.cycleLength() < 21 || request.cycleLength() > 45) {
-                throw new ApiException(ErrorCode.CYCLE_LENGTH_OUT_OF_RANGE, "cycleLength must be between 21 and 45.");
+                throw new ApiException(ErrorCode.CYCLE_LENGTH_OUT_OF_RANGE, ErrorMessage.CYCLE_LENGTH_OUT_OF_RANGE);
             }
             user.setCycleLength(request.cycleLength());
         }
         if (request.periodLength() != null) {
             if (request.periodLength() < 2 || request.periodLength() > 10) {
-                throw new ApiException(ErrorCode.PERIOD_LENGTH_OUT_OF_RANGE, "periodLength must be between 2 and 10.");
+                throw new ApiException(ErrorCode.PERIOD_LENGTH_OUT_OF_RANGE, ErrorMessage.PERIOD_LENGTH_OUT_OF_RANGE);
             }
             user.setPeriodLength(request.periodLength());
         }
@@ -125,6 +129,6 @@ public class UserWriteServiceImpl implements UserWriteService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

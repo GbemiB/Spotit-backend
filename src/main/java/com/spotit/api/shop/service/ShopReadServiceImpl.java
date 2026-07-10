@@ -1,6 +1,7 @@
 package com.spotit.api.shop.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.LevelUtil;
 import com.spotit.api.shop.dto.OrderResponse;
@@ -56,7 +57,7 @@ public class ShopReadServiceImpl implements ShopReadService {
     public ProductAdminResponse getForAdmin(String productId) {
         return productRepository.findById(productId)
                 .map(this::toAdminResponse)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Product not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
     }
 
     private ProductResponse toResponse(Product p, String levelName, boolean premium) {
@@ -73,6 +74,6 @@ public class ShopReadServiceImpl implements ShopReadService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

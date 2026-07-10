@@ -9,6 +9,7 @@ import com.spotit.api.billing.entity.Subscription;
 import com.spotit.api.billing.entity.SubscriptionStatus;
 import com.spotit.api.billing.repository.SubscriptionRepository;
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -36,11 +37,11 @@ public class BillingWriteServiceImpl implements BillingWriteService {
     @Transactional
     public SubscriptionResponse subscribe(UUID userId, SubscribeRequest request) {
         if (request.receipt().isBlank()) {
-            throw new ApiException(ErrorCode.RECEIPT_INVALID, "Receipt could not be verified.");
+            throw new ApiException(ErrorCode.RECEIPT_INVALID, ErrorMessage.RECEIPT_INVALID);
         }
         var existing = subscriptionRepository.findByUserId(userId);
         if (existing.isPresent() && existing.get().getStatus() == SubscriptionStatus.active) {
-            throw new ApiException(ErrorCode.ALREADY_SUBSCRIBED, "You already have an active subscription.");
+            throw new ApiException(ErrorCode.ALREADY_SUBSCRIBED, ErrorMessage.ALREADY_SUBSCRIBED);
         }
 
         Instant renewsAt = Instant.now().plus(SUBSCRIPTION_PERIOD);
@@ -61,7 +62,7 @@ public class BillingWriteServiceImpl implements BillingWriteService {
     @Transactional
     public CancelResponse cancel(UUID userId) {
         Subscription sub = subscriptionRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "No subscription found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.SUBSCRIPTION_NOT_FOUND));
         sub.setAutoRenew(false);
         subscriptionRepository.save(sub);
         return new CancelResponse(sub.getStatus() == SubscriptionStatus.active, false, sub.getRenewsAt());
@@ -71,7 +72,7 @@ public class BillingWriteServiceImpl implements BillingWriteService {
     @Transactional
     public SubscriptionResponse restore(UUID userId, RestoreRequest request) {
         Subscription sub = subscriptionRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NO_PURCHASE_FOUND, "No previous purchase found for this account."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NO_PURCHASE_FOUND, ErrorMessage.NO_PURCHASE_FOUND));
         sub.setStatus(SubscriptionStatus.active);
         sub.setAutoRenew(true);
         sub.setPlatform(Platform.valueOf(request.platform()));
@@ -97,7 +98,7 @@ public class BillingWriteServiceImpl implements BillingWriteService {
 
     private void setPremium(UUID userId, boolean premium) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
         user.setPremium(premium);
         userRepository.save(user);
     }

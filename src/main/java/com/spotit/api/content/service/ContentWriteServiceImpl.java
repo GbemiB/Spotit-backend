@@ -1,6 +1,7 @@
 package com.spotit.api.content.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
 import com.spotit.api.content.dto.CreateContentItemRequest;
@@ -38,7 +39,7 @@ public class ContentWriteServiceImpl implements ContentWriteService {
     @Transactional
     public ContentItemAdminResponse update(UUID id, UpdateContentItemRequest request) {
         ContentItem item = contentItemRepository.findById(id)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Content item not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CONTENT_ITEM_NOT_FOUND));
         if (request.tag() != null) item.setTag(request.tag());
         if (request.title() != null) item.setTitle(request.title());
         if (request.imageUrl() != null) item.setImageUrl(request.imageUrl());
@@ -53,7 +54,7 @@ public class ContentWriteServiceImpl implements ContentWriteService {
     @Transactional
     public void delete(UUID id) {
         if (!contentItemRepository.existsById(id)) {
-            throw new ApiException(ErrorCode.NOT_FOUND, "Content item not found.");
+            throw new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CONTENT_ITEM_NOT_FOUND);
         }
         contentItemRepository.deleteById(id);
     }

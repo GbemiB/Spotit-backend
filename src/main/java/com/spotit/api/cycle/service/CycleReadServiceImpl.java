@@ -1,6 +1,7 @@
 package com.spotit.api.cycle.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.cycle.CycleUtil;
 import com.spotit.api.cycle.dto.CycleCalendarResponse;
@@ -48,7 +49,7 @@ public class CycleReadServiceImpl implements CycleReadService {
     @Transactional(readOnly = true)
     public CycleCalendarResponse getCalendarMonth(UUID userId, int year, int month) {
         if (month < 1 || month > 12) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, "month must be between 1 and 12.");
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.MONTH_OUT_OF_RANGE);
         }
         User user = requireUser(userId);
         LocalDate lastPeriod = user.getLastPeriodDate() != null ? user.getLastPeriodDate() : LocalDate.now();
@@ -69,6 +70,6 @@ public class CycleReadServiceImpl implements CycleReadService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

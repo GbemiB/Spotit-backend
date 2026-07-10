@@ -1,6 +1,7 @@
 package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.dto.BadgeDefinitionAdminResponse;
 import com.spotit.api.rewards.dto.BadgeResponse;
@@ -51,7 +52,7 @@ public class BadgeReadServiceImpl implements BadgeReadService {
     public BadgeDefinitionAdminResponse getDefinitionForAdmin(String id) {
         return badgeDefinitionRepository.findById(id)
                 .map(this::toAdminResponse)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Badge definition not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.BADGE_NOT_FOUND));
     }
 
     private BadgeDefinitionAdminResponse toAdminResponse(BadgeDefinition def) {

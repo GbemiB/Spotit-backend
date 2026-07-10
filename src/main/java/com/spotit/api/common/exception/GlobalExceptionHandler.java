@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiErrorBody> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiErrorBody("invalid_credentials", "Invalid email or password."));
+                .body(new ApiErrorBody("invalid_credentials", ErrorMessage.INVALID_CREDENTIALS));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -55,13 +55,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
     public ResponseEntity<ApiErrorBody> handleNotFound(Exception ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiErrorBody("not_found", "No such endpoint."));
+                .body(new ApiErrorBody("not_found", ErrorMessage.NO_SUCH_ENDPOINT));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorBody> handleGeneric(Exception ex) {
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiErrorBody("internal_error", "Something went wrong. Please try again."));
+                .body(new ApiErrorBody("internal_error", ErrorMessage.INTERNAL_ERROR));
     }
 }

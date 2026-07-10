@@ -5,7 +5,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 
 public record UpdateProfileRequest(
-        String name,
+        String firstName,
+        String lastName,
         @Min(21) @Max(45) Integer cycleLength,
         @Min(2) @Max(10) Integer periodLength,
         @Pattern(regexp = "light|dark|system") String themePref

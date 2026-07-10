@@ -1,6 +1,7 @@
 package com.spotit.api.content.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.content.dto.ContentFeedResponse;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
@@ -44,7 +45,7 @@ public class ContentReadServiceImpl implements ContentReadService {
     public ContentItemAdminResponse getForAdmin(UUID id) {
         return contentItemRepository.findById(id)
                 .map(this::toAdminResponse)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Content item not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CONTENT_ITEM_NOT_FOUND));
     }
 
     private ContentItemAdminResponse toAdminResponse(ContentItem i) {

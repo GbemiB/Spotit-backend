@@ -10,6 +10,18 @@ spring:
     password: ${DB_PASSWORD:postgres}
     type: com.zaxxer.hikari.HikariDataSource
 
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:true}
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -43,6 +55,8 @@ spotit:
   cycle:
     default-cycle-length: 28
     default-period-length: 5
+  mail:
+    from-address: ${MAIL_FROM:no-reply@spotit.app}
 
 logging:
   level:

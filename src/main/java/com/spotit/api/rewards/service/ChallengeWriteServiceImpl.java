@@ -1,6 +1,7 @@
 package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.dto.ChallengeClaimResponse;
 import com.spotit.api.rewards.dto.ChallengeDefinitionAdminResponse;
@@ -32,12 +33,12 @@ public class ChallengeWriteServiceImpl implements ChallengeWriteService {
     @Transactional
     public ChallengeClaimResponse claim(UUID userId, String challengeId) {
         ChallengeDefinition def = challengeDefinitionRepository.findById(challengeId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Challenge not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CHALLENGE_NOT_FOUND));
         LocalDate weekStart = calculator.currentWeekStart();
         int done = calculator.computeDone(userId, def);
 
         if (done < def.getTotal()) {
-            throw new ApiException(ErrorCode.NOT_YET_COMPLETE, "This challenge isn't complete yet.");
+            throw new ApiException(ErrorCode.NOT_YET_COMPLETE, ErrorMessage.CHALLENGE_NOT_YET_COMPLETE);
         }
 
         UserChallengeProgress progress = progressRepository
@@ -46,7 +47,7 @@ public class ChallengeWriteServiceImpl implements ChallengeWriteService {
                         .userId(userId).challengeId(challengeId).weekStartDate(weekStart).claimed(false).build());
 
         if (progress.isClaimed()) {
-            throw new ApiException(ErrorCode.ALREADY_CLAIMED, "This challenge's reward has already been claimed this week.");
+            throw new ApiException(ErrorCode.ALREADY_CLAIMED, ErrorMessage.CHALLENGE_ALREADY_CLAIMED);
         }
         progress.setClaimed(true);
         progress.setClaimedAt(Instant.now());
@@ -60,7 +61,7 @@ public class ChallengeWriteServiceImpl implements ChallengeWriteService {
     @Transactional
     public ChallengeDefinitionAdminResponse createDefinition(CreateChallengeDefinitionRequest request) {
         if (challengeDefinitionRepository.existsById(request.id())) {
-            throw new ApiException(ErrorCode.RESOURCE_ALREADY_EXISTS, "A challenge with id '" + request.id() + "' already exists.");
+            throw new ApiException(ErrorCode.RESOURCE_ALREADY_EXISTS, ErrorMessage.challengeAlreadyExists(request.id()));
         }
         ChallengeDefinition def = ChallengeDefinition.builder()
                 .id(request.id())
@@ -77,7 +78,7 @@ public class ChallengeWriteServiceImpl implements ChallengeWriteService {
     @Transactional
     public ChallengeDefinitionAdminResponse updateDefinition(String id, UpdateChallengeDefinitionRequest request) {
         ChallengeDefinition def = challengeDefinitionRepository.findById(id)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Challenge definition not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CHALLENGE_DEFINITION_NOT_FOUND));
         if (request.title() != null) def.setTitle(request.title());
         if (request.reward() != null) def.setReward(request.reward());
         if (request.total() != null) def.setTotal(request.total());
@@ -89,7 +90,7 @@ public class ChallengeWriteServiceImpl implements ChallengeWriteService {
     @Transactional
     public void deleteDefinition(String id) {
         if (!challengeDefinitionRepository.existsById(id)) {
-            throw new ApiException(ErrorCode.NOT_FOUND, "Challenge definition not found.");
+            throw new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CHALLENGE_DEFINITION_NOT_FOUND);
         }
         challengeDefinitionRepository.deleteById(id);
     }

@@ -6,6 +6,7 @@ import com.spotit.api.auth.entity.OtpPurpose;
 import com.spotit.api.auth.entity.RefreshToken;
 import com.spotit.api.auth.repository.RefreshTokenRepository;
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
@@ -38,10 +39,11 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Transactional
     public SignupResponse signup(SignupRequest request) {
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
-            throw new ApiException(ErrorCode.EMAIL_ALREADY_REGISTERED, "An account with this email already exists.");
+            throw new ApiException(ErrorCode.EMAIL_ALREADY_REGISTERED, ErrorMessage.EMAIL_ALREADY_REGISTERED);
         }
         User user = User.builder()
-                .name(request.name())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
                 .email(request.email().toLowerCase())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .emailVerified(false)
@@ -60,7 +62,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .build();
         user = userRepository.save(user);
 
-        OtpCode otp = otpService.issue(user.getId(), OtpPurpose.signup);
+        OtpCode otp = otpService.issue(user, OtpPurpose.signup);
         return new SignupResponse(user.getId(), user.getEmail(), true, otp.getId());
     }
 
@@ -69,7 +71,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     public TokenResponse verifySignupOtp(OtpVerifyRequest request) {
         OtpCode otp = otpService.verify(request.otpId(), request.code(), OtpPurpose.signup);
         User user = userRepository.findById(otp.getUserId())
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
         user.setEmailVerified(true);
         userRepository.save(user);
         return issueTokens(user);
@@ -79,9 +81,9 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Transactional
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS, "Invalid email or password."));
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new ApiException(ErrorCode.INVALID_CREDENTIALS, "Invalid email or password.");
+            throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
         }
         return issueTokens(user);
     }
@@ -90,7 +92,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Transactional
     public OtpRequestResponse forgotPassword(EmailRequest request) {
         userRepository.findByEmailIgnoreCase(request.email()).ifPresent(user ->
-                otpService.issue(user.getId(), OtpPurpose.password_reset));
+                otpService.issue(user, OtpPurpose.password_reset));
         // Same response whether or not the email exists, to avoid account enumeration.
         return new OtpRequestResponse("If that email exists, a reset code has been sent.", null);
     }
@@ -98,9 +100,10 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Override
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        OtpCode otp = otpService.verify(request.otpId(), request.code(), OtpPurpose.password_reset);
-        User user = userRepository.findById(otp.getUserId())
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+        // Same error whether the email doesn't exist or the code is wrong, to avoid account enumeration.
+        User user = userRepository.findByEmailIgnoreCase(request.email())
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
+        otpService.verifyLatest(user.getId(), request.code(), OtpPurpose.password_reset);
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(user.getId());
@@ -110,17 +113,17 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Transactional
     public AccessTokenResponse refresh(RefreshTokenRequest request) {
         UUID userId = jwtService.parseRefreshToken(request.refreshToken())
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, "Invalid or expired refresh token."));
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, ErrorMessage.INVALID_REFRESH_TOKEN));
 
         String hash = TokenHasher.sha256Hex(request.refreshToken());
         RefreshToken stored = refreshTokenRepository.findByTokenHashAndRevokedFalse(hash)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, "Invalid or expired refresh token."));
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, ErrorMessage.INVALID_REFRESH_TOKEN));
         if (stored.getExpiresAt().isBefore(Instant.now())) {
-            throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, "Invalid or expired refresh token.");
+            throw new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, ErrorMessage.INVALID_REFRESH_TOKEN);
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, "Invalid or expired refresh token."));
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, ErrorMessage.INVALID_REFRESH_TOKEN));
         String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail(), user.isPremium());
         return new AccessTokenResponse(accessToken, jwtService.accessTokenTtlSeconds());
     }
@@ -135,12 +138,12 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Transactional
     public AccountDeletionResponse scheduleAccountDeletion(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
         Instant purgeBy = Instant.now().plus(java.time.Duration.ofDays(ACCOUNT_PURGE_GRACE_DAYS));
         user.setPendingDeletionAt(purgeBy);
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(userId);
-        return new AccountDeletionResponse("Account deletion scheduled.", purgeBy);
+        return new AccountDeletionResponse(ErrorMessage.ACCOUNT_DELETION_SCHEDULED, purgeBy);
     }
 
     private TokenResponse issueTokens(User user) {

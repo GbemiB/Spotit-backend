@@ -1,6 +1,7 @@
 package com.spotit.api.log.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.log.dto.LogEntryResponse;
 import com.spotit.api.log.dto.LogsRangeResponse;
@@ -33,7 +34,7 @@ public class LogReadServiceImpl implements LogReadService {
     @Transactional(readOnly = true)
     public LogsRangeResponse getLogsInRange(UUID userId, LocalDate from, LocalDate to) {
         if (from.isAfter(to)) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, "'from' must be before or equal to 'to'.");
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.INVALID_DATE_RANGE);
         }
         Map<String, LogEntryResponse> logs = new LinkedHashMap<>();
         cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, from, to)

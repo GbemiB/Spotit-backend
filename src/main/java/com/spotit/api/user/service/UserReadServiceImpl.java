@@ -1,6 +1,7 @@
 package com.spotit.api.user.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
@@ -45,7 +46,7 @@ public class UserReadServiceImpl implements UserReadService {
     @Transactional(readOnly = true)
     public ExportDataResponse getExportData(UUID userId, UUID jobId) {
         exportJobRepository.findByIdAndUserId(jobId, userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Export job not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.EXPORT_JOB_NOT_FOUND));
 
         User user = requireUser(userId);
         var logs = cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, LocalDate.of(2000, 1, 1), LocalDate.now())
@@ -69,6 +70,6 @@ public class UserReadServiceImpl implements UserReadService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

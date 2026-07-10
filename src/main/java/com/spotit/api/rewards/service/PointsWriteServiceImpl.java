@@ -1,6 +1,7 @@
 package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.config.SpotItProperties;
 import com.spotit.api.rewards.entity.PointsHistoryEntry;
@@ -74,7 +75,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         long watchedToday = pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad");
         if (watchedToday >= properties.ads().dailyLimit()) {
-            throw new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, "You've reached today's rewarded-ad limit.");
+            throw new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, ErrorMessage.DAILY_AD_LIMIT_REACHED);
         }
         User user = requireUser(userId);
         user.setPoints(user.getPoints() + WATCH_AD_POINTS);
@@ -105,6 +106,6 @@ public class PointsWriteServiceImpl implements PointsWriteService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "User not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

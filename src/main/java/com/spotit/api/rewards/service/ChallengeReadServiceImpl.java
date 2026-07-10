@@ -1,6 +1,7 @@
 package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.dto.ChallengeDefinitionAdminResponse;
 import com.spotit.api.rewards.dto.ChallengeResponse;
@@ -52,7 +53,7 @@ public class ChallengeReadServiceImpl implements ChallengeReadService {
     public ChallengeDefinitionAdminResponse getDefinitionForAdmin(String id) {
         return challengeDefinitionRepository.findById(id)
                 .map(this::toAdminResponse)
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Challenge definition not found."));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CHALLENGE_DEFINITION_NOT_FOUND));
     }
 
     private ChallengeDefinitionAdminResponse toAdminResponse(ChallengeDefinition def) {
