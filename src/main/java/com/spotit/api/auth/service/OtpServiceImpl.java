@@ -9,6 +9,7 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.config.SpotItProperties;
 import com.spotit.api.user.entity.User;
+import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailException;
@@ -31,10 +32,12 @@ public class OtpServiceImpl implements OtpService {
     private final PasswordEncoder passwordEncoder;
     private final SpotItProperties properties;
     private final EmailService emailService;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public OtpCode issue(User user, OtpPurpose purpose) {
+        otpCodeRepository.invalidateActive(user.getId(), purpose);
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
         OtpCode otp = OtpCode.builder()
                 .userId(user.getId())
@@ -82,6 +85,21 @@ public class OtpServiceImpl implements OtpService {
         OtpCode otp = otpCodeRepository.findFirstByUserIdAndPurposeAndConsumedFalseOrderByCreatedAtDesc(userId, expectedPurpose)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
         return checkAndConsume(otp, code);
+    }
+
+    @Override
+    @Transactional
+    public OtpCode resend(UUID otpId) {
+        OtpCode existing = otpCodeRepository.findById(otpId)
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
+        User user = userRepository.findById(existing.getUserId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
+        return issue(user, existing.getPurpose());
+    }
+
+    @Override
+    public long ttlSeconds() {
+        return properties.otp().ttlSeconds();
     }
 
     private OtpCode checkAndConsume(OtpCode otp, String code) {

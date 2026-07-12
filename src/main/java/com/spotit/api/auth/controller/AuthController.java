@@ -66,6 +66,23 @@ public class AuthController {
         return authWriteService.verifySignupOtp(request);
     }
 
+    @Operation(summary = AuthControllerSwagger.RESEND_OTP_SUMMARY, description = AuthControllerSwagger.RESEND_OTP_DESCRIPTION)
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+            schema = @Schema(implementation = OtpResendRequest.class),
+            examples = @ExampleObject(value = AuthControllerSwagger.RESEND_OTP_REQUEST_EXAMPLE)))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "A new code was issued and emailed.", content = @Content(
+                    schema = @Schema(implementation = OtpRequestResponse.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.RESEND_OTP_200_EXAMPLE))),
+            @ApiResponse(responseCode = "400", description = "Invalid or already-used code.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.INVALID_CODE_400_EXAMPLE)))
+    })
+    @PostMapping("/otp/resend")
+    public OtpRequestResponse resendOtp(@Valid @RequestBody OtpResendRequest request) {
+        return authWriteService.resendOtp(request);
+    }
+
     @Operation(summary = AuthControllerSwagger.LOGIN_SUMMARY, description = AuthControllerSwagger.LOGIN_DESCRIPTION)
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
             schema = @Schema(implementation = LoginRequest.class),

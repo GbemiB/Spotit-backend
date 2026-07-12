@@ -63,7 +63,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         user = userRepository.save(user);
 
         OtpCode otp = otpService.issue(user, OtpPurpose.signup);
-        return new SignupResponse(user.getId(), user.getEmail(), true, otp.getId());
+        return new SignupResponse(user.getId(), user.getEmail(), true, otp.getId(), otpService.ttlSeconds());
     }
 
     @Override
@@ -94,7 +94,14 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         userRepository.findByEmailIgnoreCase(request.email()).ifPresent(user ->
                 otpService.issue(user, OtpPurpose.password_reset));
         // Same response whether or not the email exists, to avoid account enumeration.
-        return new OtpRequestResponse("If that email exists, a reset code has been sent.", null);
+        return new OtpRequestResponse("If that email exists, a reset code has been sent.", null, otpService.ttlSeconds());
+    }
+
+    @Override
+    @Transactional
+    public OtpRequestResponse resendOtp(OtpResendRequest request) {
+        OtpCode otp = otpService.resend(request.otpId());
+        return new OtpRequestResponse("A new code has been sent.", otp.getId(), otpService.ttlSeconds());
     }
 
     @Override
