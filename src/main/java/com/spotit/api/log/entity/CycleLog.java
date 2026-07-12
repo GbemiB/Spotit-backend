@@ -43,8 +43,8 @@ public class CycleLog {
 
     @Builder.Default
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(columnDefinition = "text[]", nullable = false)
-    private List<String> symptoms = new ArrayList<>();
+    @Column(columnDefinition = "integer[]", nullable = false)
+    private List<Integer> symptoms = new ArrayList<>();
 
     @Column(columnDefinition = "text")
     private String notes;

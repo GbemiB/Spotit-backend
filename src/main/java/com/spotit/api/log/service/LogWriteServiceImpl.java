@@ -5,6 +5,7 @@ import com.spotit.api.log.dto.SaveLogResponse;
 import com.spotit.api.log.entity.CycleLog;
 import com.spotit.api.log.entity.FlowIntensity;
 import com.spotit.api.log.entity.MoodType;
+import com.spotit.api.log.entity.SymptomType;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.service.PointsWriteService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,7 +31,7 @@ public class LogWriteServiceImpl implements LogWriteService {
 
         entry.setFlow(request.flow() == null ? null : FlowIntensity.valueOf(request.flow()));
         entry.setMood(request.mood() == null ? null : MoodType.valueOf(request.mood()));
-        entry.setSymptoms(request.symptoms() == null ? List.of() : request.symptoms());
+        entry.setSymptoms(SymptomType.toValues(request.symptoms()));
         entry.setNotes(request.notes());
         entry.setIntimate(request.intimate());
         cycleLogRepository.save(entry);
@@ -39,7 +39,7 @@ public class LogWriteServiceImpl implements LogWriteService {
         var pointsResult = pointsWriteService.recordDailyLog(userId, date, isNewEntry);
 
         return new SaveLogResponse(
-                date, request.flow(), request.mood(), entry.getSymptoms(), entry.getNotes(), entry.isIntimate(),
+                date, request.flow(), request.mood(), SymptomType.fromValues(entry.getSymptoms()), entry.getNotes(), entry.isIntimate(),
                 pointsResult.pointsAwarded(), pointsResult.newBalance(), pointsResult.streak(), isNewEntry
         );
     }

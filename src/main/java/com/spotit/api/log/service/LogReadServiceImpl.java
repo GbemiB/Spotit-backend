@@ -6,6 +6,7 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.log.dto.LogEntryResponse;
 import com.spotit.api.log.dto.LogsRangeResponse;
 import com.spotit.api.log.entity.CycleLog;
+import com.spotit.api.log.entity.SymptomType;
 import com.spotit.api.log.repository.CycleLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class LogReadServiceImpl implements LogReadService {
                 log.getLogDate(),
                 log.getFlow() == null ? null : log.getFlow().name(),
                 log.getMood() == null ? null : log.getMood().name(),
-                log.getSymptoms(),
+                SymptomType.fromValues(log.getSymptoms()),
                 log.getNotes(),
                 log.isIntimate()
         );

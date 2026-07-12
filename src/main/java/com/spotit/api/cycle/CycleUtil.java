@@ -9,7 +9,7 @@ public final class CycleUtil {
     private CycleUtil() {
     }
 
-    public record Phase(CyclePhase key, String label) {
+    public record Phase(CyclePhase key, String code) {
     }
 
     public static int cycleDayOf(LocalDate date, LocalDate lastPeriodDate, int cycleLength) {
@@ -19,11 +19,13 @@ public final class CycleUtil {
 
     public static Phase phaseFor(int cycleDay, int periodLength, int cycleLength) {
         int ovDay = cycleLength - 14;
-        if (cycleDay <= periodLength) return new Phase(CyclePhase.period, "Period");
-        if (cycleDay == ovDay) return new Phase(CyclePhase.ovulation, "Ovulation");
-        if (cycleDay >= ovDay - 4 && cycleDay < ovDay) return new Phase(CyclePhase.fertile, "Fertile");
-        if (cycleDay > ovDay) return new Phase(CyclePhase.luteal, "Luteal");
-        return new Phase(CyclePhase.follicular, "Follicular");
+        CyclePhase key;
+        if (cycleDay <= periodLength) key = CyclePhase.period;
+        else if (cycleDay == ovDay) key = CyclePhase.ovulation;
+        else if (cycleDay >= ovDay - 4 && cycleDay < ovDay) key = CyclePhase.fertile;
+        else if (cycleDay > ovDay) key = CyclePhase.luteal;
+        else key = CyclePhase.follicular;
+        return new Phase(key, key.getCode());
     }
 
     public static LocalDate nextPeriodDate(LocalDate today, LocalDate lastPeriodDate, int cycleLength) {

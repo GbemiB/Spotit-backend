@@ -3,6 +3,7 @@ package com.spotit.api.user.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.log.entity.SymptomType;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.user.dto.ExportDataResponse;
@@ -55,7 +56,7 @@ public class UserReadServiceImpl implements UserReadService {
                         "date", l.getLogDate().toString(),
                         "flow", l.getFlow() == null ? "" : l.getFlow().name(),
                         "mood", l.getMood() == null ? "" : l.getMood().name(),
-                        "symptoms", l.getSymptoms(),
+                        "symptoms", SymptomType.fromValues(l.getSymptoms()),
                         "notes", l.getNotes() == null ? "" : l.getNotes()))
                 .toList();
 

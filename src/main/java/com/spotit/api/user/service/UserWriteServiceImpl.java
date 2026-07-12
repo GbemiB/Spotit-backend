@@ -81,10 +81,30 @@ public class UserWriteServiceImpl implements UserWriteService {
         User user = requireUser(userId);
         user.setDob(request.dob());
         user.setLastPeriodDate(request.lastPeriodDate());
-        user.setGoal(Goal.valueOf(request.goal()));
+        user.setGoal(resolveGoal(request.goal()));
+        if (request.cycleLength() != null) {
+            if (request.cycleLength() < 21 || request.cycleLength() > 45) {
+                throw new ApiException(ErrorCode.CYCLE_LENGTH_OUT_OF_RANGE, ErrorMessage.CYCLE_LENGTH_OUT_OF_RANGE);
+            }
+            user.setCycleLength(request.cycleLength());
+        }
+        if (request.periodLength() != null) {
+            if (request.periodLength() < 2 || request.periodLength() > 10) {
+                throw new ApiException(ErrorCode.PERIOD_LENGTH_OUT_OF_RANGE, ErrorMessage.PERIOD_LENGTH_OUT_OF_RANGE);
+            }
+            user.setPeriodLength(request.periodLength());
+        }
         user.setOnboarded(true);
         userRepository.save(user);
         return new OnboardingResponse(true, user.getCycleLength(), user.getPeriodLength(), user.getGoal().name());
+    }
+
+    private Goal resolveGoal(String goal) {
+        try {
+            return Goal.valueOf(goal);
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(ErrorCode.INVALID_GOAL, ErrorMessage.invalidGoal(goal));
+        }
     }
 
     @Override

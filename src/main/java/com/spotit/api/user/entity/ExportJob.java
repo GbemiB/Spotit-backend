@@ -40,6 +40,45 @@ public class ExportJob {
     }
 
     public enum ExportJobStatus {
-        processing, ready, failed
+        processing(1, "exportJobStatus.processing"),
+        ready(2, "exportJobStatus.ready"),
+        failed(3, "exportJobStatus.failed");
+
+        private final Integer value;
+        private final String code;
+
+        ExportJobStatus(Integer value, String code) {
+            this.value = value;
+            this.code = code;
+        }
+
+        public static ExportJobStatus fromInt(Integer value) {
+            return switch (value) {
+                case 1 -> processing;
+                case 2 -> ready;
+                case 3 -> failed;
+                default -> throw new IllegalArgumentException("Unknown ExportJobStatus value: " + value);
+            };
+        }
+
+        public Integer getValue() {
+            return value;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public boolean isProcessing() {
+            return this == processing;
+        }
+
+        public boolean isReady() {
+            return this == ready;
+        }
+
+        public boolean isFailed() {
+            return this == failed;
+        }
     }
 }
