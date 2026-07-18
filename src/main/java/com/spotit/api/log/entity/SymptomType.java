@@ -16,11 +16,16 @@ public enum SymptomType {
     tender(4, "symptomType.tender"),
     fatigue(5, "symptomType.fatigue"),
     nausea(6, "symptomType.nausea"),
-    backpain(7, "symptomType.back pain"),
+    backpain(7, "symptomType.backpain"),
     acne(8, "symptomType.acne"),
-    moodswings(9, "symptomType.moods wings"),
+    moodswings(9, "symptomType.moodswings"),
     insomnia(10, "symptomType.insomnia"),
-    discharge(11, "symptomType.discharge");
+    discharge(11, "symptomType.discharge"),
+    dizziness(12, "symptomType.dizziness"),
+    jointpain(13, "symptomType.jointpain"),
+    pelvicpain(14, "symptomType.pelvicpain"),
+    sweating(15, "symptomType.sweating"),
+    anxiety(16, "symptomType.anxiety");
 
     private final Integer value;
     private final String code;
@@ -43,6 +48,11 @@ public enum SymptomType {
             case 9 -> moodswings;
             case 10 -> insomnia;
             case 11 -> discharge;
+            case 12 -> dizziness;
+            case 13 -> jointpain;
+            case 14 -> pelvicpain;
+            case 15 -> sweating;
+            case 16 -> anxiety;
             default -> throw new IllegalArgumentException("Unknown SymptomType value: " + value);
         };
     }
@@ -97,6 +107,26 @@ public enum SymptomType {
 
     public boolean isDischarge() {
         return this == discharge;
+    }
+
+    public boolean isDizziness() {
+        return this == dizziness;
+    }
+
+    public boolean isJointpain() {
+        return this == jointpain;
+    }
+
+    public boolean isPelvicpain() {
+        return this == pelvicpain;
+    }
+
+    public boolean isSweating() {
+        return this == sweating;
+    }
+
+    public boolean isAnxiety() {
+        return this == anxiety;
     }
 
     public static List<Integer> toValues(List<String> names) {

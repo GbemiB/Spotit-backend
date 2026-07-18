@@ -36,18 +36,24 @@ final class LogControllerSwagger {
                   { "id": "emotional", "label": "Emotional" }
                 ],
                 "symptoms": [
-                  { "id": "cramps", "label": "Cramps" },
                   { "id": "headache", "label": "Headache" },
+                  { "id": "dizziness", "label": "Dizziness" },
+                  { "id": "cramps", "label": "Cramps" },
+                  { "id": "backpain", "label": "Back pain" },
+                  { "id": "fatigue", "label": "Fatigue" },
+                  { "id": "jointpain", "label": "Joint pain" },
+                  { "id": "nausea", "label": "Nausea" },
                   { "id": "bloating", "label": "Bloating" },
                   { "id": "tender", "label": "Tender breasts" },
-                  { "id": "fatigue", "label": "Fatigue" },
-                  { "id": "nausea", "label": "Nausea" },
-                  { "id": "backpain", "label": "Back pain" },
+                  { "id": "pelvicpain", "label": "Pelvic pain" },
+                  { "id": "discharge", "label": "Discharge" },
+                  { "id": "sweating", "label": "Night sweats" },
                   { "id": "acne", "label": "Acne" },
                   { "id": "moodswings", "label": "Mood swings" },
                   { "id": "insomnia", "label": "Insomnia" },
-                  { "id": "discharge", "label": "Discharge" }
-                ]
+                  { "id": "anxiety", "label": "Anxiety" }
+                ],
+                "basePoints": 80
               }
             }
             """;

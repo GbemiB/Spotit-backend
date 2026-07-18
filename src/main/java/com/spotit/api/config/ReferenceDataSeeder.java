@@ -15,6 +15,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * Idempotently seeds the small set of reference/definition rows the app
  * needs to function (badge & challenge definitions, shop products, a starter
@@ -40,7 +42,7 @@ public class ReferenceDataSeeder implements ApplicationRunner {
 
     private void seedBadges() {
         if (badgeDefinitionRepository.count() > 0) return;
-        badgeDefinitionRepository.saveAll(java.util.List.of(
+        badgeDefinitionRepository.saveAll(List.of(
                 new BadgeDefinition("first_flow", "First Flow", "Log your first period"),
                 new BadgeDefinition("cycle_veteran", "Cycle Veteran", "Log 28 or more days"),
                 new BadgeDefinition("know_your_body", "Know Your Body", "Log 10 or more days"),
@@ -52,15 +54,16 @@ public class ReferenceDataSeeder implements ApplicationRunner {
 
     private void seedChallenges() {
         if (challengeDefinitionRepository.count() > 0) return;
-        challengeDefinitionRepository.saveAll(java.util.List.of(
-                ChallengeDefinition.builder().id("log_week").title("Log your mood every day").reward(150).total(7).type(ChallengeType.WEEKLY_LOG).build(),
-                ChallengeDefinition.builder().id("read_3").title("Read 3 nutrition articles").reward(120).total(3).type(ChallengeType.STATIC).build()
+        challengeDefinitionRepository.saveAll(List.of(
+                ChallengeDefinition.builder().id("log_week").title("Log your mood every day").reward(5).total(7).type(ChallengeType.WEEKLY_LOG).build(),
+                ChallengeDefinition.builder().id("read_3").title("Read 3 nutrition articles").reward(5).total(3).type(ChallengeType.STATIC).build(),
+                ChallengeDefinition.builder().id("daily_log").title("Log today").reward(10).total(1).type(ChallengeType.STATIC).build()
         ));
     }
 
     private void seedProducts() {
         if (productRepository.count() > 0) return;
-        productRepository.saveAll(java.util.List.of(
+        productRepository.saveAll(List.of(
                 Product.builder().id("rosewater_mist").name("Rosewater Face Mist").cost(800).minLevel("Petal").premiumOnly(false).icon("🌹").active(true).build(),
                 Product.builder().id("vitc_serum").name("Vitamin C Serum").cost(2500).minLevel("Rosé").premiumOnly(false).icon("💧").active(true).build(),
                 Product.builder().id("sheet_mask_set").name("Hydrating Sheet Mask Set").cost(4000).minLevel("Bloom").premiumOnly(true).icon("🧖‍♀️").active(true).build(),
@@ -70,7 +73,7 @@ public class ReferenceDataSeeder implements ApplicationRunner {
 
     private void seedContent() {
         if (contentItemRepository.count() > 0) return;
-        contentItemRepository.saveAll(java.util.List.of(
+        contentItemRepository.saveAll(List.of(
                 ContentItem.builder().tag("Education").title("Understanding your fertile window").imageUrl("https://cdn.spotit.app/content/lifestyle.jpg").sponsored(false).sortOrder(1).build(),
                 ContentItem.builder().tag("Nutrition").title("5 foods that support ovulation").imageUrl("https://cdn.spotit.app/content/food.jpg").sponsored(false).sortOrder(2).build(),
                 ContentItem.builder().tag("Sponsored").title("Nourish prenatal multivitamins").imageUrl("https://cdn.spotit.app/content/product.jpg").sponsored(true).advertiser("Nourish").sortOrder(3).build()

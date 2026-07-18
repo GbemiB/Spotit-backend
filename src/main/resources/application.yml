@@ -55,6 +55,9 @@ spotit:
   cycle:
     default-cycle-length: 28
     default-period-length: 5
+  points:
+    daily-claim: 50
+    watch-ad: 100
   mail:
     from-address: ${MAIL_FROM:no-reply@spotit.app}
 

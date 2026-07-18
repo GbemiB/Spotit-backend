@@ -42,7 +42,8 @@ final class InsightControllerSwagger {
             """;
 
     static final String REGULARITY_SUMMARY = "Get regularity flags";
-    static final String REGULARITY_DESCRIPTION = "Returns a regularity status and human-readable flags describing whether recent cycles/periods look unusual. Not medical advice.";
+    static final String REGULARITY_DESCRIPTION = "Returns a regularity status and human-readable flags describing whether recent cycles/periods look unusual. "
+            + "Status is \"insufficient_data\" until at least one period has been logged. Not medical advice.";
     static final String REGULARITY_200_EXAMPLE = """
             {
               "code": 200,

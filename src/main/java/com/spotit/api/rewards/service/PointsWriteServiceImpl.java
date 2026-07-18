@@ -20,13 +20,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PointsWriteServiceImpl implements PointsWriteService {
 
-    private static final int DAILY_LOG_POINTS = 80;
-    private static final int DAILY_CLAIM_POINTS = 50;
-    private static final int WATCH_AD_POINTS = 100;
-
     private final UserRepository userRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
     private final SpotItProperties properties;
+    private final ChallengeReadService challengeReadService;
 
     @Override
     @Transactional
@@ -44,14 +41,15 @@ public class PointsWriteServiceImpl implements PointsWriteService {
                 (user.getLastLogDate().equals(yesterday) || user.getLastLogDate().equals(today)))
                 ? user.getStreak() + 1 : 1;
 
+        int points = challengeReadService.getDailyLogReward();
         user.setStreak(streak);
         user.setLongestStreak(Math.max(streak, user.getLongestStreak()));
         user.setLastLogDate(today);
-        user.setPoints(user.getPoints() + DAILY_LOG_POINTS);
+        user.setPoints(user.getPoints() + points);
         userRepository.save(user);
 
-        recordHistory(userId, "📝", "Logged flow, mood & symptoms", DAILY_LOG_POINTS);
-        return new LogPointsResult(DAILY_LOG_POINTS, user.getPoints(), streak, true);
+        recordHistory(userId, "📝", "Logged flow, mood & symptoms", points);
+        return new LogPointsResult(points, user.getPoints(), streak, true);
     }
 
     @Override
@@ -62,11 +60,12 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         if (today.equals(user.getLastClaimedDate())) {
             return new DailyClaimResult(0, user.getPoints(), true);
         }
+        int points = properties.points().dailyClaim();
         user.setLastClaimedDate(today);
-        user.setPoints(user.getPoints() + DAILY_CLAIM_POINTS);
+        user.setPoints(user.getPoints() + points);
         userRepository.save(user);
-        recordHistory(userId, "🎁", "Daily check-in bonus", DAILY_CLAIM_POINTS);
-        return new DailyClaimResult(DAILY_CLAIM_POINTS, user.getPoints(), false);
+        recordHistory(userId, "🎁", "Daily check-in bonus", points);
+        return new DailyClaimResult(points, user.getPoints(), false);
     }
 
     @Override
@@ -78,10 +77,11 @@ public class PointsWriteServiceImpl implements PointsWriteService {
             throw new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, ErrorMessage.DAILY_AD_LIMIT_REACHED);
         }
         User user = requireUser(userId);
-        user.setPoints(user.getPoints() + WATCH_AD_POINTS);
+        int points = properties.points().watchAd();
+        user.setPoints(user.getPoints() + points);
         userRepository.save(user);
-        recordHistory(userId, "🎬", "Watched a rewarded ad", WATCH_AD_POINTS);
-        return new AdWatchResult(WATCH_AD_POINTS, user.getPoints());
+        recordHistory(userId, "🎬", "Watched a rewarded ad", points);
+        return new AdWatchResult(points, user.getPoints());
     }
 
     @Override

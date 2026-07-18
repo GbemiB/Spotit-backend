@@ -13,4 +13,7 @@ public interface ChallengeReadService {
     List<ChallengeDefinitionAdminResponse> listDefinitionsForAdmin();
 
     ChallengeDefinitionAdminResponse getDefinitionForAdmin(String id);
+
+    /** The "daily_log" ChallengeDefinition's reward — the SpotPoints PointsWriteService pays out per log. */
+    int getDailyLogReward();
 }

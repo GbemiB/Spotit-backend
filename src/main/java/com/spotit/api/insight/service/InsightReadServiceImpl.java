@@ -85,6 +85,13 @@ public class InsightReadServiceImpl implements InsightReadService {
     public RegularityResponse getRegularity(UUID userId) {
         User user = requireUser(userId);
         List<PeriodEpisode> episodes = detectPeriodEpisodes(userId);
+
+        // Nothing logged yet — "regular" would be a false positive since there's no data to
+        // support it, not an actual finding. Say so instead of defaulting to a clean bill of health.
+        if (episodes.isEmpty()) {
+            return new RegularityResponse("insufficient_data", List.of(), "This is not medical advice.");
+        }
+
         List<Integer> cycleLengths = cycleLengthsFrom(episodes, DEFAULT_CYCLES);
 
         List<String> flags = new ArrayList<>();

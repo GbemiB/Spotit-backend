@@ -21,6 +21,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ChallengeReadServiceImpl implements ChallengeReadService {
 
+    // Not a real challenge — see the seeded "daily_log" row's comment in ReferenceDataSeeder.
+    // It stores the per-log SpotPoints reward in the DB but has no claim flow, so it's excluded
+    // from the challenges list shown in the app.
+    private static final String DAILY_LOG_DEFINITION_ID = "daily_log";
+
     private final ChallengeDefinitionRepository challengeDefinitionRepository;
     private final UserChallengeProgressRepository progressRepository;
     private final ChallengeCalculator calculator;
@@ -30,8 +35,17 @@ public class ChallengeReadServiceImpl implements ChallengeReadService {
     public List<ChallengeResponse> getChallenges(UUID userId) {
         LocalDate weekStart = calculator.currentWeekStart();
         return challengeDefinitionRepository.findAll().stream()
+                .filter(def -> !DAILY_LOG_DEFINITION_ID.equals(def.getId()))
                 .map(def -> toResponse(userId, def, weekStart))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getDailyLogReward() {
+        return challengeDefinitionRepository.findById(DAILY_LOG_DEFINITION_ID)
+                .map(ChallengeDefinition::getReward)
+                .orElse(80);
     }
 
     private ChallengeResponse toResponse(UUID userId, ChallengeDefinition def, LocalDate weekStart) {

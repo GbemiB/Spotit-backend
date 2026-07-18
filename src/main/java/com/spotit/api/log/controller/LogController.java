@@ -15,6 +15,7 @@ import com.spotit.api.log.entity.MoodType;
 import com.spotit.api.log.entity.SymptomType;
 import com.spotit.api.log.service.LogReadService;
 import com.spotit.api.log.service.LogWriteService;
+import com.spotit.api.rewards.service.ChallengeReadService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -40,6 +41,7 @@ public class LogController {
 
     private final LogReadService logReadService;
     private final LogWriteService logWriteService;
+    private final ChallengeReadService challengeReadService;
 
     @Operation(summary = LogControllerSwagger.TEMPLATE_SUMMARY, description = LogControllerSwagger.TEMPLATE_DESCRIPTION,
             security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
@@ -53,7 +55,8 @@ public class LogController {
         return new LogTemplateResponse(
                 Arrays.stream(FlowIntensity.values()).map(f -> new EnumOption(f.name(), EnumMessages.resolve(f.getCode()))).toList(),
                 Arrays.stream(MoodType.values()).map(m -> new EnumOption(m.name(), EnumMessages.resolve(m.getCode()))).toList(),
-                Arrays.stream(SymptomType.values()).map(s -> new EnumOption(s.name(), EnumMessages.resolve(s.getCode()))).toList()
+                Arrays.stream(SymptomType.values()).map(s -> new EnumOption(s.name(), EnumMessages.resolve(s.getCode()))).toList(),
+                challengeReadService.getDailyLogReward()
         );
     }
 
