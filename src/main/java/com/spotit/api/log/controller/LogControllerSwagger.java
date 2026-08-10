@@ -88,6 +88,54 @@ final class LogControllerSwagger {
             }
             """;
 
+    static final String LOG_PERIOD_SUMMARY = "Log a period range";
+    static final String LOG_PERIOD_DESCRIPTION = "Marks startDate..endDate (inclusive) as a period: sets flow on every day in the range (full "
+            + "mood/symptoms/notes/intimate detail applies only to startDate), and resyncs the account's lastPeriodDate so cycle/fertile/ovulation "
+            + "predictions reflect this period going forward.";
+    static final String LOG_PERIOD_REQUEST_EXAMPLE = """
+            {
+              "startDate": "2026-07-10",
+              "endDate": "2026-07-15",
+              "flow": "medium",
+              "mood": "calm",
+              "symptoms": ["cramps", "fatigue"],
+              "notes": "Felt okay today.",
+              "intimate": false
+            }
+            """;
+    static final String LOG_PERIOD_200_EXAMPLE = """
+            {
+              "code": 200,
+              "message": "OK",
+              "data": {
+                "startDate": "2026-07-10",
+                "endDate": "2026-07-15",
+                "flow": "medium",
+                "lastPeriodDate": "2026-07-10",
+                "cycleLength": 28,
+                "periodLength": 6,
+                "startDayEntry": {
+                  "date": "2026-07-10",
+                  "flow": "medium",
+                  "mood": "calm",
+                  "symptoms": ["cramps", "fatigue"],
+                  "notes": "Felt okay today.",
+                  "intimate": false
+                },
+                "pointsAwarded": 80,
+                "newBalance": 480,
+                "streak": 4
+              }
+            }
+            """;
+    static final String LOG_PERIOD_422_EXAMPLE = """
+            {
+              "code": 422,
+              "message": "'startDate' must be before or equal to 'endDate'.",
+              "data": { "errorCode": "validation_error" }
+            }
+            """;
+
     static final String GET_LOG_SUMMARY = "Get a day's log";
     static final String GET_LOG_DESCRIPTION = "Returns the log entry for the given date, or an empty entry if nothing was logged that day.";
     static final String GET_LOG_200_EXAMPLE = """

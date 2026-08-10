@@ -6,6 +6,8 @@ import com.spotit.api.common.i18n.EnumMessages;
 import com.spotit.api.common.security.CurrentUserId;
 import com.spotit.api.log.dto.EnumOption;
 import com.spotit.api.log.dto.LogEntryResponse;
+import com.spotit.api.log.dto.LogPeriodRequest;
+import com.spotit.api.log.dto.LogPeriodResponse;
 import com.spotit.api.log.dto.LogTemplateResponse;
 import com.spotit.api.log.dto.LogsRangeResponse;
 import com.spotit.api.log.dto.SaveLogRequest;
@@ -75,6 +77,24 @@ public class LogController {
                                     @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10") @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                     @Valid @RequestBody SaveLogRequest request) {
         return logWriteService.saveLog(userId, date, request);
+    }
+
+    @Operation(summary = LogControllerSwagger.LOG_PERIOD_SUMMARY, description = LogControllerSwagger.LOG_PERIOD_DESCRIPTION,
+            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+            schema = @Schema(implementation = LogPeriodRequest.class),
+            examples = @ExampleObject(value = LogControllerSwagger.LOG_PERIOD_REQUEST_EXAMPLE)))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Period logged.", content = @Content(
+                    schema = @Schema(implementation = LogPeriodResponse.class),
+                    examples = @ExampleObject(value = LogControllerSwagger.LOG_PERIOD_200_EXAMPLE))),
+            @ApiResponse(responseCode = "422", description = "Invalid date range.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = LogControllerSwagger.LOG_PERIOD_422_EXAMPLE)))
+    })
+    @PutMapping("/period")
+    public LogPeriodResponse logPeriod(@CurrentUserId UUID userId, @Valid @RequestBody LogPeriodRequest request) {
+        return logWriteService.logPeriod(userId, request);
     }
 
     @Operation(summary = LogControllerSwagger.GET_LOG_SUMMARY, description = LogControllerSwagger.GET_LOG_DESCRIPTION,

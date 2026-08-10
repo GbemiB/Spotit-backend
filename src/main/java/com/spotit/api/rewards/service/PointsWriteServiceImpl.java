@@ -28,7 +28,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Override
     @Transactional
     public LogPointsResult recordDailyLog(UUID userId, LocalDate logDate, boolean isNewEntry) {
-        User user = requireUser(userId);
+        User user = requireUserForUpdate(userId);
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         boolean earns = isNewEntry && logDate.equals(today);
 
@@ -55,7 +55,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Override
     @Transactional
     public DailyClaimResult claimDaily(UUID userId) {
-        User user = requireUser(userId);
+        User user = requireUserForUpdate(userId);
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         if (today.equals(user.getLastClaimedDate())) {
             return new DailyClaimResult(0, user.getPoints(), true);
@@ -71,12 +71,14 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Override
     @Transactional
     public AdWatchResult watchAd(UUID userId) {
+        // Lock the user row first so a concurrent watchAd call for the same user is forced to
+        // wait here rather than both readers passing the daily-limit count check at once.
+        User user = requireUserForUpdate(userId);
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         long watchedToday = pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad");
         if (watchedToday >= properties.ads().dailyLimit()) {
             throw new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, ErrorMessage.DAILY_AD_LIMIT_REACHED);
         }
-        User user = requireUser(userId);
         int points = properties.points().watchAd();
         user.setPoints(user.getPoints() + points);
         userRepository.save(user);
@@ -87,7 +89,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Override
     @Transactional
     public long adjust(UUID userId, int delta, String icon, String label) {
-        User user = requireUser(userId);
+        User user = requireUserForUpdate(userId);
         user.setPoints(user.getPoints() + delta);
         userRepository.save(user);
         recordHistory(userId, icon, label, delta);
@@ -104,8 +106,8 @@ public class PointsWriteServiceImpl implements PointsWriteService {
                 .build());
     }
 
-    private User requireUser(UUID userId) {
-        return userRepository.findById(userId)
+    private User requireUserForUpdate(UUID userId) {
+        return userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }

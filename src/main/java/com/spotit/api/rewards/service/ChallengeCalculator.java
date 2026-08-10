@@ -23,7 +23,7 @@ class ChallengeCalculator {
     int computeDone(UUID userId, ChallengeDefinition def) {
         if (def.getType() == ChallengeType.WEEKLY_LOG) {
             LocalDate today = LocalDate.now();
-            return cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, today.minusDays(6), today).size();
+            return cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, currentWeekStart(), today).size();
         }
         return READ_3_STUB_DONE;
     }

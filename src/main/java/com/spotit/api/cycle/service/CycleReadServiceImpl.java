@@ -31,8 +31,15 @@ public class CycleReadServiceImpl implements CycleReadService {
     @Transactional(readOnly = true)
     public CycleCurrentResponse getCurrent(UUID userId) {
         User user = requireUser(userId);
+        // No period logged yet — there's nothing to compute a cycle day/phase/prediction from.
+        // Treating "today" as an implicit period start would fabricate a confident-looking
+        // result (e.g. "Day 1 · Period") out of zero real data.
+        if (user.getLastPeriodDate() == null) {
+            return new CycleCurrentResponse(null, null, null, null, "insufficient_data");
+        }
+
         LocalDate today = LocalDate.now();
-        LocalDate lastPeriod = user.getLastPeriodDate() != null ? user.getLastPeriodDate() : today;
+        LocalDate lastPeriod = user.getLastPeriodDate();
 
         int cycleDay = CycleUtil.cycleDayOf(today, lastPeriod, user.getCycleLength());
         CycleUtil.Phase phase = CycleUtil.phaseFor(cycleDay, user.getPeriodLength(), user.getCycleLength());
@@ -52,13 +59,18 @@ public class CycleReadServiceImpl implements CycleReadService {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.MONTH_OUT_OF_RANGE);
         }
         User user = requireUser(userId);
-        LocalDate lastPeriod = user.getLastPeriodDate() != null ? user.getLastPeriodDate() : LocalDate.now();
+        LocalDate lastPeriod = user.getLastPeriodDate();
 
         LocalDate first = LocalDate.of(year, month, 1);
         int daysInMonth = first.lengthOfMonth();
 
+        // No period logged yet — same reasoning as getCurrent(): every day gets a null phase
+        // rather than one fabricated from treating today as an implicit period start.
         List<CycleCalendarResponse.DayPhase> days = first.datesUntil(first.plusDays(daysInMonth))
                 .map(date -> {
+                    if (lastPeriod == null) {
+                        return new CycleCalendarResponse.DayPhase(date.toString(), null);
+                    }
                     int cycleDay = CycleUtil.cycleDayOf(date, lastPeriod, user.getCycleLength());
                     CycleUtil.Phase phase = CycleUtil.phaseFor(cycleDay, user.getPeriodLength(), user.getCycleLength());
                     return new CycleCalendarResponse.DayPhase(date.toString(), phase.key().name());

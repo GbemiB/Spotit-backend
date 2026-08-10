@@ -73,11 +73,18 @@ public class BillingWriteServiceImpl implements BillingWriteService {
     public SubscriptionResponse restore(UUID userId, RestoreRequest request) {
         Subscription sub = subscriptionRepository.findByUserId(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NO_PURCHASE_FOUND, ErrorMessage.NO_PURCHASE_FOUND));
+        boolean alreadyEntitled = sub.getStatus() == SubscriptionStatus.active
+                && sub.getRenewsAt() != null && sub.getRenewsAt().isAfter(Instant.now());
         sub.setStatus(SubscriptionStatus.active);
         sub.setAutoRenew(true);
         sub.setPlatform(Platform.valueOf(request.platform()));
         sub.setReceipt(request.receipt());
-        sub.setRenewsAt(Instant.now().plus(SUBSCRIPTION_PERIOD));
+        if (!alreadyEntitled) {
+            // Only grant a fresh period when reactivating a lapsed subscription;
+            // restoring an already-active one must not push renewsAt further out
+            // each time this is called (double-crediting).
+            sub.setRenewsAt(Instant.now().plus(SUBSCRIPTION_PERIOD));
+        }
         subscriptionRepository.save(sub);
         setPremium(userId, true);
         return new SubscriptionResponse(true, sub.getPlan(), sub.getRenewsAt(), true);

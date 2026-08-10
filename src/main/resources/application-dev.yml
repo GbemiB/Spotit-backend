@@ -10,7 +10,7 @@ spring:
           auth: ${MAIL_SMTP_AUTH:false}
           starttls:
             enable: ${MAIL_SMTP_STARTTLS:false}
-  #http://localhost:8025
+
 logging:
   level:
     com.spotit.api: DEBUG

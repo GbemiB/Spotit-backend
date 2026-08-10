@@ -3,10 +3,10 @@ package com.spotit.api.cycle.dto;
 import java.time.LocalDate;
 
 public record CycleCurrentResponse(
-        int cycleDay,
+        Integer cycleDay,
         String phase,
         LocalDate nextPeriodDate,
-        long daysUntilNextPeriod,
+        Long daysUntilNextPeriod,
         String confidence
 ) {
 }

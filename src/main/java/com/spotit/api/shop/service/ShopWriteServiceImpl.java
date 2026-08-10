@@ -34,7 +34,10 @@ public class ShopWriteServiceImpl implements ShopWriteService {
     @Override
     @Transactional
     public RedeemResponse redeem(UUID userId, String productId) {
-        User user = requireUser(userId);
+        // Lock the user row before checking the balance so a second, concurrent redeem for the
+        // same user can't read the same pre-deduction balance and also pass the cost check —
+        // that race would let both redemptions succeed and drive the balance negative.
+        User user = requireUserForUpdate(userId);
         Product product = productRepository.findById(productId)
                 .filter(Product::isActive)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
@@ -109,8 +112,8 @@ public class ShopWriteServiceImpl implements ShopWriteService {
         return new ProductAdminResponse(p.getId(), p.getName(), p.getCost(), p.getMinLevel(), p.isPremiumOnly(), p.getIcon(), p.isActive());
     }
 
-    private User requireUser(UUID userId) {
-        return userRepository.findById(userId)
+    private User requireUserForUpdate(UUID userId) {
+        return userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
     }
 }
