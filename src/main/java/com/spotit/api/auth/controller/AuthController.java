@@ -4,6 +4,7 @@ import com.spotit.api.auth.dto.*;
 import com.spotit.api.auth.service.AuthWriteService;
 import com.spotit.api.common.dto.ErrorDetail;
 import com.spotit.api.common.dto.MessageResponse;
+import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.security.CurrentUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -112,6 +113,27 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public OtpRequestResponse forgotPassword(@Valid @RequestBody EmailRequest request) {
         return authWriteService.forgotPassword(request);
+    }
+
+    @Operation(summary = AuthControllerSwagger.VERIFY_RESET_OTP_SUMMARY, description = AuthControllerSwagger.VERIFY_RESET_OTP_DESCRIPTION)
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+            schema = @Schema(implementation = ResetOtpVerifyRequest.class),
+            examples = @ExampleObject(value = AuthControllerSwagger.VERIFY_RESET_OTP_REQUEST_EXAMPLE)))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Code is valid.", content = @Content(
+                    schema = @Schema(implementation = MessageResponse.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.VERIFY_RESET_OTP_200_EXAMPLE))),
+            @ApiResponse(responseCode = "400", description = "Invalid or already-used code.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.INVALID_CODE_400_EXAMPLE))),
+            @ApiResponse(responseCode = "410", description = "This code has expired.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.OTP_EXPIRED_410_EXAMPLE)))
+    })
+    @PostMapping("/reset-password/verify-otp")
+    public MessageResponse verifyResetOtp(@Valid @RequestBody ResetOtpVerifyRequest request) {
+        authWriteService.verifyResetOtp(request);
+        return new MessageResponse(ErrorMessage.CODE_VERIFIED);
     }
 
     @Operation(summary = AuthControllerSwagger.RESET_PASSWORD_SUMMARY, description = AuthControllerSwagger.RESET_PASSWORD_DESCRIPTION)

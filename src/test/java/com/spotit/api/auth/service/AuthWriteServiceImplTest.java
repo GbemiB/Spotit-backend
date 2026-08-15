@@ -90,6 +90,33 @@ class AuthWriteServiceImplTest {
                 !u.isEmailVerified() && u.getCycleLength() == 28 && u.getPeriodLength() == 5 && u.getPoints() == 0));
     }
 
+    // --- verifyResetOtp ---
+
+    @Test
+    void verifyResetOtpRejectsAnUnknownEmailWithoutRevealingThat() {
+        when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.empty());
+        ResetOtpVerifyRequest request = new ResetOtpVerifyRequest("jane@example.com", "482913");
+
+        assertThatThrownBy(() -> service.verifyResetOtp(request))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_CODE);
+        verify(otpService, never()).checkValid(any(), any(), any());
+    }
+
+    @Test
+    void verifyResetOtpChecksTheCodeWithoutConsumingIt() {
+        UUID userId = UUID.randomUUID();
+        User user = existingUser(userId);
+        when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.of(user));
+        ResetOtpVerifyRequest request = new ResetOtpVerifyRequest("jane@example.com", "482913");
+
+        service.verifyResetOtp(request);
+
+        verify(otpService).checkValid(userId, "482913", OtpPurpose.password_reset);
+        verify(userRepository, never()).save(any());
+    }
+
     // --- login ---
 
     @Test

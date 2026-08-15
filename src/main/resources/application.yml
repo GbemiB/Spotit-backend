@@ -10,6 +10,10 @@ spring:
     password: ${DB_PASSWORD:postgres}
     type: com.zaxxer.hikari.HikariDataSource
 
+  # MAIL_USERNAME/MAIL_PASSWORD MUST be set (a real mailbox login, e.g. a Gmail App Password) for
+  # outbound mail to work at all — with them blank, SMTP auth fails silently (caught and logged,
+  # not surfaced to the caller) and no OTP email is ever sent. MAIL_FROM should also be an address
+  # on a domain with SPF/DKIM configured for this SMTP host, or providers may reject/spam-box it.
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}

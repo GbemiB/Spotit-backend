@@ -114,10 +114,29 @@ Default config (`application.yml`) points at `localhost:5433/spotitdb` with user
 
 OTP emails (signup, password reset) are sent over SMTP. In the `dev` profile this points at
 [Mailpit](https://github.com/axllent/mailpit) on `localhost:1025` with no auth/TLS — view caught
-emails at `http://localhost:8025`. If the mail server is unreachable, sending is logged as a
-warning rather than failing the request (signup/OTP issuance still succeeds). Point at a real
-provider via `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`,
-`MAIL_SMTP_AUTH`, `MAIL_SMTP_STARTTLS`.
+emails at `http://localhost:8025`. **This is by design: `dev`-profile OTP mail never reaches a
+real inbox**, so if you're testing signup/reset against a real Gmail account and the email isn't
+showing up, check Mailpit at `http://localhost:8025` first — it's almost certainly sitting there.
+The app also logs its resolved mail target on every boot (`Outbound mail target: host:port ...`)
+so you can confirm at a glance whether you're pointed at Mailpit or a real host. If the mail
+server is unreachable, sending is logged as an error rather than failing the request (signup/OTP
+issuance still succeeds either way).
+
+To have OTP emails land in a real inbox during local dev, override the SMTP target with a real
+provider's credentials, e.g. Gmail (requires an [App Password](https://myaccount.google.com/apppasswords),
+not your normal password — and `MAIL_FROM` must equal `MAIL_USERNAME`, since Gmail's SMTP relay
+rejects/rewrites a `From` address that doesn't match the authenticated account):
+
+```bash
+export MAIL_HOST=smtp.gmail.com
+export MAIL_PORT=587
+export MAIL_USERNAME=you@gmail.com
+export MAIL_PASSWORD=<16-character App Password>
+export MAIL_FROM=you@gmail.com
+export MAIL_SMTP_AUTH=true
+export MAIL_SMTP_STARTTLS=true
+mvn spring-boot:run
+```
 
 API docs: `http://localhost:8080/api/v1/swagger-ui.html`
 

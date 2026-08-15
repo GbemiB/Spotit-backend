@@ -105,6 +105,15 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public void verifyResetOtp(ResetOtpVerifyRequest request) {
+        // Same error whether the email doesn't exist or the code is wrong, to avoid account enumeration.
+        User user = userRepository.findByEmailIgnoreCase(request.email())
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
+        otpService.checkValid(user.getId(), request.code(), OtpPurpose.password_reset);
+    }
+
+    @Override
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         // Same error whether the email doesn't exist or the code is wrong, to avoid account enumeration.

@@ -1,6 +1,10 @@
 spring:
   jpa:
     show-sql: true
+  # Points at a local Mailpit SMTP catcher by default (UI: http://localhost:8025/), not a real
+  # mailbox — OTP emails sent while this profile is active NEVER reach a real inbox. If you need
+  # to see a real OTP land in Gmail/etc while developing, override MAIL_HOST/MAIL_PORT (and set
+  # MAIL_USERNAME/MAIL_PASSWORD) to point at a real SMTP account, or run with the prod profile.
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
@@ -10,7 +14,6 @@ spring:
           auth: ${MAIL_SMTP_AUTH:false}
           starttls:
             enable: ${MAIL_SMTP_STARTTLS:false}
-
 logging:
   level:
     com.spotit.api: DEBUG

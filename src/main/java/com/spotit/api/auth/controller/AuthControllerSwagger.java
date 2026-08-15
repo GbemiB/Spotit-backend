@@ -143,6 +143,22 @@ final class AuthControllerSwagger {
             }
             """;
 
+    static final String VERIFY_RESET_OTP_SUMMARY = "Verify a password-reset code";
+    static final String VERIFY_RESET_OTP_DESCRIPTION = "Confirms the code sent to the given email is correct and unexpired, without consuming it or changing the password — lets the client gate the new-password form on a valid code before asking for it.";
+    static final String VERIFY_RESET_OTP_REQUEST_EXAMPLE = """
+            {
+              "email": "amara@example.com",
+              "code": "482913"
+            }
+            """;
+    static final String VERIFY_RESET_OTP_200_EXAMPLE = """
+            {
+              "code": 200,
+              "message": "Code verified.",
+              "data": null
+            }
+            """;
+
     static final String RESET_PASSWORD_SUMMARY = "Reset password";
     static final String RESET_PASSWORD_DESCRIPTION = "Confirms the password-reset OTP sent to the given email and sets a new password. Revokes all existing refresh tokens.";
     static final String RESET_PASSWORD_REQUEST_EXAMPLE = """

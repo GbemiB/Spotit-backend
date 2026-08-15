@@ -16,6 +16,8 @@ public interface AuthWriteService {
 
     OtpRequestResponse resendOtp(OtpResendRequest request);
 
+    void verifyResetOtp(ResetOtpVerifyRequest request);
+
     void resetPassword(ResetPasswordRequest request);
 
     AccessTokenResponse refresh(RefreshTokenRequest request);

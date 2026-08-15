@@ -57,7 +57,7 @@ class OtpServiceImplTest {
         assertThat(result.getUserId()).isEqualTo(user.getId());
         assertThat(result.getPurpose()).isEqualTo(OtpPurpose.signup);
         assertThat(result.isConsumed()).isFalse();
-        verify(emailService).send(eq("jane@example.com"), anyString(), anyString());
+        verify(emailService).send(eq("jane@example.com"), anyString(), anyString(), anyString());
     }
 
     @Test
@@ -66,7 +66,7 @@ class OtpServiceImplTest {
         when(passwordEncoder.encode(anyString())).thenReturn("hashed-code");
         when(otpCodeRepository.save(any(OtpCode.class))).thenAnswer(inv -> inv.getArgument(0));
         doThrow(new org.springframework.mail.MailSendException("smtp down"))
-                .when(emailService).send(anyString(), anyString(), anyString());
+                .when(emailService).send(anyString(), anyString(), anyString(), anyString());
 
         OtpCode result = service.issue(user, OtpPurpose.signup);
 
@@ -136,6 +136,47 @@ class OtpServiceImplTest {
         OtpCode result = service.verify(otpId, "123456", OtpPurpose.signup);
 
         assertThat(result.isConsumed()).isTrue();
+    }
+
+    @Test
+    void checkValidAcceptsACorrectUnexpiredCodeWithoutConsumingIt() {
+        OtpCode otp = OtpCode.builder().id(UUID.randomUUID()).userId(user.getId()).purpose(OtpPurpose.password_reset)
+                .expiresAt(Instant.now().plusSeconds(60)).codeHash("hashed").consumed(false).build();
+        when(otpCodeRepository.findFirstByUserIdAndPurposeAndConsumedFalseOrderByCreatedAtDesc(user.getId(), OtpPurpose.password_reset))
+                .thenReturn(Optional.of(otp));
+        when(passwordEncoder.matches("123456", "hashed")).thenReturn(true);
+
+        service.checkValid(user.getId(), "123456", OtpPurpose.password_reset);
+
+        assertThat(otp.isConsumed()).isFalse();
+        verify(otpCodeRepository, never()).save(any(OtpCode.class));
+    }
+
+    @Test
+    void checkValidRejectsAWrongCode() {
+        OtpCode otp = OtpCode.builder().id(UUID.randomUUID()).userId(user.getId()).purpose(OtpPurpose.password_reset)
+                .expiresAt(Instant.now().plusSeconds(60)).codeHash("hashed").build();
+        when(otpCodeRepository.findFirstByUserIdAndPurposeAndConsumedFalseOrderByCreatedAtDesc(user.getId(), OtpPurpose.password_reset))
+                .thenReturn(Optional.of(otp));
+        when(passwordEncoder.matches("000000", "hashed")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.checkValid(user.getId(), "000000", OtpPurpose.password_reset))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_CODE);
+    }
+
+    @Test
+    void checkValidRejectsAnExpiredCode() {
+        OtpCode otp = OtpCode.builder().id(UUID.randomUUID()).userId(user.getId()).purpose(OtpPurpose.password_reset)
+                .expiresAt(Instant.now().minusSeconds(1)).codeHash("hashed").build();
+        when(otpCodeRepository.findFirstByUserIdAndPurposeAndConsumedFalseOrderByCreatedAtDesc(user.getId(), OtpPurpose.password_reset))
+                .thenReturn(Optional.of(otp));
+
+        assertThatThrownBy(() -> service.checkValid(user.getId(), "123456", OtpPurpose.password_reset))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.OTP_EXPIRED);
     }
 
     @Test

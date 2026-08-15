@@ -7,6 +7,7 @@ import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
+import com.spotit.api.common.mail.OtpEmailTemplate;
 import com.spotit.api.config.SpotItProperties;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -52,18 +53,26 @@ public class OtpServiceImpl implements OtpService {
     }
 
     private void sendOtpEmail(User user, OtpPurpose purpose, String code) {
-        String subject = purpose == OtpPurpose.signup ? "Verify your Spot it account" : "Reset your Spot it password";
+        boolean isSignup = purpose == OtpPurpose.signup;
+        String subject = isSignup ? "Verify your Spot it account" : "Reset your Spot it password";
+        String heading = isSignup ? "Verify your email" : "Reset your password";
+        String introLine = isSignup
+                ? "here's your verification code to finish creating your Spot it account."
+                : "here's your code to reset your Spot it password.";
         String greeting = user.getFirstName() == null || user.getFirstName().isBlank() ? "there" : user.getFirstName();
         long ttlMinutes = properties.otp().ttlSeconds() / 60;
-        String body = "Hi " + greeting + ",\n\n" +
-                "Your Spot it verification code is: " + code + "\n\n" +
-                "This code expires in " + ttlMinutes + " minutes. If you didn't request this, you can ignore this email.\n\n" +
-                "— Spot it";
+        String html = OtpEmailTemplate.html(greeting, code, heading, introLine, ttlMinutes);
+        String text = OtpEmailTemplate.text(greeting, code, heading, introLine, ttlMinutes);
         try {
-            emailService.send(user.getEmail(), subject, body);
+            emailService.send(user.getEmail(), subject, html, text);
             log.info("OTP email sent to user {} for purpose {}", user.getId(), purpose);
         } catch (MailException e) {
-            log.warn("Failed to send OTP email to user {} for purpose {}: {}", user.getId(), purpose, e.getMessage());
+            // Swallowed on purpose (a mail outage shouldn't block signup/login), but logged at
+            // error with the full stack trace — this is the first place to look when a user
+            // reports never receiving a code. Common causes: wrong active Spring profile (the
+            // "dev" profile points at a local Mailpit catcher, not a real inbox) or missing/bad
+            // MAIL_USERNAME / MAIL_PASSWORD for the configured SMTP host.
+            log.error("Failed to send OTP email to user {} for purpose {}", user.getId(), purpose, e);
         }
     }
 
@@ -88,6 +97,14 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public void checkValid(UUID userId, String code, OtpPurpose expectedPurpose) {
+        OtpCode otp = otpCodeRepository.findFirstByUserIdAndPurposeAndConsumedFalseOrderByCreatedAtDesc(userId, expectedPurpose)
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
+        assertValid(otp, code);
+    }
+
+    @Override
     @Transactional
     public OtpCode resend(UUID otpId) {
         OtpCode existing = otpCodeRepository.findById(otpId)
@@ -103,13 +120,17 @@ public class OtpServiceImpl implements OtpService {
     }
 
     private OtpCode checkAndConsume(OtpCode otp, String code) {
+        assertValid(otp, code);
+        otp.setConsumed(true);
+        return otpCodeRepository.save(otp);
+    }
+
+    private void assertValid(OtpCode otp, String code) {
         if (otp.getExpiresAt().isBefore(Instant.now())) {
             throw new ApiException(ErrorCode.OTP_EXPIRED, ErrorMessage.CODE_EXPIRED);
         }
         if (!passwordEncoder.matches(code, otp.getCodeHash())) {
             throw new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE);
         }
-        otp.setConsumed(true);
-        return otpCodeRepository.save(otp);
     }
 }

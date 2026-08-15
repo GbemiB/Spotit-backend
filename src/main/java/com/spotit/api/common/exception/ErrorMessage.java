@@ -14,6 +14,7 @@ public final class ErrorMessage {
     // Auth
     public static final String INVALID_OR_USED_CODE = "Invalid or already-used code.";
     public static final String CODE_EXPIRED = "This code has expired.";
+    public static final String CODE_VERIFIED = "Code verified.";
     public static final String EMAIL_ALREADY_REGISTERED = "An account with this email already exists.";
     public static final String INVALID_CREDENTIALS = "Invalid email or password.";
     public static final String INVALID_REFRESH_TOKEN = "Invalid or expired refresh token.";
