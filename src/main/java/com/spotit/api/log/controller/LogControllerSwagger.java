@@ -90,12 +90,16 @@ final class LogControllerSwagger {
 
     static final String LOG_PERIOD_SUMMARY = "Log a period range";
     static final String LOG_PERIOD_DESCRIPTION = "Marks startDate..endDate (inclusive) as a period: sets flow on every day in the range (full "
-            + "mood/symptoms/notes/intimate detail applies only to startDate), and resyncs the account's lastPeriodDate so cycle/fertile/ovulation "
-            + "predictions reflect this period going forward.";
+            + "mood/symptoms/notes/intimate detail applies only to detailDate, which defaults to startDate if omitted — pass it explicitly when the "
+            + "caller is describing a different day in the range, e.g. logging from the last day of a period), and resyncs the account's "
+            + "lastPeriodDate so cycle/fertile/ovulation predictions reflect this period going forward. If this edit moves or shrinks a previously "
+            + "logged period, days that fall outside the new range but were part of the old one have their stale flow cleared (or the row deleted "
+            + "outright if it had no other data) — clearedEntries reports each one so the caller can fix its own cached day-log state to match.";
     static final String LOG_PERIOD_REQUEST_EXAMPLE = """
             {
               "startDate": "2026-07-10",
               "endDate": "2026-07-15",
+              "detailDate": "2026-07-10",
               "flow": "medium",
               "mood": "calm",
               "symptoms": ["cramps", "fatigue"],
@@ -122,9 +126,10 @@ final class LogControllerSwagger {
                   "notes": "Felt okay today.",
                   "intimate": false
                 },
-                "pointsAwarded": 80,
-                "newBalance": 480,
-                "streak": 4
+                "pointsAwarded": 10,
+                "newBalance": 410,
+                "streak": 4,
+                "clearedEntries": []
               }
             }
             """;

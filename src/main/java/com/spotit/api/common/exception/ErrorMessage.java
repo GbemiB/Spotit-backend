@@ -47,6 +47,7 @@ public final class ErrorMessage {
     public static final String INVALID_DATE_RANGE = "'from' must be before or equal to 'to'.";
     public static final String PERIOD_START_AFTER_END = "'startDate' must be before or equal to 'endDate'.";
     public static final String PERIOD_RANGE_TOO_LONG = "Period range cannot exceed 14 days.";
+    public static final String PERIOD_DETAIL_DATE_OUT_OF_RANGE = "'detailDate' must fall within 'startDate' and 'endDate'.";
 
     // Billing
     public static final String RECEIPT_INVALID = "Receipt could not be verified.";

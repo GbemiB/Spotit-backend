@@ -2,6 +2,24 @@ spring:
   jpa:
     show-sql: false
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:true}
+
+spotit:
+  mail:
+    from-address: ${MAIL_FROM}
+  crypto:
+    aes-key: ${CRYPTO_AES_KEY}
+
 logging:
   level:
     com.spotit.api: INFO

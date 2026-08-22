@@ -33,19 +33,20 @@ class CycleUtilTest {
     }
 
     @Test
-    void phaseCoversTheFullCycleWithNoGaps() {
+    void phaseIsNullOutsidePeriodFertileOvulation() {
         int cycleLength = 28;
         int periodLength = 5;
-        // ovDay = 28 - 14 = 14
+        // ovDay = 28 - 14 = 14. Luteal/follicular stretches aren't tracked — phaseFor returns
+        // null for those days rather than labeling them.
         assertThat(phase(1, periodLength, cycleLength)).isEqualTo(CyclePhase.period);
         assertThat(phase(5, periodLength, cycleLength)).isEqualTo(CyclePhase.period);
-        assertThat(phase(6, periodLength, cycleLength)).isEqualTo(CyclePhase.follicular);
-        assertThat(phase(9, periodLength, cycleLength)).isEqualTo(CyclePhase.follicular);
+        assertThat(phase(6, periodLength, cycleLength)).isNull();
+        assertThat(phase(9, periodLength, cycleLength)).isNull();
         assertThat(phase(10, periodLength, cycleLength)).isEqualTo(CyclePhase.fertile);
         assertThat(phase(13, periodLength, cycleLength)).isEqualTo(CyclePhase.fertile);
         assertThat(phase(14, periodLength, cycleLength)).isEqualTo(CyclePhase.ovulation);
-        assertThat(phase(15, periodLength, cycleLength)).isEqualTo(CyclePhase.luteal);
-        assertThat(phase(28, periodLength, cycleLength)).isEqualTo(CyclePhase.luteal);
+        assertThat(phase(15, periodLength, cycleLength)).isNull();
+        assertThat(phase(28, periodLength, cycleLength)).isNull();
     }
 
     @Test
@@ -68,6 +69,7 @@ class CycleUtilTest {
     }
 
     private CyclePhase phase(int cycleDay, int periodLength, int cycleLength) {
-        return CycleUtil.phaseFor(cycleDay, periodLength, cycleLength).key();
+        CycleUtil.Phase p = CycleUtil.phaseFor(cycleDay, periodLength, cycleLength);
+        return p == null ? null : p.key();
     }
 }

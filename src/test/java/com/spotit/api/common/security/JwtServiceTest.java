@@ -15,7 +15,7 @@ class JwtServiceTest {
     private JwtService serviceWithTtl(long accessTtlSeconds, long refreshTtlSeconds) {
         SpotItProperties props = new SpotItProperties(
                 new SpotItProperties.Jwt(SECRET, accessTtlSeconds, refreshTtlSeconds),
-                null, null, null, null, null);
+                null, null, null, null, null, null);
         return new JwtService(props);
     }
 

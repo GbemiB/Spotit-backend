@@ -56,15 +56,20 @@ class PointsWriteServiceImplTest {
     // --- recordDailyLog ---
 
     @Test
-    void backfillingAnOlderDateAwardsNoPoints() {
-        User user = userWith(100, 3, 5, today.minusDays(1));
+    void backfillingAnOlderDateStillAwardsPointsWhenNew() {
+        // logDate itself isn't restricted to today — period/day logging both let a user pick
+        // any date (e.g. marking a period that started a few days ago). isNewEntry alone is
+        // the anti-double-counting signal; the streak math below is about today's app usage,
+        // independent of which date was actually logged.
+        userWith(100, 3, 5, today.minusDays(1));
+        when(challengeReadService.getDailyLogReward()).thenReturn(10);
 
         var result = service.recordDailyLog(userId, today.minusDays(3), true);
 
-        assertThat(result.pointsAwarded()).isZero();
-        assertThat(result.newBalance()).isEqualTo(100);
-        assertThat(result.streak()).isEqualTo(3);
-        verify(userRepository, never()).save(any());
+        assertThat(result.pointsAwarded()).isEqualTo(10);
+        assertThat(result.newBalance()).isEqualTo(110);
+        assertThat(result.streak()).isEqualTo(4);
+        verify(userRepository).save(any());
     }
 
     @Test

@@ -30,7 +30,11 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     public LogPointsResult recordDailyLog(UUID userId, LocalDate logDate, boolean isNewEntry) {
         User user = requireUserForUpdate(userId);
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        boolean earns = isNewEntry && logDate.equals(today);
+        // isNewEntry alone is the right earn signal — logDate itself is deliberately not
+        // restricted to "today" since period/day logging both let a user pick any date
+        // (e.g. marking a period that started a few days ago, or backfilling yesterday's
+        // symptoms). Requiring an exact match to today blocked points for exactly that.
+        boolean earns = isNewEntry;
 
         if (!earns) {
             return new LogPointsResult(0, user.getPoints(), user.getStreak(), isNewEntry);

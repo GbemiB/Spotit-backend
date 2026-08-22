@@ -102,8 +102,6 @@ them as 500s).
 docker run -d --name spotit-pg -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=spotitdb -p 5433:5432 postgres:16
 
-docker run -d --name spotit-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit
-
 export JWT_SECRET=$(openssl rand -base64 48)
 mvn spring-boot:run
 ```
@@ -112,31 +110,17 @@ Default config (`application.yml`) points at `localhost:5433/spotitdb` with user
 `postgres`/`postgres` — override via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` env vars.
 `JWT_SECRET` must be set to a real secret before anything but local dev.
 
-OTP emails (signup, password reset) are sent over SMTP. In the `dev` profile this points at
-[Mailpit](https://github.com/axllent/mailpit) on `localhost:1025` with no auth/TLS — view caught
-emails at `http://localhost:8025`. **This is by design: `dev`-profile OTP mail never reaches a
-real inbox**, so if you're testing signup/reset against a real Gmail account and the email isn't
-showing up, check Mailpit at `http://localhost:8025` first — it's almost certainly sitting there.
-The app also logs its resolved mail target on every boot (`Outbound mail target: host:port ...`)
-so you can confirm at a glance whether you're pointed at Mailpit or a real host. If the mail
-server is unreachable, sending is logged as an error rather than failing the request (signup/OTP
-issuance still succeeds either way).
-
-To have OTP emails land in a real inbox during local dev, override the SMTP target with a real
-provider's credentials, e.g. Gmail (requires an [App Password](https://myaccount.google.com/apppasswords),
-not your normal password — and `MAIL_FROM` must equal `MAIL_USERNAME`, since Gmail's SMTP relay
-rejects/rewrites a `From` address that doesn't match the authenticated account):
-
-```bash
-export MAIL_HOST=smtp.gmail.com
-export MAIL_PORT=587
-export MAIL_USERNAME=you@gmail.com
-export MAIL_PASSWORD=<16-character App Password>
-export MAIL_FROM=you@gmail.com
-export MAIL_SMTP_AUTH=true
-export MAIL_SMTP_STARTTLS=true
-mvn spring-boot:run
-```
+OTP emails (signup, password reset) are sent over real SMTP in every profile, including `dev` —
+there's no local mail catcher. The live SMTP config (host/port/username/password/from-address) is
+read from the `smtp_settings` DB table (`com.spotit.api.smtp`), not from env vars or `application.yml`
+— see `SmtpSettingsService`. There's no admin endpoint yet, so seed/update that row directly (SQL
+insert, with the password encrypted via `AesGcmEncryptionService` using the `CRYPTO_AES_KEY` in
+effect), or via a one-off call to `SmtpSettingsService.saveSettings(...)`. If the table is empty,
+`spring.mail.*`/`MAIL_*` env vars are used as a fallback instead. The app logs its resolved
+env-var-fallback mail target on every boot (`Default (env-var) outbound mail target: host:port ...`)
+so you can confirm at a glance whether DB-backed settings or the fallback are actually in play. If
+the mail server is unreachable, sending is logged as an error rather than failing the request
+(signup/OTP issuance still succeeds either way).
 
 API docs: `http://localhost:8080/api/v1/swagger-ui.html`
 

@@ -49,7 +49,7 @@ public class CycleReadServiceImpl implements CycleReadService {
         long totalLogs = cycleLogRepository.countByUserId(userId);
         String confidence = totalLogs >= HIGH_CONFIDENCE_LOG_THRESHOLD ? "high" : "estimated";
 
-        return new CycleCurrentResponse(cycleDay, phase.key().name(), nextPeriod, Math.max(0, daysUntil), confidence);
+        return new CycleCurrentResponse(cycleDay, phase == null ? null : phase.key().name(), nextPeriod, Math.max(0, daysUntil), confidence);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class CycleReadServiceImpl implements CycleReadService {
                     }
                     int cycleDay = CycleUtil.cycleDayOf(date, lastPeriod, user.getCycleLength());
                     CycleUtil.Phase phase = CycleUtil.phaseFor(cycleDay, user.getPeriodLength(), user.getCycleLength());
-                    return new CycleCalendarResponse.DayPhase(date.toString(), phase.key().name());
+                    return new CycleCalendarResponse.DayPhase(date.toString(), phase == null ? null : phase.key().name());
                 })
                 .toList();
 

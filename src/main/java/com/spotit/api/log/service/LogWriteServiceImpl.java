@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -68,6 +70,11 @@ public class LogWriteServiceImpl implements LogWriteService {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PERIOD_RANGE_TOO_LONG);
         }
 
+        LocalDate detailDate = request.detailDate() != null ? request.detailDate() : startDate;
+        if (detailDate.isBefore(startDate) || detailDate.isAfter(endDate)) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PERIOD_DETAIL_DATE_OUT_OF_RANGE);
+        }
+
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
 
@@ -82,7 +89,8 @@ public class LogWriteServiceImpl implements LogWriteService {
             boolean isNewEntry = existing.isEmpty();
             CycleLog entry = existing.orElseGet(() -> CycleLog.builder().userId(userId).logDate(currentDate).build());
 
-            if (currentDate.equals(startDate)) {
+            boolean isDetailDay = currentDate.equals(detailDate);
+            if (isDetailDay) {
                 entry.setFlow(request.flow() == null ? null : FlowIntensity.valueOf(request.flow()));
                 entry.setMood(request.mood() == null ? null : MoodType.valueOf(request.mood()));
                 entry.setSymptoms(SymptomType.toValues(request.symptoms()));
@@ -93,16 +101,20 @@ public class LogWriteServiceImpl implements LogWriteService {
             }
             cycleLogRepository.save(entry);
 
-            var pointsResult = pointsWriteService.recordDailyLog(userId, currentDate, isNewEntry);
-            pointsAwarded += pointsResult.pointsAwarded();
-            newBalance = pointsResult.newBalance();
-            streak = pointsResult.streak();
-
-            if (currentDate.equals(startDate)) {
+            // Points/streak are awarded once per logPeriod action (on the detail day), not once
+            // per day in the range — otherwise a multi-day backfill earns N x the daily reward
+            // and can inflate the streak counter multiple times within a single request.
+            if (isDetailDay) {
+                var pointsResult = pointsWriteService.recordDailyLog(userId, currentDate, isNewEntry);
+                pointsAwarded = pointsResult.pointsAwarded();
+                newBalance = pointsResult.newBalance();
+                streak = pointsResult.streak();
                 startDayEntry = new LogEntryResponse(
                         currentDate, request.flow(), request.mood(), SymptomType.fromValues(entry.getSymptoms()), entry.getNotes(), entry.isIntimate());
             }
         }
+
+        List<LogEntryResponse> clearedEntries = clearStalePeriodDays(userId, startDate, endDate);
 
         LocalDate lastPeriod = user.getLastPeriodDate();
         boolean shouldResync = lastPeriod == null
@@ -115,7 +127,7 @@ public class LogWriteServiceImpl implements LogWriteService {
 
         return new LogPeriodResponse(
                 startDate, endDate, request.flow(), user.getLastPeriodDate(), user.getCycleLength(), user.getPeriodLength(),
-                startDayEntry, pointsAwarded, newBalance, streak
+                startDayEntry, pointsAwarded, newBalance, streak, clearedEntries
         );
     }
 
@@ -123,5 +135,33 @@ public class LogWriteServiceImpl implements LogWriteService {
     @Transactional
     public void deleteLog(UUID userId, LocalDate date) {
         cycleLogRepository.deleteByUserIdAndLogDate(userId, date);
+    }
+
+    // Only the most recently logged period should ever show as flow-logged — logging a new one
+    // clears the flow on every previously flow-logged day outside this range (deleting the row
+    // outright if it had no other data, or just nulling flow if it did), not just days adjacent
+    // to this range. Returns each cleared day's corrected state so the caller can fix its own
+    // cached copy — clearing the row here alone doesn't help a client that already has the day
+    // cached from before this edit.
+    private List<LogEntryResponse> clearStalePeriodDays(UUID userId, LocalDate newStart, LocalDate newEnd) {
+        List<LogEntryResponse> cleared = new ArrayList<>();
+        for (CycleLog entry : cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)) {
+            LocalDate d = entry.getLogDate();
+            if (!d.isBefore(newStart) && !d.isAfter(newEnd)) {
+                continue;
+            }
+            entry.setFlow(null);
+            boolean isNowEmpty = entry.getMood() == null && entry.getSymptoms().isEmpty()
+                    && (entry.getNotes() == null || entry.getNotes().isBlank()) && !entry.isIntimate();
+            if (isNowEmpty) {
+                cycleLogRepository.delete(entry);
+                cleared.add(LogEntryResponse.empty(d));
+            } else {
+                cycleLogRepository.save(entry);
+                cleared.add(new LogEntryResponse(d, null, entry.getMood() == null ? null : entry.getMood().name(),
+                        SymptomType.fromValues(entry.getSymptoms()), entry.getNotes(), entry.isIntimate()));
+            }
+        }
+        return cleared;
     }
 }

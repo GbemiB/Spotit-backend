@@ -10,10 +10,6 @@ spring:
     password: ${DB_PASSWORD:postgres}
     type: com.zaxxer.hikari.HikariDataSource
 
-  # MAIL_USERNAME/MAIL_PASSWORD MUST be set (a real mailbox login, e.g. a Gmail App Password) for
-  # outbound mail to work at all — with them blank, SMTP auth fails silently (caught and logged,
-  # not surfaced to the caller) and no OTP email is ever sent. MAIL_FROM should also be an address
-  # on a domain with SPF/DKIM configured for this SMTP host, or providers may reject/spam-box it.
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
@@ -51,9 +47,9 @@ spotit:
   jwt:
     secret: ${JWT_SECRET:change-this-to-a-long-random-base64-secret-before-deploying-to-production}
     access-token-ttl-seconds: 3600
-    refresh-token-ttl-seconds: 2592000 # 30 days
+    refresh-token-ttl-seconds: 2592000
   otp:
-    ttl-seconds: 600 # 10 minutes
+    ttl-seconds: 600
   ads:
     daily-limit: 5
   cycle:
@@ -64,6 +60,8 @@ spotit:
     watch-ad: 100
   mail:
     from-address: ${MAIL_FROM:no-reply@spotit.app}
+  crypto:
+    aes-key: ${CRYPTO_AES_KEY:h+5YDmnQ8RfYjADYUaaWcP7pjWnMCkoauzAdd7ZnyTE=}
 
 logging:
   level:

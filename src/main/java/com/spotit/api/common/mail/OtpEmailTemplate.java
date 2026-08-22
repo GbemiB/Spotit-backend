@@ -45,7 +45,7 @@ public final class OtpEmailTemplate {
                                 <table role="presentation" width="100%%" cellpadding="0" cellspacing="0">
                                   <tr>
                                     <td align="center" style="background:%s;border-radius:14px;padding:18px 12px;">
-                                      <span style="font-size:30px;font-weight:700;letter-spacing:8px;color:%s;font-family:'SF Mono',Consolas,Menlo,monospace;">%s</span>
+                                      <span style="font-size:24px;font-weight:700;letter-spacing:8px;color:%s;font-family:'SF Mono',Consolas,Menlo,monospace;">%s</span>
                                     </td>
                                   </tr>
                                 </table>

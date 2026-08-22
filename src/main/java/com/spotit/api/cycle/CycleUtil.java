@@ -17,15 +17,13 @@ public final class CycleUtil {
         return (int) (Math.floorMod(diff, cycleLength) + 1);
     }
 
+    /** Null outside period/fertile/ovulation — the luteal and follicular stretches aren't tracked. */
     public static Phase phaseFor(int cycleDay, int periodLength, int cycleLength) {
         int ovDay = cycleLength - 14;
-        CyclePhase key;
-        if (cycleDay <= periodLength) key = CyclePhase.period;
-        else if (cycleDay == ovDay) key = CyclePhase.ovulation;
-        else if (cycleDay >= ovDay - 4 && cycleDay < ovDay) key = CyclePhase.fertile;
-        else if (cycleDay > ovDay) key = CyclePhase.luteal;
-        else key = CyclePhase.follicular;
-        return new Phase(key, key.getCode());
+        if (cycleDay <= periodLength) return new Phase(CyclePhase.period, CyclePhase.period.getCode());
+        if (cycleDay == ovDay) return new Phase(CyclePhase.ovulation, CyclePhase.ovulation.getCode());
+        if (cycleDay >= ovDay - 4 && cycleDay < ovDay) return new Phase(CyclePhase.fertile, CyclePhase.fertile.getCode());
+        return null;
     }
 
     public static LocalDate nextPeriodDate(LocalDate today, LocalDate lastPeriodDate, int cycleLength) {

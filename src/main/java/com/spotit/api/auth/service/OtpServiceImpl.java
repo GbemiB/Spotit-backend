@@ -69,9 +69,8 @@ public class OtpServiceImpl implements OtpService {
         } catch (MailException e) {
             // Swallowed on purpose (a mail outage shouldn't block signup/login), but logged at
             // error with the full stack trace — this is the first place to look when a user
-            // reports never receiving a code. Common causes: wrong active Spring profile (the
-            // "dev" profile points at a local Mailpit catcher, not a real inbox) or missing/bad
-            // MAIL_USERNAME / MAIL_PASSWORD for the configured SMTP host.
+            // reports never receiving a code. Common cause: missing/bad MAIL_USERNAME /
+            // MAIL_PASSWORD for the configured SMTP host.
             log.error("Failed to send OTP email to user {} for purpose {}", user.getId(), purpose, e);
         }
     }
