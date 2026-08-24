@@ -86,6 +86,11 @@ public class User {
     @Column(name = "last_log_date")
     private LocalDate lastLogDate;
 
+    // Distinct from lastLogDate: gates period-logging points to the first period save in a
+    // given calendar month, so correcting/updating the same period repeatedly doesn't re-earn.
+    @Column(name = "last_period_log_date")
+    private LocalDate lastPeriodLogDate;
+
     @Column(name = "last_claimed_date")
     private LocalDate lastClaimedDate;
 

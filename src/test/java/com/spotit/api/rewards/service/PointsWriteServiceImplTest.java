@@ -53,6 +53,12 @@ class PointsWriteServiceImplTest {
         return user;
     }
 
+    private User userWithPeriodLog(long points, LocalDate lastPeriodLogDate) {
+        User user = User.builder().id(userId).points(points).lastPeriodLogDate(lastPeriodLogDate).build();
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+        return user;
+    }
+
     // --- recordDailyLog ---
 
     @Test
@@ -123,6 +129,43 @@ class PointsWriteServiceImplTest {
         service.recordDailyLog(userId, today, true);
 
         assertThat(user.getLongestStreak()).isEqualTo(12); // new streak (1) doesn't beat the old record
+    }
+
+    // --- recordPeriodLog ---
+
+    @Test
+    void firstPeriodLogOfTheMonthAwardsPoints() {
+        userWithPeriodLog(100, null);
+        when(challengeReadService.getDailyLogReward()).thenReturn(10);
+
+        var result = service.recordPeriodLog(userId);
+
+        assertThat(result.pointsAwarded()).isEqualTo(10);
+        assertThat(result.newBalance()).isEqualTo(110);
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    void aSecondPeriodLogTheSameMonthAwardsNoPoints() {
+        // Correcting/updating the same period again later this month must not re-earn.
+        userWithPeriodLog(100, today);
+
+        var result = service.recordPeriodLog(userId);
+
+        assertThat(result.pointsAwarded()).isZero();
+        assertThat(result.newBalance()).isEqualTo(100);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void aPeriodLogInANewCalendarMonthAwardsPointsAgain() {
+        userWithPeriodLog(100, today.minusMonths(1));
+        when(challengeReadService.getDailyLogReward()).thenReturn(10);
+
+        var result = service.recordPeriodLog(userId);
+
+        assertThat(result.pointsAwarded()).isEqualTo(10);
+        assertThat(result.newBalance()).isEqualTo(110);
     }
 
     // --- claimDaily ---

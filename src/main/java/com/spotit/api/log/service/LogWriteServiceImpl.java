@@ -86,7 +86,6 @@ public class LogWriteServiceImpl implements LogWriteService {
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
             final LocalDate currentDate = date;
             var existing = cycleLogRepository.findByUserIdAndLogDate(userId, currentDate);
-            boolean isNewEntry = existing.isEmpty();
             CycleLog entry = existing.orElseGet(() -> CycleLog.builder().userId(userId).logDate(currentDate).build());
 
             boolean isDetailDay = currentDate.equals(detailDate);
@@ -103,9 +102,12 @@ public class LogWriteServiceImpl implements LogWriteService {
 
             // Points/streak are awarded once per logPeriod action (on the detail day), not once
             // per day in the range — otherwise a multi-day backfill earns N x the daily reward
-            // and can inflate the streak counter multiple times within a single request.
+            // and can inflate the streak counter multiple times within a single request. And
+            // recordPeriodLog (unlike recordDailyLog) gates on the calendar month rather than
+            // per-day isNewEntry, so re-saving/correcting the same period later this month
+            // doesn't earn again.
             if (isDetailDay) {
-                var pointsResult = pointsWriteService.recordDailyLog(userId, currentDate, isNewEntry);
+                var pointsResult = pointsWriteService.recordPeriodLog(userId);
                 pointsAwarded = pointsResult.pointsAwarded();
                 newBalance = pointsResult.newBalance();
                 streak = pointsResult.streak();
@@ -116,14 +118,11 @@ public class LogWriteServiceImpl implements LogWriteService {
 
         List<LogEntryResponse> clearedEntries = clearStalePeriodDays(userId, startDate, endDate);
 
-        LocalDate lastPeriod = user.getLastPeriodDate();
-        boolean shouldResync = lastPeriod == null
-                || !startDate.isBefore(lastPeriod)
-                || ChronoUnit.DAYS.between(startDate, lastPeriod) <= user.getCycleLength() / 2;
-        if (shouldResync) {
-            user.setLastPeriodDate(startDate);
-            userRepository.save(user);
-        }
+        // The picker only ever edits the user's one tracked "current period," so whatever date
+        // they land on always becomes the new prediction baseline — no distance guard against
+        // the previously stored lastPeriodDate.
+        user.setLastPeriodDate(startDate);
+        userRepository.save(user);
 
         return new LogPeriodResponse(
                 startDate, endDate, request.flow(), user.getLastPeriodDate(), user.getCycleLength(), user.getPeriodLength(),

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
@@ -53,6 +54,35 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         userRepository.save(user);
 
         recordHistory(userId, "📝", "Logged flow, mood & symptoms", points);
+        return new LogPointsResult(points, user.getPoints(), streak, true);
+    }
+
+    @Override
+    @Transactional
+    public LogPointsResult recordPeriodLog(UUID userId) {
+        User user = requireUserForUpdate(userId);
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        boolean earns = user.getLastPeriodLogDate() == null
+                || !YearMonth.from(user.getLastPeriodLogDate()).equals(YearMonth.from(today));
+
+        if (!earns) {
+            return new LogPointsResult(0, user.getPoints(), user.getStreak(), false);
+        }
+
+        LocalDate yesterday = today.minusDays(1);
+        int streak = (user.getLastLogDate() != null &&
+                (user.getLastLogDate().equals(yesterday) || user.getLastLogDate().equals(today)))
+                ? user.getStreak() + 1 : 1;
+
+        int points = challengeReadService.getDailyLogReward();
+        user.setStreak(streak);
+        user.setLongestStreak(Math.max(streak, user.getLongestStreak()));
+        user.setLastLogDate(today);
+        user.setLastPeriodLogDate(today);
+        user.setPoints(user.getPoints() + points);
+        userRepository.save(user);
+
+        recordHistory(userId, "📝", "Logged a period", points);
         return new LogPointsResult(points, user.getPoints(), streak, true);
     }
 

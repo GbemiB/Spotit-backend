@@ -22,6 +22,13 @@ public interface PointsWriteService {
     /** Awards points and updates the logging streak — but only the first time a given (today's) date is saved. */
     LogPointsResult recordDailyLog(UUID userId, LocalDate logDate, boolean isNewEntry);
 
+    /**
+     * Awards points for logging a period — but only for the first period-log action in the
+     * current calendar month, regardless of how many corrections/updates follow it that same
+     * month (they still save fine, just without repeat points).
+     */
+    LogPointsResult recordPeriodLog(UUID userId);
+
     DailyClaimResult claimDaily(UUID userId);
 
     AdWatchResult watchAd(UUID userId);
