@@ -4,24 +4,6 @@ spring:
   profiles:
     active: dev
 
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:spotitdb}?currentSchema=public
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
-    type: com.zaxxer.hikari.HikariDataSource
-
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: ${MAIL_SMTP_AUTH:true}
-          starttls:
-            enable: ${MAIL_SMTP_STARTTLS:true}
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -44,22 +26,6 @@ springdoc:
     path: /api/v1/swagger-ui.html
 
 spotit:
-  jwt:
-    secret: ${JWT_SECRET:change-this-to-a-long-random-base64-secret-before-deploying-to-production}
-    access-token-ttl-seconds: 3600
-    refresh-token-ttl-seconds: 2592000
-  otp:
-    ttl-seconds: 600
-  ads:
-    daily-limit: 5
-  cycle:
-    default-cycle-length: 28
-    default-period-length: 5
-  points:
-    daily-claim: 50
-    watch-ad: 100
-  mail:
-    from-address: ${MAIL_FROM:no-reply@spotit.app}
   crypto:
     aes-key: ${CRYPTO_AES_KEY:h+5YDmnQ8RfYjADYUaaWcP7pjWnMCkoauzAdd7ZnyTE=}
 

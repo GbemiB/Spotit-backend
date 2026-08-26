@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: spotit-backend-dev
+    runtime: java
+    plan: starter
+    branch: dev
+    buildCommand: ./mvnw -B clean package -DskipTests
+    startCommand: java -jar target/spotit-backend.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: dev
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: CRYPTO_AES_KEY
+        sync: false
+
+  - type: web
+    name: spotit-backend-prod
+    runtime: java
+    plan: starter
+    branch: main
+    buildCommand: ./mvnw -B clean package -DskipTests
+    startCommand: java -jar target/spotit-backend.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: CRYPTO_AES_KEY
+        sync: false

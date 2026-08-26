@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Must be a genuine JDK 21 — Lombok's annotation processor silently no-ops when the
+      # compiler cross-targets an older release, so getters/setters/builders vanish and every
+      # entity fails to compile (see README "Requirements").
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Runs build + unit tests only. `verify` also runs checkstyle-check, but the codebase
+      # currently has ~60 pre-existing checkstyle violations unrelated to deployability — turn
+      # this into `./mvnw -B verify` once those are cleaned up to enforce style in CI too.
+      - name: Build and test
+        run: ./mvnw -B test

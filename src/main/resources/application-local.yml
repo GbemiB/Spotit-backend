@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:spotitdb}?currentSchema=public&sslmode=${DB_SSLMODE:disable}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    type: com.zaxxer.hikari.HikariDataSource
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.spotit.api: DEBUG
