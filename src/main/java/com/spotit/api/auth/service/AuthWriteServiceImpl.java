@@ -10,7 +10,7 @@ import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
-import com.spotit.api.config.SpotItProperties;
+import com.spotit.api.settings.service.AppSettingsService;
 import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -33,7 +33,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final OtpService otpService;
-    private final SpotItProperties properties;
+    private final AppSettingsService appSettingsService;
 
     @Override
     @Transactional
@@ -47,8 +47,8 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .email(request.email().toLowerCase())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .emailVerified(false)
-                .cycleLength(properties.cycle().defaultCycleLength())
-                .periodLength(properties.cycle().defaultPeriodLength())
+                .cycleLength(appSettingsService.getActiveSettings().cycleDefaultLength())
+                .periodLength(appSettingsService.getActiveSettings().cycleDefaultPeriodLength())
                 .themePref(ThemePref.system)
                 .onboarded(false)
                 .notifPeriod(true)
@@ -169,7 +169,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         RefreshToken stored = RefreshToken.builder()
                 .userId(user.getId())
                 .tokenHash(TokenHasher.sha256Hex(refreshToken))
-                .expiresAt(Instant.now().plusSeconds(properties.jwt().refreshTokenTtlSeconds()))
+                .expiresAt(Instant.now().plusSeconds(jwtService.refreshTokenTtlSeconds()))
                 .revoked(false)
                 .build();
         refreshTokenRepository.save(stored);

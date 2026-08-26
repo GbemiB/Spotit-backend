@@ -1,22 +1,29 @@
 package com.spotit.api.common.security;
 
-import com.spotit.api.config.SpotItProperties;
+import com.spotit.api.settings.service.AppSettingsService;
+import com.spotit.api.settings.service.ResolvedAppSettings;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class JwtServiceTest {
 
     private static final String SECRET = "a-very-long-test-only-secret-that-is-definitely-long-enough-for-hmac";
 
+    @Mock AppSettingsService appSettingsService;
+
     private JwtService serviceWithTtl(long accessTtlSeconds, long refreshTtlSeconds) {
-        SpotItProperties props = new SpotItProperties(
-                new SpotItProperties.Jwt(SECRET, accessTtlSeconds, refreshTtlSeconds),
-                null, null, null, null, null, null);
-        return new JwtService(props);
+        when(appSettingsService.getActiveSettings()).thenReturn(
+                new ResolvedAppSettings(SECRET, accessTtlSeconds, refreshTtlSeconds, 600, 5, 28, 5, 50, 100));
+        return new JwtService(appSettingsService);
     }
 
     private JwtService service() {
@@ -83,5 +90,10 @@ class JwtServiceTest {
     @Test
     void exposesTheConfiguredAccessTokenTtl() {
         assertThat(serviceWithTtl(1234, 5678).accessTokenTtlSeconds()).isEqualTo(1234);
+    }
+
+    @Test
+    void exposesTheConfiguredRefreshTokenTtl() {
+        assertThat(serviceWithTtl(1234, 5678).refreshTokenTtlSeconds()).isEqualTo(5678);
     }
 }

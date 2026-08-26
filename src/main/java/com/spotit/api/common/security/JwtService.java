@@ -1,6 +1,7 @@
 package com.spotit.api.common.security;
 
-import com.spotit.api.config.SpotItProperties;
+import com.spotit.api.settings.service.AppSettingsService;
+import com.spotit.api.settings.service.ResolvedAppSettings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -19,6 +20,13 @@ import java.util.UUID;
  * enough claims (email, premium flag) to build a {@link SecurityUser} without
  * a DB round-trip on every request; refresh tokens are opaque beyond the
  * subject + type so they can't be used as access tokens if leaked.
+ *
+ * <p>The signing key and TTLs are resolved once from {@link AppSettingsService} at construction
+ * time, not re-read per call — {@link com.spotit.api.common.security.JwtAuthenticationFilter}
+ * runs on every request, so re-querying the DB there would add a round-trip to every API call.
+ * Changing the JWT secret/TTLs in {@code app_settings} therefore takes effect on next restart,
+ * not live — appropriate for a signing key, which shouldn't rotate silently underneath issued
+ * tokens anyway.
  */
 @Service
 public class JwtService {
@@ -30,11 +38,11 @@ public class JwtService {
     private static final String TYPE_REFRESH = "refresh";
 
     private final SecretKey key;
-    private final SpotItProperties.Jwt props;
+    private final ResolvedAppSettings settings;
 
-    public JwtService(SpotItProperties properties) {
-        this.props = properties.jwt();
-        this.key = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
+    public JwtService(AppSettingsService appSettingsService) {
+        this.settings = appSettingsService.getActiveSettings();
+        this.key = Keys.hmacShaKeyFor(settings.jwtSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateAccessToken(UUID userId, String email, boolean premium) {
@@ -45,7 +53,7 @@ public class JwtService {
                 .claim(CLAIM_EMAIL, email)
                 .claim(CLAIM_PREMIUM, premium)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(props.accessTokenTtlSeconds())))
+                .expiration(Date.from(now.plusSeconds(settings.jwtAccessTokenTtlSeconds())))
                 .signWith(key)
                 .compact();
     }
@@ -57,13 +65,17 @@ public class JwtService {
                 .id(UUID.randomUUID().toString())
                 .claim(CLAIM_TYPE, TYPE_REFRESH)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(props.refreshTokenTtlSeconds())))
+                .expiration(Date.from(now.plusSeconds(settings.jwtRefreshTokenTtlSeconds())))
                 .signWith(key)
                 .compact();
     }
 
     public long accessTokenTtlSeconds() {
-        return props.accessTokenTtlSeconds();
+        return settings.jwtAccessTokenTtlSeconds();
+    }
+
+    public long refreshTokenTtlSeconds() {
+        return settings.jwtRefreshTokenTtlSeconds();
     }
 
     public Optional<SecurityUser> parseAccessToken(String token) {

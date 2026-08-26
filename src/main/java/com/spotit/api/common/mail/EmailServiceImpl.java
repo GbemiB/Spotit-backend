@@ -1,14 +1,13 @@
 package com.spotit.api.common.mail;
 
-import com.spotit.api.config.SpotItProperties;
 import com.spotit.api.smtp.service.ResolvedSmtpSettings;
 import com.spotit.api.smtp.service.SmtpSettingsService;
-import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailParseException;
+import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -16,38 +15,27 @@ import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
-import java.util.Set;
 
+/**
+ * All SMTP config (host/port/credentials/from-address) comes exclusively from the {@code smtp_settings}
+ * DB table via {@link SmtpSettingsService} — there is no env-var/yml fallback. Seed that row via
+ * {@code SmtpSettingsService.saveSettings(...)} (or a direct SQL insert) before mail can be sent.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
     private static final String SENDER_DISPLAY_NAME = "Spot it";
-    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "::1");
 
-    // env-var-backed bean (spring.mail.*) — used only when no DB-configured settings exist yet.
-    private final JavaMailSender defaultMailSender;
-    private final SpotItProperties properties;
     private final SmtpSettingsService smtpSettingsService;
-
-    // Logs where OTP mail is actually headed on every boot, so it's easy to confirm at a glance
-    // whether MAIL_HOST/MAIL_USERNAME etc. resolved to the intended real mailbox.
-    @PostConstruct
-    void logMailTarget() {
-        if (defaultMailSender instanceof JavaMailSenderImpl impl) {
-            boolean isLoopbackHost = LOOPBACK_HOSTS.contains(impl.getHost());
-            log.info("Default (env-var) outbound mail target: {}:{} (From: {}){}", impl.getHost(), impl.getPort(),
-                    properties.mail().fromAddress(),
-                    isLoopbackHost ? " — this is a LOOPBACK host; OTP emails will NOT reach a real inbox from here" : "");
-        }
-    }
 
     @Override
     public void send(String to, String subject, String htmlBody, String textBody) {
-        ResolvedSmtpSettings dbSettings = smtpSettingsService.getActiveSettings().orElse(null);
-        JavaMailSender mailSender = dbSettings != null ? buildMailSender(dbSettings) : defaultMailSender;
-        String fromAddress = dbSettings != null ? dbSettings.fromAddress() : properties.mail().fromAddress();
+        ResolvedSmtpSettings settings = smtpSettingsService.getActiveSettings()
+                .orElseThrow(() -> new MailPreparationException(
+                        "No smtp_settings row configured — seed one via SmtpSettingsService.saveSettings(...) before sending mail."));
+        JavaMailSender mailSender = buildMailSender(settings);
 
         MimeMessage message = mailSender.createMimeMessage();
         try {
@@ -55,7 +43,7 @@ public class EmailServiceImpl implements EmailService {
             // clients that can't/won't render HTML (and spam filters that penalize HTML-only
             // mail) fall back to the plain-text part instead of showing nothing.
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromAddress, SENDER_DISPLAY_NAME);
+            helper.setFrom(settings.fromAddress(), SENDER_DISPLAY_NAME);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(textBody, htmlBody);
@@ -76,6 +64,12 @@ public class EmailServiceImpl implements EmailService {
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", String.valueOf(settings.useTls()));
+        // JavaMail's default for these is infinite — without them, an unreachable/filtered SMTP
+        // host (e.g. outbound SMTP blocked by the hosting provider) hangs the request thread
+        // instead of failing fast.
+        props.put("mail.smtp.connectiontimeout", "5000");
+        props.put("mail.smtp.timeout", "5000");
+        props.put("mail.smtp.writetimeout", "5000");
         return mailSender;
     }
 }

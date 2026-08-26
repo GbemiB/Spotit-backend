@@ -8,7 +8,7 @@ import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.common.mail.OtpEmailTemplate;
-import com.spotit.api.config.SpotItProperties;
+import com.spotit.api.settings.service.AppSettingsService;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,28 +31,29 @@ public class OtpServiceImpl implements OtpService {
 
     private final OtpCodeRepository otpCodeRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SpotItProperties properties;
+    private final AppSettingsService appSettingsService;
     private final EmailService emailService;
     private final UserRepository userRepository;
 
     @Override
     @Transactional
     public OtpCode issue(User user, OtpPurpose purpose) {
+        long ttlSeconds = appSettingsService.getActiveSettings().otpTtlSeconds();
         otpCodeRepository.invalidateActive(user.getId(), purpose);
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
         OtpCode otp = OtpCode.builder()
                 .userId(user.getId())
                 .codeHash(passwordEncoder.encode(code))
                 .purpose(purpose)
-                .expiresAt(Instant.now().plusSeconds(properties.otp().ttlSeconds()))
+                .expiresAt(Instant.now().plusSeconds(ttlSeconds))
                 .consumed(false)
                 .build();
         otp = otpCodeRepository.save(otp);
-        sendOtpEmail(user, purpose, code);
+        sendOtpEmail(user, purpose, code, ttlSeconds);
         return otp;
     }
 
-    private void sendOtpEmail(User user, OtpPurpose purpose, String code) {
+    private void sendOtpEmail(User user, OtpPurpose purpose, String code, long ttlSeconds) {
         boolean isSignup = purpose == OtpPurpose.signup;
         String subject = isSignup ? "Verify your Spot it account" : "Reset your Spot it password";
         String heading = isSignup ? "Verify your email" : "Reset your password";
@@ -60,7 +61,7 @@ public class OtpServiceImpl implements OtpService {
                 ? "here's your verification code to finish creating your Spot it account."
                 : "here's your code to reset your Spot it password.";
         String greeting = user.getFirstName() == null || user.getFirstName().isBlank() ? "there" : user.getFirstName();
-        long ttlMinutes = properties.otp().ttlSeconds() / 60;
+        long ttlMinutes = ttlSeconds / 60;
         String html = OtpEmailTemplate.html(greeting, code, heading, introLine, ttlMinutes);
         String text = OtpEmailTemplate.text(greeting, code, heading, introLine, ttlMinutes);
         try {
@@ -69,8 +70,8 @@ public class OtpServiceImpl implements OtpService {
         } catch (MailException e) {
             // Swallowed on purpose (a mail outage shouldn't block signup/login), but logged at
             // error with the full stack trace — this is the first place to look when a user
-            // reports never receiving a code. Common cause: missing/bad MAIL_USERNAME /
-            // MAIL_PASSWORD for the configured SMTP host.
+            // reports never receiving a code. Common cause: no smtp_settings row configured, or
+            // bad username/password in it — see SmtpSettingsService.
             log.error("Failed to send OTP email to user {} for purpose {}", user.getId(), purpose, e);
         }
     }
@@ -115,7 +116,7 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public long ttlSeconds() {
-        return properties.otp().ttlSeconds();
+        return appSettingsService.getActiveSettings().otpTtlSeconds();
     }
 
     private OtpCode checkAndConsume(OtpCode otp, String code) {

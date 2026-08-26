@@ -9,7 +9,8 @@ import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
-import com.spotit.api.config.SpotItProperties;
+import com.spotit.api.settings.service.AppSettingsService;
+import com.spotit.api.settings.service.ResolvedAppSettings;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,13 +39,17 @@ class AuthWriteServiceImplTest {
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
     @Mock OtpService otpService;
-    @Mock SpotItProperties properties;
+    @Mock AppSettingsService appSettingsService;
 
     AuthWriteServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, passwordEncoder, jwtService, otpService, properties);
+        service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, passwordEncoder, jwtService, otpService, appSettingsService);
+    }
+
+    private static ResolvedAppSettings settingsWithCycleDefaults(int cycleLength, int periodLength) {
+        return new ResolvedAppSettings("test-jwt-secret", 3600, 2_592_000, 600, 5, cycleLength, periodLength, 50, 100);
     }
 
     private User existingUser(UUID id) {
@@ -69,7 +74,7 @@ class AuthWriteServiceImplTest {
     @Test
     void signupCreatesAnUnverifiedUserAndIssuesAnOtp() {
         when(userRepository.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
-        when(properties.cycle()).thenReturn(new SpotItProperties.Cycle(28, 5));
+        when(appSettingsService.getActiveSettings()).thenReturn(settingsWithCycleDefaults(28, 5));
         when(passwordEncoder.encode("password123")).thenReturn("hashed-password");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
@@ -239,6 +244,6 @@ class AuthWriteServiceImplTest {
         when(jwtService.generateAccessToken(eq(userId), any(), anyBoolean())).thenReturn("access-token");
         when(jwtService.generateRefreshToken(userId)).thenReturn("refresh-token");
         when(jwtService.accessTokenTtlSeconds()).thenReturn(3600L);
-        when(properties.jwt()).thenReturn(new SpotItProperties.Jwt("secret", 3600, 2_592_000));
+        when(jwtService.refreshTokenTtlSeconds()).thenReturn(2_592_000L);
     }
 }

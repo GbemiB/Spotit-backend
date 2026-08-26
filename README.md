@@ -96,31 +96,74 @@ them as 500s).
   `@UuidGenerator`, not a DB-side `gen_random_uuid()`.
 - Maven 3.9+.
 
-## Running locally
+## Environments / Spring profiles
+
+There are three profiles, one per environment, each with its own `application-<profile>.yml`
+supplying `spring.datasource`:
+
+| Profile | File | Points at | Default active? |
+|---|---|---|---|
+| `local` | `application-local.yml` | Docker Postgres on `localhost:5433` | Yes (`spring.profiles.active: local` in `application.yml`) |
+| `dev` | `application-dev.yml` | Shared Render Postgres (dev DB) | Only when `SPRING_PROFILES_ACTIVE=dev` |
+| `prod` | `application-prod.yml` | Production Postgres — every value required, no defaults | Only when `SPRING_PROFILES_ACTIVE=prod` |
+
+Every profile's JDBC URL takes a `DB_SSLMODE` override (`local` defaults to `disable`; `dev`/`prod`
+default to `require`, which Render's managed Postgres needs for external connections).
+
+### Running locally
 
 ```bash
 docker run -d --name spotit-pg -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
   -e POSTGRES_DB=spotitdb -p 5433:5432 postgres:16
 
-export JWT_SECRET=$(openssl rand -base64 48)
 mvn spring-boot:run
 ```
 
-Default config (`application.yml`) points at `localhost:5433/spotitdb` with user/password
-`postgres`/`postgres` — override via `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` env vars.
-`JWT_SECRET` must be set to a real secret before anything but local dev.
+No `SPRING_PROFILES_ACTIVE` needed — `local` is the default. Override any piece via `DB_HOST`,
+`DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_SSLMODE`.
+
+### Running against the shared dev DB (Render)
+
+```bash
+export SPRING_PROFILES_ACTIVE=dev
+export DB_PASSWORD=<the smtp/db user's password>   # required, no default — never commit it
+mvn spring-boot:run
+```
+
+`DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USER` default to the shared Render dev instance; only
+`DB_PASSWORD` must be supplied. SSL is required by default (`sslmode=require`).
+
+### Production
+
+`SPRING_PROFILES_ACTIVE=prod` requires `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`,
+`CRYPTO_AES_KEY` explicitly — there are no defaults, so the app refuses to start with anything
+missing.
 
 OTP emails (signup, password reset) are sent over real SMTP in every profile, including `dev` —
-there's no local mail catcher. The live SMTP config (host/port/username/password/from-address) is
-read from the `smtp_settings` DB table (`com.spotit.api.smtp`), not from env vars or `application.yml`
-— see `SmtpSettingsService`. There's no admin endpoint yet, so seed/update that row directly (SQL
-insert, with the password encrypted via `AesGcmEncryptionService` using the `CRYPTO_AES_KEY` in
-effect), or via a one-off call to `SmtpSettingsService.saveSettings(...)`. If the table is empty,
-`spring.mail.*`/`MAIL_*` env vars are used as a fallback instead. The app logs its resolved
-env-var-fallback mail target on every boot (`Default (env-var) outbound mail target: host:port ...`)
-so you can confirm at a glance whether DB-backed settings or the fallback are actually in play. If
-the mail server is unreachable, sending is logged as an error rather than failing the request
-(signup/OTP issuance still succeeds either way).
+there's no local mail catcher. The SMTP config (host/port/username/password/from-address) comes
+**exclusively** from the `smtp_settings` DB table (`com.spotit.api.smtp`) — there is no env-var or
+`application.yml` fallback of any kind. There's no admin endpoint yet, so seed/update that row
+directly (SQL insert, with the password encrypted via `AesGcmEncryptionService` using the
+`CRYPTO_AES_KEY` in effect), or via a one-off call to `SmtpSettingsService.saveSettings(...)`. If
+the table is empty, sending fails with a `MailPreparationException`, which is caught and logged as
+an error rather than failing the request (signup/OTP issuance still succeeds either way).
+
+App-wide tunables (JWT TTLs, OTP TTL, ads daily limit, cycle defaults, points economy) live
+**exclusively** in the `app_settings` DB table (`com.spotit.api.settings`) — same story as SMTP,
+no yml/env-var fallback. `AppSettingsService.getActiveSettings()` seeds a default row (and a
+freshly generated random JWT secret) the first time anything asks for it, so a brand-new DB just
+works with no manual step. To change a value, update that row directly (the JWT secret column is
+AES-GCM ciphertext, same as the SMTP password — encrypt with `AesGcmEncryptionService` before
+writing it). `spotit.crypto.aes-key` (`CRYPTO_AES_KEY`) is the one setting that **stays** in
+env-vars/yml on purpose — it's the root key that encrypts both `app_settings.encrypted_jwt_secret`
+and `smtp_settings.encrypted_password`, so it can never live in the same DB it protects.
+
+The JWT secret/TTLs are read from `app_settings` once, at `JwtService` construction (i.e. app
+boot) — not per-request — since `JwtAuthenticationFilter` calls into it on every authenticated API
+call and a DB round-trip there would add real latency. Changing the JWT secret in the DB therefore
+takes effect on the next restart, not live. Everything else in `app_settings` (OTP TTL, ads limit,
+cycle defaults, points economy) is read fresh on each relevant call, so those changes apply
+immediately without a restart.
 
 API docs: `http://localhost:8080/api/v1/swagger-ui.html`
 

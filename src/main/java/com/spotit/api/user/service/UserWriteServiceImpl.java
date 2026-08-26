@@ -3,11 +3,11 @@ package com.spotit.api.user.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
-import com.spotit.api.config.SpotItProperties;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.rewards.repository.UserBadgeRepository;
 import com.spotit.api.rewards.repository.UserChallengeProgressRepository;
+import com.spotit.api.settings.service.AppSettingsService;
 import com.spotit.api.user.dto.*;
 import com.spotit.api.user.entity.ExportJob;
 import com.spotit.api.user.entity.Goal;
@@ -32,7 +32,7 @@ public class UserWriteServiceImpl implements UserWriteService {
     private final PointsHistoryRepository pointsHistoryRepository;
     private final UserBadgeRepository userBadgeRepository;
     private final UserChallengeProgressRepository userChallengeProgressRepository;
-    private final SpotItProperties properties;
+    private final AppSettingsService appSettingsService;
 
     @Override
     @Transactional
@@ -130,8 +130,9 @@ public class UserWriteServiceImpl implements UserWriteService {
         user.setGoal(null);
         user.setDob(null);
         user.setLastPeriodDate(null);
-        user.setCycleLength(properties.cycle().defaultCycleLength());
-        user.setPeriodLength(properties.cycle().defaultPeriodLength());
+        var settings = appSettingsService.getActiveSettings();
+        user.setCycleLength(settings.cycleDefaultLength());
+        user.setPeriodLength(settings.cycleDefaultPeriodLength());
         user.setThemePref(ThemePref.system);
         user.setNotifPeriod(true);
         user.setNotifOvulation(true);
