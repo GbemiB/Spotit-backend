@@ -2,5 +2,6 @@ package com.spotit.api.auth.dto;
 
 import java.util.UUID;
 
-public record SignupResponse(UUID userId, String email, boolean otpRequired, UUID otpId, long expiresInSeconds) {
+// No userId: nothing is created yet but the lead — see SignupLead / AuthWriteService#completeSignup.
+public record SignupResponse(UUID otpId, String email, long expiresInSeconds) {
 }

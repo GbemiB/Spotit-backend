@@ -25,6 +25,7 @@ public class SecurityConfig {
     // left out of this list so anyRequest().authenticated() covers them.
     private static final String[] PUBLIC_PATHS = {
             "/api/v1/auth/signup",
+            "/api/v1/auth/signup/complete",
             "/api/v1/auth/otp/verify",
             "/api/v1/auth/otp/resend",
             "/api/v1/auth/login",

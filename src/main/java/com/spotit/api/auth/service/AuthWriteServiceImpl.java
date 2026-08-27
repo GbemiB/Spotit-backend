@@ -1,13 +1,16 @@
 package com.spotit.api.auth.service;
 
 import com.spotit.api.auth.dto.*;
-import com.spotit.api.auth.entity.OtpCode;
 import com.spotit.api.auth.entity.OtpPurpose;
 import com.spotit.api.auth.entity.RefreshToken;
+import com.spotit.api.auth.entity.SignupLead;
 import com.spotit.api.auth.repository.RefreshTokenRepository;
+import com.spotit.api.auth.repository.SignupLeadRepository;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.mail.EmailService;
+import com.spotit.api.common.mail.OtpEmailTemplate;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
 import com.spotit.api.settings.service.AppSettingsService;
@@ -15,38 +18,90 @@ import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthWriteServiceImpl implements AuthWriteService {
 
     private static final long ACCOUNT_PURGE_GRACE_DAYS = 30;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final SignupLeadRepository signupLeadRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final OtpService otpService;
+    private final EmailService emailService;
     private final AppSettingsService appSettingsService;
 
+    // Signup is a two-step process: (1) SignupRequest captures name/email and creates/refreshes
+    // a SignupLead — no password, no User row yet, so there's nothing a bypass could log into.
+    // (2) Only after the OTP on that lead is verified does completeSignup() take a password and
+    // create the real User. A lead that never verifies is left in signup_leads (not deleted) so
+    // it can be followed up on (e.g. re-engagement email/ads) instead of silently vanishing.
     @Override
     @Transactional
     public SignupResponse signup(SignupRequest request) {
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw new ApiException(ErrorCode.EMAIL_ALREADY_REGISTERED, ErrorMessage.EMAIL_ALREADY_REGISTERED);
         }
+        SignupLead lead = signupLeadRepository.findByEmailIgnoreCase(request.email()).orElseGet(SignupLead::new);
+        lead.setFirstName(request.firstName());
+        lead.setLastName(request.lastName());
+        lead.setEmail(request.email().toLowerCase());
+        lead.setOtpVerified(false);
+        lead = signupLeadRepository.save(lead);
+
+        long ttlSeconds = issueLeadOtp(lead);
+        return new SignupResponse(lead.getId(), lead.getEmail(), ttlSeconds);
+    }
+
+    @Override
+    @Transactional
+    public SignupOtpVerifiedResponse verifySignupOtp(OtpVerifyRequest request) {
+        SignupLead lead = signupLeadRepository.findById(request.otpId())
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
+        if (lead.getOtpExpiresAt().isBefore(Instant.now())) {
+            throw new ApiException(ErrorCode.OTP_EXPIRED, ErrorMessage.CODE_EXPIRED);
+        }
+        if (!passwordEncoder.matches(request.code(), lead.getOtpCodeHash())) {
+            throw new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE);
+        }
+        lead.setOtpVerified(true);
+        signupLeadRepository.save(lead);
+        return new SignupOtpVerifiedResponse(lead.getId(), lead.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public TokenResponse completeSignup(CompleteSignupRequest request) {
+        SignupLead lead = signupLeadRepository.findById(request.leadId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.SIGNUP_NOT_FOUND));
+        if (!lead.isOtpVerified()) {
+            throw new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.OTP_NOT_VERIFIED);
+        }
+        // Re-check uniqueness: another signup for the same email could have completed first.
+        if (userRepository.existsByEmailIgnoreCase(lead.getEmail())) {
+            throw new ApiException(ErrorCode.EMAIL_ALREADY_REGISTERED, ErrorMessage.EMAIL_ALREADY_REGISTERED);
+        }
+
         User user = User.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .email(request.email().toLowerCase())
+                .firstName(lead.getFirstName())
+                .lastName(lead.getLastName())
+                .email(lead.getEmail())
                 .passwordHash(passwordEncoder.encode(request.password()))
-                .emailVerified(false)
+                .emailVerified(true)
                 .cycleLength(appSettingsService.getActiveSettings().cycleDefaultLength())
                 .periodLength(appSettingsService.getActiveSettings().cycleDefaultPeriodLength())
                 .themePref(ThemePref.system)
@@ -61,20 +116,32 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .premium(false)
                 .build();
         user = userRepository.save(user);
+        signupLeadRepository.delete(lead);
 
-        OtpCode otp = otpService.issue(user, OtpPurpose.signup);
-        return new SignupResponse(user.getId(), user.getEmail(), true, otp.getId(), otpService.ttlSeconds());
+        return issueTokens(user);
     }
 
-    @Override
-    @Transactional
-    public TokenResponse verifySignupOtp(OtpVerifyRequest request) {
-        OtpCode otp = otpService.verify(request.otpId(), request.code(), OtpPurpose.signup);
-        User user = userRepository.findById(otp.getUserId())
-                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
-        user.setEmailVerified(true);
-        userRepository.save(user);
-        return issueTokens(user);
+    private long issueLeadOtp(SignupLead lead) {
+        long ttlSeconds = appSettingsService.getActiveSettings().otpTtlSeconds();
+        String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
+        lead.setOtpCodeHash(passwordEncoder.encode(code));
+        lead.setOtpExpiresAt(Instant.now().plusSeconds(ttlSeconds));
+        signupLeadRepository.save(lead);
+
+        String greeting = lead.getFirstName() == null || lead.getFirstName().isBlank() ? "there" : lead.getFirstName();
+        long ttlMinutes = ttlSeconds / 60;
+        String html = OtpEmailTemplate.html(greeting, code, "Verify your email", "here's your verification code to finish creating your Spot it account.", ttlMinutes);
+        String text = OtpEmailTemplate.text(greeting, code, "Verify your email", "here's your verification code to finish creating your Spot it account.", ttlMinutes);
+        try {
+            emailService.send(lead.getEmail(), "Verify your Spot it account", html, text);
+            log.info("Signup OTP email sent to lead {}", lead.getId());
+        } catch (MailException e) {
+            // Swallowed on purpose (a mail outage shouldn't block signup) but logged with the
+            // full stack trace — this lead now just sits unverified in signup_leads until a
+            // resend succeeds or it's picked up for follow-up. See EmailServiceImpl/SmtpSettingsService.
+            log.error("Failed to send signup OTP email to lead {}", lead.getId(), e);
+        }
+        return ttlSeconds;
     }
 
     @Override
@@ -83,6 +150,12 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
+        }
+        // Defense in depth: a User is only ever created with emailVerified=true (see
+        // completeSignup), so this should be unreachable — but if it ever isn't, login must
+        // not silently grant a session to an unverified account.
+        if (!user.isEmailVerified()) {
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
         }
         return issueTokens(user);
@@ -100,8 +173,12 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Override
     @Transactional
     public OtpRequestResponse resendOtp(OtpResendRequest request) {
-        OtpCode otp = otpService.resend(request.otpId());
-        return new OtpRequestResponse("A new code has been sent.", otp.getId(), otpService.ttlSeconds());
+        // Only used to resend a signup-verification code (password-reset resend goes through
+        // forgotPassword instead), so this resends against the SignupLead.
+        SignupLead lead = signupLeadRepository.findById(request.otpId())
+                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
+        long ttlSeconds = issueLeadOtp(lead);
+        return new OtpRequestResponse("A new code has been sent.", lead.getId(), ttlSeconds);
     }
 
     @Override

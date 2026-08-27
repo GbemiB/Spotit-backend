@@ -1,12 +1,14 @@
 package com.spotit.api.auth.service;
 
 import com.spotit.api.auth.dto.*;
-import com.spotit.api.auth.entity.OtpCode;
 import com.spotit.api.auth.entity.OtpPurpose;
 import com.spotit.api.auth.entity.RefreshToken;
+import com.spotit.api.auth.entity.SignupLead;
 import com.spotit.api.auth.repository.RefreshTokenRepository;
+import com.spotit.api.auth.repository.SignupLeadRepository;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
 import com.spotit.api.settings.service.AppSettingsService;
@@ -36,16 +38,19 @@ class AuthWriteServiceImplTest {
 
     @Mock UserRepository userRepository;
     @Mock RefreshTokenRepository refreshTokenRepository;
+    @Mock SignupLeadRepository signupLeadRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
     @Mock OtpService otpService;
+    @Mock EmailService emailService;
     @Mock AppSettingsService appSettingsService;
 
     AuthWriteServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, passwordEncoder, jwtService, otpService, appSettingsService);
+        service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, signupLeadRepository,
+                passwordEncoder, jwtService, otpService, emailService, appSettingsService);
     }
 
     private static ResolvedAppSettings settingsWithCycleDefaults(int cycleLength, int periodLength) {
@@ -54,25 +59,110 @@ class AuthWriteServiceImplTest {
 
     private User existingUser(UUID id) {
         return User.builder().id(id).firstName("Jane").lastName("Doe")
-                .email("jane@example.com").passwordHash("hashed").onboarded(false).premium(false).build();
+                .email("jane@example.com").passwordHash("hashed").emailVerified(true).onboarded(false).premium(false).build();
     }
 
-    // --- signup ---
+    private SignupLead existingLead(UUID id, boolean otpVerified) {
+        return SignupLead.builder().id(id).firstName("Jane").lastName("Doe").email("jane@example.com")
+                .otpCodeHash("hashed-code").otpExpiresAt(Instant.now().plusSeconds(300)).otpVerified(otpVerified).build();
+    }
+
+    // --- signup (step 1: creates/refreshes a lead, no account yet) ---
 
     @Test
     void signupRejectsAnAlreadyRegisteredEmail() {
         when(userRepository.existsByEmailIgnoreCase("jane@example.com")).thenReturn(true);
-        SignupRequest request = new SignupRequest("Jane", "Doe", "jane@example.com", "password123");
+        SignupRequest request = new SignupRequest("Jane", "Doe", "jane@example.com");
 
         assertThatThrownBy(() -> service.signup(request))
                 .isInstanceOf(ApiException.class)
                 .extracting(e -> ((ApiException) e).getErrorCode())
                 .isEqualTo(ErrorCode.EMAIL_ALREADY_REGISTERED);
         verify(userRepository, never()).save(any());
+        verify(signupLeadRepository, never()).save(any());
     }
 
     @Test
-    void signupCreatesAnUnverifiedUserAndIssuesAnOtp() {
+    void signupCreatesAnUnverifiedLeadAndIssuesAnOtp() {
+        when(userRepository.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
+        when(signupLeadRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.empty());
+        when(appSettingsService.getActiveSettings()).thenReturn(settingsWithCycleDefaults(28, 5));
+        when(passwordEncoder.encode(any())).thenReturn("hashed-code");
+        when(signupLeadRepository.save(any(SignupLead.class))).thenAnswer(inv -> {
+            SignupLead l = inv.getArgument(0);
+            if (l.getId() == null) l.setId(UUID.randomUUID());
+            return l;
+        });
+
+        SignupRequest request = new SignupRequest("Jane", "Doe", "jane@example.com");
+        SignupResponse response = service.signup(request);
+
+        assertThat(response.email()).isEqualTo("jane@example.com");
+        assertThat(response.expiresInSeconds()).isEqualTo(600L);
+        assertThat(response.otpId()).isNotNull();
+        verify(signupLeadRepository, atLeastOnce()).save(argThat(l -> !l.isOtpVerified() && "jane@example.com".equals(l.getEmail())));
+        verify(userRepository, never()).save(any());
+    }
+
+    // --- verifySignupOtp (step 2) ---
+
+    @Test
+    void verifySignupOtpRejectsAnUnknownLead() {
+        UUID leadId = UUID.randomUUID();
+        when(signupLeadRepository.findById(leadId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.verifySignupOtp(new OtpVerifyRequest(leadId, "482913")))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_CODE);
+    }
+
+    @Test
+    void verifySignupOtpRejectsAnExpiredCode() {
+        UUID leadId = UUID.randomUUID();
+        SignupLead lead = existingLead(leadId, false);
+        lead.setOtpExpiresAt(Instant.now().minusSeconds(10));
+        when(signupLeadRepository.findById(leadId)).thenReturn(Optional.of(lead));
+
+        assertThatThrownBy(() -> service.verifySignupOtp(new OtpVerifyRequest(leadId, "482913")))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.OTP_EXPIRED);
+    }
+
+    @Test
+    void verifySignupOtpMarksTheLeadVerifiedWithoutCreatingAUser() {
+        UUID leadId = UUID.randomUUID();
+        SignupLead lead = existingLead(leadId, false);
+        when(signupLeadRepository.findById(leadId)).thenReturn(Optional.of(lead));
+        when(passwordEncoder.matches("482913", "hashed-code")).thenReturn(true);
+
+        SignupOtpVerifiedResponse response = service.verifySignupOtp(new OtpVerifyRequest(leadId, "482913"));
+
+        assertThat(response.leadId()).isEqualTo(leadId);
+        verify(signupLeadRepository).save(argThat(SignupLead::isOtpVerified));
+        verify(userRepository, never()).save(any());
+    }
+
+    // --- completeSignup (step 3: only place a password/User is ever created) ---
+
+    @Test
+    void completeSignupRejectsAnUnverifiedLead() {
+        UUID leadId = UUID.randomUUID();
+        when(signupLeadRepository.findById(leadId)).thenReturn(Optional.of(existingLead(leadId, false)));
+
+        assertThatThrownBy(() -> service.completeSignup(new CompleteSignupRequest(leadId, "password123")))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_CODE);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void completeSignupCreatesAVerifiedUserAndRemovesTheLead() {
+        UUID leadId = UUID.randomUUID();
+        SignupLead lead = existingLead(leadId, true);
+        when(signupLeadRepository.findById(leadId)).thenReturn(Optional.of(lead));
         when(userRepository.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
         when(appSettingsService.getActiveSettings()).thenReturn(settingsWithCycleDefaults(28, 5));
         when(passwordEncoder.encode("password123")).thenReturn("hashed-password");
@@ -81,18 +171,13 @@ class AuthWriteServiceImplTest {
             u.setId(UUID.randomUUID());
             return u;
         });
-        OtpCode otp = OtpCode.builder().id(UUID.randomUUID()).build();
-        when(otpService.issue(any(User.class), eq(OtpPurpose.signup))).thenReturn(otp);
-        when(otpService.ttlSeconds()).thenReturn(600L);
+        stubTokenIssuance(null);
 
-        SignupRequest request = new SignupRequest("Jane", "Doe", "jane@example.com", "password123");
-        SignupResponse response = service.signup(request);
+        TokenResponse response = service.completeSignup(new CompleteSignupRequest(leadId, "password123"));
 
-        assertThat(response.email()).isEqualTo("jane@example.com");
-        assertThat(response.otpRequired()).isTrue();
-        assertThat(response.otpId()).isEqualTo(otp.getId());
-        verify(userRepository).save(argThat(u ->
-                !u.isEmailVerified() && u.getCycleLength() == 28 && u.getPeriodLength() == 5 && u.getPoints() == 0));
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        verify(userRepository).save(argThat(u -> u.isEmailVerified() && u.getCycleLength() == 28 && u.getPoints() == 0));
+        verify(signupLeadRepository).delete(lead);
     }
 
     // --- verifyResetOtp ---
@@ -240,9 +325,12 @@ class AuthWriteServiceImplTest {
         verify(refreshTokenRepository).deleteByUserId(userId);
     }
 
+    // userId is only used to pin the stub to a specific id when the caller already knows it
+    // (login/refresh); pass null to match any id, e.g. when the User is created inside the
+    // call under test and its id isn't known until then (completeSignup).
     private void stubTokenIssuance(UUID userId) {
-        when(jwtService.generateAccessToken(eq(userId), any(), anyBoolean())).thenReturn("access-token");
-        when(jwtService.generateRefreshToken(userId)).thenReturn("refresh-token");
+        when(jwtService.generateAccessToken(userId == null ? any() : eq(userId), any(), anyBoolean())).thenReturn("access-token");
+        when(jwtService.generateRefreshToken(userId == null ? any() : eq(userId))).thenReturn("refresh-token");
         when(jwtService.accessTokenTtlSeconds()).thenReturn(3600L);
         when(jwtService.refreshTokenTtlSeconds()).thenReturn(2_592_000L);
     }

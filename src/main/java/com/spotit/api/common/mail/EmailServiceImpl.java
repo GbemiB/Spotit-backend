@@ -63,7 +63,15 @@ public class EmailServiceImpl implements EmailService {
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", String.valueOf(settings.useTls()));
+        // Port 465 is implicit TLS — the connection must be SSL from the first byte, STARTTLS
+        // is never negotiated on it. Port 587 (and 25) is plaintext-then-upgrade: STARTTLS is
+        // issued after connecting. Setting starttls.enable on a 465 host (or ssl.enable on a
+        // 587 host) leaves the handshake mismatched and the send silently times out/fails —
+        // which is what was happening against providers configured on 465.
+        boolean implicitSsl = settings.port() == 465;
+        props.put("mail.smtp.ssl.enable", String.valueOf(implicitSsl));
+        props.put("mail.smtp.starttls.enable", String.valueOf(!implicitSsl && settings.useTls()));
+        props.put("mail.smtp.starttls.required", String.valueOf(!implicitSsl && settings.useTls()));
         // JavaMail's default for these is infinite — without them, an unreachable/filtered SMTP
         // host (e.g. outbound SMTP blocked by the hosting provider) hangs the request thread
         // instead of failing fast.

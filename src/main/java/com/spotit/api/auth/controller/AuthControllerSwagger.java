@@ -11,14 +11,14 @@ final class AuthControllerSwagger {
     private AuthControllerSwagger() {
     }
 
-    static final String SIGNUP_SUMMARY = "Sign up";
-    static final String SIGNUP_DESCRIPTION = "Creates a new account and issues a one-time code to verify the email address.";
+    static final String SIGNUP_SUMMARY = "Sign up (step 1: name + email)";
+    static final String SIGNUP_DESCRIPTION = "Creates or refreshes a signup lead (no account yet) and issues a one-time code to verify the "
+            + "email address. Call /otp/verify with the returned otpId, then /signup/complete with a password to create the account.";
     static final String SIGNUP_REQUEST_EXAMPLE = """
             {
               "firstName": "Amara",
               "lastName": "Okafor",
-              "email": "amara@example.com",
-              "password": "SuperSecret123"
+              "email": "amara@example.com"
             }
             """;
     static final String SIGNUP_201_EXAMPLE = """
@@ -26,10 +26,8 @@ final class AuthControllerSwagger {
               "code": 201,
               "message": "Created",
               "data": {
-                "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                "email": "amara@example.com",
-                "otpRequired": true,
                 "otpId": "9d1e2b0a-1234-4c56-9abc-1234567890ab",
+                "email": "amara@example.com",
                 "expiresInSeconds": 600
               }
             }
@@ -42,8 +40,9 @@ final class AuthControllerSwagger {
             }
             """;
 
-    static final String VERIFY_OTP_SUMMARY = "Verify signup OTP";
-    static final String VERIFY_OTP_DESCRIPTION = "Confirms the code sent at signup, marks the email verified, and issues access/refresh tokens.";
+    static final String VERIFY_OTP_SUMMARY = "Verify signup OTP (step 2)";
+    static final String VERIFY_OTP_DESCRIPTION = "Confirms the code sent at signup. No account or session exists yet — call /signup/complete "
+            + "with the returned leadId and a password to actually create the account.";
     static final String VERIFY_OTP_REQUEST_EXAMPLE = """
             {
               "otpId": "9d1e2b0a-1234-4c56-9abc-1234567890ab",
@@ -51,6 +50,26 @@ final class AuthControllerSwagger {
             }
             """;
     static final String VERIFY_OTP_200_EXAMPLE = """
+            {
+              "code": 200,
+              "message": "OK",
+              "data": {
+                "leadId": "9d1e2b0a-1234-4c56-9abc-1234567890ab",
+                "email": "amara@example.com"
+              }
+            }
+            """;
+
+    static final String COMPLETE_SIGNUP_SUMMARY = "Complete signup (step 3: create password)";
+    static final String COMPLETE_SIGNUP_DESCRIPTION = "Creates the account and issues tokens. Only allowed once the OTP for this leadId has "
+            + "been verified via /otp/verify — this is the only place a password is ever set for a new account.";
+    static final String COMPLETE_SIGNUP_REQUEST_EXAMPLE = """
+            {
+              "leadId": "9d1e2b0a-1234-4c56-9abc-1234567890ab",
+              "password": "SuperSecret123"
+            }
+            """;
+    static final String COMPLETE_SIGNUP_200_EXAMPLE = """
             {
               "code": 200,
               "message": "OK",

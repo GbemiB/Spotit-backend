@@ -52,8 +52,8 @@ public class AuthController {
             schema = @Schema(implementation = OtpVerifyRequest.class),
             examples = @ExampleObject(value = AuthControllerSwagger.VERIFY_OTP_REQUEST_EXAMPLE)))
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "OTP verified; tokens issued.", content = @Content(
-                    schema = @Schema(implementation = TokenResponse.class),
+            @ApiResponse(responseCode = "200", description = "OTP verified; call /signup/complete with this leadId to finish creating the account.", content = @Content(
+                    schema = @Schema(implementation = SignupOtpVerifiedResponse.class),
                     examples = @ExampleObject(value = AuthControllerSwagger.VERIFY_OTP_200_EXAMPLE))),
             @ApiResponse(responseCode = "400", description = "Invalid or already-used code.", content = @Content(
                     schema = @Schema(implementation = ErrorDetail.class),
@@ -63,8 +63,28 @@ public class AuthController {
                     examples = @ExampleObject(value = AuthControllerSwagger.OTP_EXPIRED_410_EXAMPLE)))
     })
     @PostMapping("/otp/verify")
-    public TokenResponse verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+    public SignupOtpVerifiedResponse verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
         return authWriteService.verifySignupOtp(request);
+    }
+
+    @Operation(summary = AuthControllerSwagger.COMPLETE_SIGNUP_SUMMARY, description = AuthControllerSwagger.COMPLETE_SIGNUP_DESCRIPTION)
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+            schema = @Schema(implementation = CompleteSignupRequest.class),
+            examples = @ExampleObject(value = AuthControllerSwagger.COMPLETE_SIGNUP_REQUEST_EXAMPLE)))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Account created; tokens issued.", content = @Content(
+                    schema = @Schema(implementation = TokenResponse.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.COMPLETE_SIGNUP_200_EXAMPLE))),
+            @ApiResponse(responseCode = "400", description = "The OTP for this signup hasn't been verified yet.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.INVALID_CODE_400_EXAMPLE))),
+            @ApiResponse(responseCode = "409", description = "An account with this email already exists.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.SIGNUP_409_EXAMPLE)))
+    })
+    @PostMapping("/signup/complete")
+    public TokenResponse completeSignup(@Valid @RequestBody CompleteSignupRequest request) {
+        return authWriteService.completeSignup(request);
     }
 
     @Operation(summary = AuthControllerSwagger.RESEND_OTP_SUMMARY, description = AuthControllerSwagger.RESEND_OTP_DESCRIPTION)

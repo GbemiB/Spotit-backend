@@ -20,6 +20,8 @@ public final class ErrorMessage {
     public static final String INVALID_REFRESH_TOKEN = "Invalid or expired refresh token.";
     public static final String USER_NOT_FOUND = "User not found.";
     public static final String ACCOUNT_DELETION_SCHEDULED = "Account deletion scheduled.";
+    public static final String SIGNUP_NOT_FOUND = "We couldn't find that signup. Please start over.";
+    public static final String OTP_NOT_VERIFIED = "Please verify your email code before creating a password.";
 
     // Cycle / User settings
     public static final String MONTH_OUT_OF_RANGE = "month must be between 1 and 12.";

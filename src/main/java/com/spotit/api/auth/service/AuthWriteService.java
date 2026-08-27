@@ -8,7 +8,9 @@ public interface AuthWriteService {
 
     SignupResponse signup(SignupRequest request);
 
-    TokenResponse verifySignupOtp(OtpVerifyRequest request);
+    SignupOtpVerifiedResponse verifySignupOtp(OtpVerifyRequest request);
+
+    TokenResponse completeSignup(CompleteSignupRequest request);
 
     TokenResponse login(LoginRequest request);
 
