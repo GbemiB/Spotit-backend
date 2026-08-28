@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
@@ -44,13 +45,14 @@ class AuthWriteServiceImplTest {
     @Mock OtpService otpService;
     @Mock EmailService emailService;
     @Mock AppSettingsService appSettingsService;
+    @Mock Environment environment;
 
     AuthWriteServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, signupLeadRepository,
-                passwordEncoder, jwtService, otpService, emailService, appSettingsService);
+                passwordEncoder, jwtService, otpService, emailService, appSettingsService, environment);
     }
 
     private static ResolvedAppSettings settingsWithCycleDefaults(int cycleLength, int periodLength) {

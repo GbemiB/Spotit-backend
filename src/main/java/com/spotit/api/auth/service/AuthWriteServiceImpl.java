@@ -19,6 +19,7 @@ import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private final OtpService otpService;
     private final EmailService emailService;
     private final AppSettingsService appSettingsService;
+    private final Environment environment;
 
     // Signup is a two-step process: (1) SignupRequest captures name/email and creates/refreshes
     // a SignupLead — no password, no User row yet, so there's nothing a bypass could log into.
@@ -127,6 +129,12 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private long issueLeadOtp(SignupLead lead) {
         long ttlSeconds = appSettingsService.getActiveSettings().otpTtlSeconds();
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
+        // TEMPORARY, remove once SMTP delivery is confirmed reliable: logs the plaintext code
+        // so it can be read off Render's logs while email delivery is unreliable. Never on
+        // prod — a code logged in plaintext defeats the point of it being a secret.
+        if (environment.matchesProfiles("!prod")) {
+            log.info("[DEV OTP] signup code for lead {} ({}): {}", lead.getId(), lead.getEmail(), code);
+        }
         lead.setOtpCodeHash(passwordEncoder.encode(code));
         lead.setOtpExpiresAt(Instant.now().plusSeconds(ttlSeconds));
         signupLeadRepository.save(lead);

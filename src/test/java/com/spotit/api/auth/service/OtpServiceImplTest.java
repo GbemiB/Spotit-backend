@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
@@ -36,13 +37,14 @@ class OtpServiceImplTest {
     @Mock AppSettingsService appSettingsService;
     @Mock EmailService emailService;
     @Mock UserRepository userRepository;
+    @Mock Environment environment;
 
     OtpServiceImpl service;
     User user;
 
     @BeforeEach
     void setUp() {
-        service = new OtpServiceImpl(otpCodeRepository, passwordEncoder, appSettingsService, emailService, userRepository);
+        service = new OtpServiceImpl(otpCodeRepository, passwordEncoder, appSettingsService, emailService, userRepository, environment);
         user = User.builder().id(UUID.randomUUID()).firstName("Jane").email("jane@example.com").build();
     }
 

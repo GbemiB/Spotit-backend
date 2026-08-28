@@ -13,6 +13,7 @@ import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class OtpServiceImpl implements OtpService {
     private final AppSettingsService appSettingsService;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final Environment environment;
 
     @Override
     @Transactional
@@ -41,6 +43,12 @@ public class OtpServiceImpl implements OtpService {
         long ttlSeconds = appSettingsService.getActiveSettings().otpTtlSeconds();
         otpCodeRepository.invalidateActive(user.getId(), purpose);
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
+        // TEMPORARY, remove once SMTP delivery is confirmed reliable: logs the plaintext code
+        // so it can be read off Render's logs while email delivery is unreliable. Never on
+        // prod — a code logged in plaintext defeats the point of it being a secret.
+        if (environment.matchesProfiles("!prod")) {
+            log.info("[DEV OTP] {} code for user {} ({}): {}", purpose, user.getId(), user.getEmail(), code);
+        }
         OtpCode otp = OtpCode.builder()
                 .userId(user.getId())
                 .codeHash(passwordEncoder.encode(code))
