@@ -22,7 +22,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * GDPR/NDPR Art. 17 purge: hard-deletes accounts whose 30-day deletion grace
+ * Hard-deletes accounts whose 30-day deletion grace
  * period (set by {@code DELETE /auth/account}) has elapsed. Since feature
  * packages deliberately don't hold JPA relationships to User (see the
  * package-by-feature notes), cascading delete has to happen here rather than
@@ -51,7 +51,7 @@ public class AccountPurgeScheduler {
     public void purgeDueAccounts() {
         for (User user : userRepository.findByPendingDeletionAtBefore(Instant.now())) {
             purge(user.getId());
-            log.info("Purged account {} after GDPR/NDPR deletion grace period", user.getId());
+            log.info("Purged account {} after deletion grace period", user.getId());
         }
     }
 
