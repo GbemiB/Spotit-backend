@@ -2,6 +2,8 @@ package com.spotit.api.smtp.controller;
 
 import com.spotit.api.smtp.dto.SaveSmtpSettingsRequest;
 import com.spotit.api.smtp.dto.SmtpSettingsStatusResponse;
+import com.spotit.api.smtp.dto.SmtpSettingsStatusResponse.SmtpProviderStatus;
+import com.spotit.api.smtp.entity.SmtpRole;
 import com.spotit.api.smtp.service.ResolvedSmtpSettings;
 import com.spotit.api.smtp.service.SmtpSettingsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,13 +12,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
- * Admin surface for the single {@code smtp_settings} row that {@link com.spotit.api.common.mail.EmailServiceImpl}
- * sends all mail through (OTP codes, password resets). Requires the caller to be signed in, same
- * as the other {@code /config/*} admin controllers in this codebase — there is no separate admin
- * role, so use any authenticated account's access token.
+ * Admin surface for the {@code smtp_settings} rows that {@link com.spotit.api.common.mail.EmailServiceImpl}
+ * sends all mail through (OTP codes, password resets) — one row for {@code primary}, optionally
+ * one for {@code backup}, which is only used when sending via primary fails. Requires the caller
+ * to be signed in, same as the other {@code /config/*} admin controllers in this codebase — there
+ * is no separate admin role, so use any authenticated account's access token.
  */
-@Tag(name = "Smtp Config (Admin)", description = "Admin surface for the SMTP relay settings used to send all transactional mail.")
+@Tag(name = "Smtp Config (Admin)", description = "Admin surface for the primary/backup SMTP relay settings used to send all transactional mail.")
 @RestController
 @RequestMapping("/api/v1/config/smtp")
 @RequiredArgsConstructor
@@ -24,23 +29,28 @@ public class SmtpConfigController {
 
     private final SmtpSettingsService smtpSettingsService;
 
-    @Operation(summary = "Get SMTP status", description = "Returns what's configured (never the password) so an admin can confirm settings without guessing.")
+    @Operation(summary = "Get SMTP status", description = "Returns what's configured for primary and backup (never the password) so an admin can confirm settings without guessing.")
     @GetMapping
     public SmtpSettingsStatusResponse status() {
-        return smtpSettingsService.getActiveSettings()
-                .map(SmtpConfigController::toStatus)
-                .orElseGet(SmtpSettingsStatusResponse::unconfigured);
+        List<ResolvedSmtpSettings> all = smtpSettingsService.getSettingsInPriorityOrder();
+        SmtpProviderStatus primary = byRole(all, SmtpRole.primary);
+        SmtpProviderStatus backup = byRole(all, SmtpRole.backup);
+        return new SmtpSettingsStatusResponse(primary, backup);
     }
 
-    @Operation(summary = "Save SMTP settings", description = "Upserts the single smtp_settings row. Omit password to keep the previously stored one.")
+    @Operation(summary = "Save SMTP settings", description = "Upserts the smtp_settings row for the given role (primary or backup). Omit password to keep the previously stored one.")
     @PutMapping
     public SmtpSettingsStatusResponse save(@Valid @RequestBody SaveSmtpSettingsRequest request) {
-        smtpSettingsService.saveSettings(request.host(), request.port(), request.username(), request.password(),
+        smtpSettingsService.saveSettings(request.role(), request.host(), request.port(), request.username(), request.password(),
                 request.fromAddress(), request.useTls());
         return status();
     }
 
-    private static SmtpSettingsStatusResponse toStatus(ResolvedSmtpSettings s) {
-        return new SmtpSettingsStatusResponse(true, s.host(), s.port(), s.username(), s.fromAddress(), s.useTls());
+    private static SmtpProviderStatus byRole(List<ResolvedSmtpSettings> all, SmtpRole role) {
+        return all.stream()
+                .filter(s -> s.role() == role)
+                .findFirst()
+                .map(s -> new SmtpProviderStatus(true, s.host(), s.port(), s.username(), s.fromAddress(), s.useTls()))
+                .orElseGet(SmtpProviderStatus::unconfigured);
     }
 }

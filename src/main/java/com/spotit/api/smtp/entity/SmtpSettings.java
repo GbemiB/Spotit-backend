@@ -13,8 +13,10 @@ import java.util.UUID;
 
 /**
  * Admin-configurable SMTP relay settings, stored so mail can be reconfigured without a redeploy.
- * Exactly one row is expected to exist at a time; {@code password} is AES-GCM ciphertext, never
- * plaintext — see {@link com.spotit.api.common.crypto.EncryptionService}.
+ * At most one row per {@link SmtpRole} is expected to exist — {@code role=primary} is always
+ * tried first by {@link com.spotit.api.common.mail.EmailServiceImpl}; {@code role=backup} (if
+ * configured) is only tried when sending via primary throws. {@code password} is AES-GCM
+ * ciphertext, never plaintext — see {@link com.spotit.api.common.crypto.EncryptionService}.
  */
 @Entity
 @Table(name = "smtp_settings")
@@ -29,6 +31,12 @@ public class SmtpSettings {
     @UuidGenerator
     @Column(nullable = false, updatable = false)
     private UUID id;
+
+    // columnDefinition backfills the existing pre-role row (if any) as 'primary' when this
+    // column is first added to an already-populated table, instead of failing/leaving it null.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, unique = true, length = 20, columnDefinition = "varchar(20) default 'primary'")
+    private SmtpRole role;
 
     @Column(nullable = false)
     private String host;

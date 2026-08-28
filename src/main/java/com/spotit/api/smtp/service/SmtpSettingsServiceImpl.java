@@ -1,13 +1,15 @@
 package com.spotit.api.smtp.service;
 
 import com.spotit.api.common.crypto.EncryptionService;
+import com.spotit.api.smtp.entity.SmtpRole;
 import com.spotit.api.smtp.entity.SmtpSettings;
 import com.spotit.api.smtp.repository.SmtpSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,16 +20,21 @@ public class SmtpSettingsServiceImpl implements SmtpSettingsService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<ResolvedSmtpSettings> getActiveSettings() {
-        return repository.findTopByOrderByUpdatedAtDesc()
-                .map(settings -> new ResolvedSmtpSettings(settings.getHost(), settings.getPort(), settings.getUsername(),
-                        encryptionService.decrypt(settings.getEncryptedPassword()), settings.getFromAddress(), settings.isUseTls()));
+    public List<ResolvedSmtpSettings> getSettingsInPriorityOrder() {
+        List<ResolvedSmtpSettings> ordered = new ArrayList<>();
+        repository.findByRole(SmtpRole.primary).map(this::toResolved).ifPresent(ordered::add);
+        repository.findByRole(SmtpRole.backup).map(this::toResolved).ifPresent(ordered::add);
+        return ordered;
     }
 
     @Override
     @Transactional
-    public void saveSettings(String host, int port, String username, String password, String fromAddress, boolean useTls) {
-        SmtpSettings settings = repository.findTopByOrderByUpdatedAtDesc().orElseGet(SmtpSettings::new);
+    public void saveSettings(SmtpRole role, String host, int port, String username, String password, String fromAddress, boolean useTls) {
+        SmtpSettings settings = repository.findByRole(role).orElseGet(() -> {
+            SmtpSettings s = new SmtpSettings();
+            s.setRole(role);
+            return s;
+        });
 
         settings.setHost(host);
         settings.setPort(port);
@@ -41,5 +48,10 @@ public class SmtpSettingsServiceImpl implements SmtpSettingsService {
         }
 
         repository.save(settings);
+    }
+
+    private ResolvedSmtpSettings toResolved(SmtpSettings settings) {
+        return new ResolvedSmtpSettings(settings.getRole(), settings.getHost(), settings.getPort(), settings.getUsername(),
+                encryptionService.decrypt(settings.getEncryptedPassword()), settings.getFromAddress(), settings.isUseTls());
     }
 }

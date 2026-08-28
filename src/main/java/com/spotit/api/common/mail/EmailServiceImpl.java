@@ -6,6 +6,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
 import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,12 +15,13 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Properties;
 
 /**
  * All SMTP config (host/port/credentials/from-address) comes exclusively from the {@code smtp_settings}
- * DB table via {@link SmtpSettingsService} — there is no env-var/yml fallback. Seed that row via
- * {@code SmtpSettingsService.saveSettings(...)} (or a direct SQL insert) before mail can be sent.
+ * DB table via {@link SmtpSettingsService} — there is no env-var/yml fallback. Seed the primary (and,
+ * optionally, backup) row via {@code SmtpSettingsService.saveSettings(...)} before mail can be sent.
  */
 @Service
 @Slf4j
@@ -32,11 +34,37 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void send(String to, String subject, String htmlBody, String textBody) {
-        ResolvedSmtpSettings settings = smtpSettingsService.getActiveSettings()
-                .orElseThrow(() -> new MailPreparationException(
-                        "No smtp_settings row configured — seed one via SmtpSettingsService.saveSettings(...) before sending mail."));
-        JavaMailSender mailSender = buildMailSender(settings);
+        List<ResolvedSmtpSettings> candidates = smtpSettingsService.getSettingsInPriorityOrder();
+        if (candidates.isEmpty()) {
+            throw new MailPreparationException(
+                    "No smtp_settings row configured — seed one via SmtpSettingsService.saveSettings(...) before sending mail.");
+        }
 
+        // Primary is tried first; backup (if configured) only gets used when primary throws —
+        // e.g. the provider is down, rate-limited, or (as happened with Gmail from this host)
+        // silently unreachable. Only the final failure propagates, so a caller catching
+        // MailException still sees exactly one exception either way.
+        MailException lastFailure = null;
+        for (int i = 0; i < candidates.size(); i++) {
+            ResolvedSmtpSettings settings = candidates.get(i);
+            try {
+                sendVia(settings, to, subject, htmlBody, textBody);
+                if (i > 0) {
+                    log.warn("Sent via {} SMTP ({}) after {} failed", settings.role(), settings.host(), candidates.get(i - 1).role());
+                }
+                return;
+            } catch (MailException e) {
+                lastFailure = e;
+                boolean hasNext = i < candidates.size() - 1;
+                log.warn("SMTP send via {} ({}) failed{}", settings.role(), settings.host(),
+                        hasNext ? " — trying backup" : " — no more providers configured", e);
+            }
+        }
+        throw lastFailure;
+    }
+
+    private void sendVia(ResolvedSmtpSettings settings, String to, String subject, String htmlBody, String textBody) {
+        JavaMailSender mailSender = buildMailSender(settings);
         MimeMessage message = mailSender.createMimeMessage();
         try {
             // multipart=true + setText(text, html) builds a multipart/alternative message —
