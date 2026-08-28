@@ -61,8 +61,11 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         lead.setLastName(request.lastName());
         lead.setEmail(request.email().toLowerCase());
         lead.setOtpVerified(false);
-        lead = signupLeadRepository.save(lead);
-
+        // Don't save here — otp_code_hash/otp_expires_at are NOT NULL columns, and a brand-new
+        // lead doesn't have them set yet at this point. issueLeadOtp() sets both and saves;
+        // saving before that (as this used to) violated the not-null constraint on every
+        // first-time signup, since only a re-signup on an *existing* lead row happened to
+        // already have non-null values left over from before.
         long ttlSeconds = issueLeadOtp(lead);
         return new SignupResponse(lead.getId(), lead.getEmail(), ttlSeconds);
     }
