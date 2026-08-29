@@ -6,6 +6,7 @@ public final class PropertyNames {
     private PropertyNames() {
     }
 
+    public static final String CRYPTO_AES_KEY = "crypto-aes-key";
     public static final String JWT_SECRET = "jwt-secret";
     public static final String JWT_ACCESS_TOKEN_TTL_SECONDS = "jwt-access-token-ttl-seconds";
     public static final String JWT_REFRESH_TOKEN_TTL_SECONDS = "jwt-refresh-token-ttl-seconds";
@@ -23,8 +24,25 @@ public final class PropertyNames {
     public static final String CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD = "cycle-high-confidence-log-threshold";
     public static final String INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS = "insight-irregular-variation-threshold-days";
     public static final String INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS = "insight-unusual-period-length-delta-days";
+    public static final String INSIGHT_DEFAULT_CYCLES = "insight-default-cycles";
     public static final String SUBSCRIPTION_PERIOD_DAYS = "subscription-period-days";
     public static final String LOG_MAX_PERIOD_RANGE_DAYS = "log-max-period-range-days";
+    public static final String REWARDS_HISTORY_PAGE_SIZE = "rewards-history-page-size";
+    public static final String CONTENT_FEED_DEFAULT_LIMIT = "content-feed-default-limit";
+
+    // Fixed set of groups this codebase actually assigns (see GlobalConfiguration#groupName) —
+    // purely a UI/organizational grouping, nothing enforces a property belongs to only these.
+    public static final String GROUP_SECURITY = "security";
+    public static final String GROUP_POINTS = "points";
+    public static final String GROUP_CYCLE = "cycle";
+    public static final String GROUP_BADGES = "badges";
+    public static final String GROUP_INSIGHT = "insight";
+    public static final String GROUP_BILLING = "billing";
+    public static final String GROUP_ACCOUNT = "account";
+    public static final String GROUP_LOGS = "logs";
+    public static final String GROUP_REWARDS = "rewards";
+    public static final String GROUP_CONTENT = "content";
+    public static final String GROUP_SMTP = "smtp";
 
     // SMTP: 6 properties per role, not auto-seeded — a role stays "not configured" (see
     // ConfigurationDomainService#getSmtpSettingsInPriorityOrder) until an admin sets its host.

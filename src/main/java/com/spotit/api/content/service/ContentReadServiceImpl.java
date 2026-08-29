@@ -3,6 +3,7 @@ package com.spotit.api.content.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.content.dto.ContentFeedResponse;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
 import com.spotit.api.content.dto.ContentItemResponse;
@@ -20,14 +21,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ContentReadServiceImpl implements ContentReadService {
 
-    private static final int DEFAULT_LIMIT = 10;
-
     private final ContentItemRepository contentItemRepository;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     @Transactional(readOnly = true)
     public ContentFeedResponse getFeed(Integer limit) {
-        int pageSize = limit == null ? DEFAULT_LIMIT : limit;
+        int pageSize = limit == null ? configurationDomainService.getContentFeedDefaultLimit() : limit;
         var items = contentItemRepository.findAllByOrderBySortOrderAsc(PageRequest.of(0, pageSize)).stream()
                 .map(i -> new ContentItemResponse(i.getId().toString(), i.getTag(), i.getTitle(), i.getBody(), i.getImageKey(), i.isSponsored(), i.getAdvertiser()))
                 .toList();

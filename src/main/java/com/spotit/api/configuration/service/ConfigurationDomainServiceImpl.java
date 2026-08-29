@@ -24,11 +24,12 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Backs every property in {@code global_configuration}. Non-SMTP properties are eagerly seeded in
- * {@link #PostConstruct} (not via {@code ReferenceDataSeeder}, which is an ApplicationRunner and
- * therefore runs too late) so that {@code JwtService}'s constructor-time read of jwt-secret always
- * finds a row, even on a brand-new database. SMTP properties are left unseeded — a role only
- * becomes "configured" once an admin PUTs its host via SmtpConfigController.
+ * Backs every property in {@code global_configuration}. Non-SMTP properties (other than
+ * crypto-aes-key, seeded by {@link com.spotit.api.common.crypto.AesGcmEncryptionService} itself)
+ * are eagerly seeded in {@link #PostConstruct} (not via {@code ReferenceDataSeeder}, which is an
+ * ApplicationRunner and therefore runs too late) so that {@code JwtService}'s constructor-time
+ * read of jwt-secret always finds a row, even on a brand-new database. SMTP properties are left
+ * unseeded — a role only becomes "configured" once an admin PUTs its host via SmtpConfigController.
  */
 @Service
 @Slf4j
@@ -39,45 +40,62 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     private static final int GENERATED_JWT_SECRET_BYTES = 48;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private static final Set<String> SECRET_NAMES = Set.of(
+    // Encrypted-at-rest: written through EncryptionService.encrypt() and read back through
+    // .decrypt(). crypto-aes-key is NOT here — it's the key that encrypts these, so it's stored
+    // as plaintext (see AesGcmEncryptionService) and only ever appears in REDACTED_NAMES below.
+    private static final Set<String> ENCRYPTED_SECRET_NAMES = Set.of(
             PropertyNames.JWT_SECRET,
             PropertyNames.smtpPassword(SmtpRole.primary.name()),
             PropertyNames.smtpPassword(SmtpRole.backup.name()));
+
+    // Every property whose stringValue is hidden from admin API responses.
+    private static final Set<String> REDACTED_NAMES = Set.of(
+            PropertyNames.JWT_SECRET,
+            PropertyNames.smtpPassword(SmtpRole.primary.name()),
+            PropertyNames.smtpPassword(SmtpRole.backup.name()),
+            PropertyNames.CRYPTO_AES_KEY);
 
     private final GlobalConfigurationRepository repository;
     private final EncryptionService encryptionService;
 
     // Runs before the @Transactional proxy wraps this bean, so each repository.save() below gets
     // its own transaction from SimpleJpaRepository rather than one shared transaction — fine here,
-    // since seeding is idempotent (seedIfAbsent) and there's no partial-write concern.
+    // since seeding is idempotent (seedIfAbsent) and there's no partial-write concern. Note:
+    // crypto-aes-key is seeded by AesGcmEncryptionService itself, not here — encryptionService
+    // (injected below) is only usable once that seeding has already happened, since it's the key
+    // this class's own encrypt() calls depend on.
     @PostConstruct
     void seedDefaults() {
-        seedIfAbsent(PropertyNames.JWT_SECRET, null, generateEncryptedJwtSecret(), "Encrypted JWT signing secret");
-        seedIfAbsent(PropertyNames.JWT_ACCESS_TOKEN_TTL_SECONDS, 3600L, null, "JWT access token time-to-live, in seconds");
-        seedIfAbsent(PropertyNames.JWT_REFRESH_TOKEN_TTL_SECONDS, 2_592_000L, null, "JWT refresh token time-to-live, in seconds");
-        seedIfAbsent(PropertyNames.OTP_TTL_SECONDS, 600L, null, "OTP code time-to-live, in seconds");
-        seedIfAbsent(PropertyNames.ADS_DAILY_LIMIT, 5L, null, "Max rewarded ad views per user per day");
-        seedIfAbsent(PropertyNames.CYCLE_DEFAULT_LENGTH, 28L, null, "Default cycle length assumed until a user has logged enough data");
-        seedIfAbsent(PropertyNames.CYCLE_DEFAULT_PERIOD_LENGTH, 5L, null, "Default period length assumed until a user has logged enough data");
-        seedIfAbsent(PropertyNames.POINTS_DAILY_CLAIM, 50L, null, "Points awarded for the daily claim");
-        seedIfAbsent(PropertyNames.POINTS_WATCH_AD, 100L, null, "Points awarded for watching a rewarded ad");
-        seedIfAbsent(PropertyNames.ACCOUNT_PURGE_GRACE_DAYS, 30L, null, "Days after a deletion request before an account is purged");
-        seedIfAbsent(PropertyNames.BADGE_KNOW_YOUR_BODY_THRESHOLD, 10L, null, "Logs required to earn the Know Your Body badge");
-        seedIfAbsent(PropertyNames.BADGE_CYCLE_VETERAN_THRESHOLD, 28L, null, "Cycles required to earn the Cycle Veteran badge");
-        seedIfAbsent(PropertyNames.BADGE_WEEK_WARRIOR_STREAK_THRESHOLD, 7L, null, "Day streak required to earn the Week Warrior badge");
-        seedIfAbsent(PropertyNames.CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD, 3L, null, "Logs needed before a cycle's confidence is reported as high");
-        seedIfAbsent(PropertyNames.INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS, 4L, null, "Cycle-length variation, in days, flagged as irregular");
-        seedIfAbsent(PropertyNames.INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS, 3L, null, "Period-length delta, in days, flagged as unusual");
-        seedIfAbsent(PropertyNames.SUBSCRIPTION_PERIOD_DAYS, 30L, null, "Length of one billing period, in days");
-        seedIfAbsent(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS, 14L, null, "Max days a single period log entry may span");
+        seedIfAbsent(PropertyNames.JWT_SECRET, PropertyNames.GROUP_SECURITY, null, generateEncryptedJwtSecret(), "Encrypted JWT signing secret");
+        seedIfAbsent(PropertyNames.JWT_ACCESS_TOKEN_TTL_SECONDS, PropertyNames.GROUP_SECURITY, 3600L, null, "JWT access token time-to-live, in seconds");
+        seedIfAbsent(PropertyNames.JWT_REFRESH_TOKEN_TTL_SECONDS, PropertyNames.GROUP_SECURITY, 2_592_000L, null, "JWT refresh token time-to-live, in seconds");
+        seedIfAbsent(PropertyNames.OTP_TTL_SECONDS, PropertyNames.GROUP_SECURITY, 600L, null, "OTP code time-to-live, in seconds");
+        seedIfAbsent(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS, 5L, null, "Max rewarded ad views per user per day");
+        seedIfAbsent(PropertyNames.CYCLE_DEFAULT_LENGTH, PropertyNames.GROUP_CYCLE, 28L, null, "Default cycle length assumed until a user has logged enough data");
+        seedIfAbsent(PropertyNames.CYCLE_DEFAULT_PERIOD_LENGTH, PropertyNames.GROUP_CYCLE, 5L, null, "Default period length assumed until a user has logged enough data");
+        seedIfAbsent(PropertyNames.POINTS_DAILY_CLAIM, PropertyNames.GROUP_POINTS, 50L, null, "Points awarded for the daily claim");
+        seedIfAbsent(PropertyNames.POINTS_WATCH_AD, PropertyNames.GROUP_POINTS, 100L, null, "Points awarded for watching a rewarded ad");
+        seedIfAbsent(PropertyNames.ACCOUNT_PURGE_GRACE_DAYS, PropertyNames.GROUP_ACCOUNT, 30L, null, "Days after a deletion request before an account is purged");
+        seedIfAbsent(PropertyNames.BADGE_KNOW_YOUR_BODY_THRESHOLD, PropertyNames.GROUP_BADGES, 10L, null, "Logs required to earn the Know Your Body badge");
+        seedIfAbsent(PropertyNames.BADGE_CYCLE_VETERAN_THRESHOLD, PropertyNames.GROUP_BADGES, 28L, null, "Cycles required to earn the Cycle Veteran badge");
+        seedIfAbsent(PropertyNames.BADGE_WEEK_WARRIOR_STREAK_THRESHOLD, PropertyNames.GROUP_BADGES, 7L, null, "Day streak required to earn the Week Warrior badge");
+        seedIfAbsent(PropertyNames.CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD, PropertyNames.GROUP_CYCLE, 3L, null, "Logs needed before a cycle's confidence is reported as high");
+        seedIfAbsent(PropertyNames.INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS, PropertyNames.GROUP_INSIGHT, 4L, null, "Cycle-length variation, in days, flagged as irregular");
+        seedIfAbsent(PropertyNames.INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS, PropertyNames.GROUP_INSIGHT, 3L, null, "Period-length delta, in days, flagged as unusual");
+        seedIfAbsent(PropertyNames.INSIGHT_DEFAULT_CYCLES, PropertyNames.GROUP_INSIGHT, 6L, null, "Cycles of history used to compute trends/regularity by default");
+        seedIfAbsent(PropertyNames.SUBSCRIPTION_PERIOD_DAYS, PropertyNames.GROUP_BILLING, 30L, null, "Length of one billing period, in days");
+        seedIfAbsent(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS, PropertyNames.GROUP_LOGS, 14L, null, "Max days a single period log entry may span");
+        seedIfAbsent(PropertyNames.REWARDS_HISTORY_PAGE_SIZE, PropertyNames.GROUP_REWARDS, 20L, null, "Default page size for points history");
+        seedIfAbsent(PropertyNames.CONTENT_FEED_DEFAULT_LIMIT, PropertyNames.GROUP_CONTENT, 10L, null, "Default number of items returned by the content feed");
     }
 
-    private void seedIfAbsent(String name, Long value, String stringValue, String description) {
+    private void seedIfAbsent(String name, String groupName, Long value, String stringValue, String description) {
         if (repository.findByName(name).isPresent()) {
             return;
         }
         GlobalConfiguration config = GlobalConfiguration.builder()
                 .name(name)
+                .groupName(groupName)
                 .enabled(true)
                 .value(value)
                 .stringValue(stringValue)
@@ -194,6 +212,12 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
+    public int getInsightDefaultCycles() {
+        return require(PropertyNames.INSIGHT_DEFAULT_CYCLES).getValue().intValue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public long getSubscriptionPeriodDays() {
         return require(PropertyNames.SUBSCRIPTION_PERIOD_DAYS).getValue();
     }
@@ -202,6 +226,18 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getLogMaxPeriodRangeDays() {
         return require(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS).getValue().intValue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getRewardsHistoryPageSize() {
+        return require(PropertyNames.REWARDS_HISTORY_PAGE_SIZE).getValue().intValue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getContentFeedDefaultLimit() {
+        return require(PropertyNames.CONTENT_FEED_DEFAULT_LIMIT).getValue().intValue();
     }
 
     // -- SMTP --------
@@ -250,7 +286,8 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     }
 
     private void upsert(String name, Long value, String stringValue, String description) {
-        GlobalConfiguration config = repository.findByName(name).orElseGet(() -> GlobalConfiguration.builder().name(name).enabled(true).build());
+        GlobalConfiguration config = repository.findByName(name)
+                .orElseGet(() -> GlobalConfiguration.builder().name(name).groupName(PropertyNames.GROUP_SMTP).enabled(true).build());
         config.setValue(value);
         config.setStringValue(stringValue);
         config.setDescription(description);
@@ -258,7 +295,8 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     }
 
     private void upsertEnabled(String name, boolean enabled, String description) {
-        GlobalConfiguration config = repository.findByName(name).orElseGet(() -> GlobalConfiguration.builder().name(name).build());
+        GlobalConfiguration config = repository.findByName(name)
+                .orElseGet(() -> GlobalConfiguration.builder().name(name).groupName(PropertyNames.GROUP_SMTP).build());
         config.setEnabled(enabled);
         config.setDescription(description);
         repository.save(config);
@@ -289,7 +327,18 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Override
     @Transactional
     public GlobalConfigurationResponse update(String name, UpdateGlobalConfigurationRequest request) {
+        // Rotating crypto-aes-key here would silently strand every ciphertext already written
+        // with the old key (jwt-secret, smtp-*-password) — undecryptable forever, no error until
+        // the next read. Rotation needs a dedicated re-encrypt-everything operation, not a blind
+        // PATCH, so it's blocked outright rather than allowed to quietly corrupt the DB.
+        if (PropertyNames.CRYPTO_AES_KEY.equals(name) && request.stringValue() != null) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR,
+                    "crypto-aes-key can't be changed via this endpoint — rotating it would strand every secret already encrypted with the old key.");
+        }
         GlobalConfiguration config = require(name);
+        if (request.groupName() != null) {
+            config.setGroupName(request.groupName());
+        }
         if (request.enabled() != null) {
             config.setEnabled(request.enabled());
         }
@@ -300,7 +349,7 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
             config.setDateValue(request.dateValue());
         }
         if (request.stringValue() != null) {
-            config.setStringValue(isSecret(name) ? encryptionService.encrypt(request.stringValue()) : request.stringValue());
+            config.setStringValue(isEncryptedSecret(name) ? encryptionService.encrypt(request.stringValue()) : request.stringValue());
         }
         if (request.description() != null) {
             config.setDescription(request.description());
@@ -312,12 +361,16 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         return repository.findByName(name).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "No such configuration property: " + name));
     }
 
-    private static boolean isSecret(String name) {
-        return SECRET_NAMES.contains(name);
+    private static boolean isEncryptedSecret(String name) {
+        return ENCRYPTED_SECRET_NAMES.contains(name);
+    }
+
+    private static boolean isRedacted(String name) {
+        return REDACTED_NAMES.contains(name);
     }
 
     private GlobalConfigurationResponse toResponse(GlobalConfiguration config) {
-        return new GlobalConfigurationResponse(config.getId(), config.getName(), config.isEnabled(), config.getValue(),
-                config.getDateValue(), isSecret(config.getName()) ? null : config.getStringValue(), config.getDescription());
+        return new GlobalConfigurationResponse(config.getId(), config.getName(), config.getGroupName(), config.isEnabled(), config.getValue(),
+                config.getDateValue(), isRedacted(config.getName()) ? null : config.getStringValue(), config.getDescription());
     }
 }

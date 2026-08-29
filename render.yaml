@@ -22,8 +22,6 @@ services:
         sync: false
       - key: DB_SSLMODE
         value: require
-      - key: CRYPTO_AES_KEY
-        sync: false
 
   - type: web
     name: spotit-backend-prod
@@ -48,5 +46,3 @@ services:
         sync: false
       - key: DB_SSLMODE
         value: require
-      - key: CRYPTO_AES_KEY
-        sync: false

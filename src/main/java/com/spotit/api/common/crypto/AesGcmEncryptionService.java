@@ -1,8 +1,11 @@
 package com.spotit.api.common.crypto;
 
-import com.spotit.api.config.SpotItProperties;
+import com.spotit.api.configuration.PropertyNames;
+import com.spotit.api.configuration.entity.GlobalConfiguration;
+import com.spotit.api.configuration.repository.GlobalConfigurationRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -18,31 +21,57 @@ import java.util.Base64;
  * IV and prepends it to the ciphertext ({@code iv || ciphertext+tag}, then Base64-encoded) so the
  * same plaintext never produces the same stored value twice and decrypt() has what it needs to
  * reverse it without a separate IV column.
+ *
+ * <p>The root key itself ({@code global_configuration.crypto-aes-key}) is read/self-seeded here,
+ * as plaintext, directly via {@link GlobalConfigurationRepository} rather than through
+ * {@code ConfigurationDomainService} — that service depends on this one to decrypt jwt-secret and
+ * smtp-*-password, so going through it here would be circular. It can't be stored encrypted
+ * either: a key encrypted with itself can't be decrypted without already knowing it. Storing the
+ * root key in the same table as the values it protects means DB read access alone is enough to
+ * decrypt everything in it — a deliberate tradeoff, not an oversight; see the git history for
+ * this file for the discussion.
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AesGcmEncryptionService implements EncryptionService {
 
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int IV_LENGTH_BYTES = 12;
     private static final int TAG_LENGTH_BITS = 128;
+    // Same shape as `openssl rand -base64 32` — 32 random bytes is exactly AES-256.
+    private static final int KEY_BYTES = 32;
 
-    private final SpotItProperties properties;
+    private final GlobalConfigurationRepository repository;
     private SecretKeySpec key;
 
     @PostConstruct
     void init() {
-        String base64Key = properties.crypto().aesKey();
-        if (base64Key == null || base64Key.isBlank()) {
-            throw new IllegalStateException(
-                    "spotit.crypto.aes-key (CRYPTO_AES_KEY) must be set to a base64-encoded 256-bit key "
-                            + "before any secret can be encrypted or decrypted. Generate one with: openssl rand -base64 32");
-        }
+        GlobalConfiguration row = repository.findByName(PropertyNames.CRYPTO_AES_KEY).orElseGet(this::seedKey);
+        String base64Key = row.getStringValue();
         byte[] decoded = Base64.getDecoder().decode(base64Key);
-        if (decoded.length != 32) {
-            throw new IllegalStateException("spotit.crypto.aes-key must decode to exactly 32 bytes (AES-256), got " + decoded.length);
+        if (decoded.length != KEY_BYTES) {
+            throw new IllegalStateException(
+                    "global_configuration.crypto-aes-key must decode to exactly 32 bytes (AES-256), got " + decoded.length);
         }
         key = new SecretKeySpec(decoded, "AES");
+    }
+
+    private GlobalConfiguration seedKey() {
+        byte[] keyBytes = new byte[KEY_BYTES];
+        new SecureRandom().nextBytes(keyBytes);
+        String base64Key = Base64.getEncoder().encodeToString(keyBytes);
+        log.info("Seeded global_configuration.{} with a freshly generated AES-256 key.", PropertyNames.CRYPTO_AES_KEY);
+        GlobalConfiguration row = GlobalConfiguration.builder()
+                .name(PropertyNames.CRYPTO_AES_KEY)
+                .groupName(PropertyNames.GROUP_SECURITY)
+                .enabled(true)
+                .stringValue(base64Key)
+                .description("Root AES-256 key that encrypts every other secret in this table (jwt-secret, smtp-*-password). "
+                        + "Plaintext by necessity — a key can't be encrypted with itself. Never change via the API: rotating it "
+                        + "strands every secret already encrypted with the old value.")
+                .build();
+        return repository.save(row);
     }
 
     @Override

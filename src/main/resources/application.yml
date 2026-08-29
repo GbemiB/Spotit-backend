@@ -25,10 +25,6 @@ springdoc:
   swagger-ui:
     path: /api/v1/swagger-ui.html
 
-spotit:
-  crypto:
-    aes-key: ${CRYPTO_AES_KEY:h+5YDmnQ8RfYjADYUaaWcP7pjWnMCkoauzAdd7ZnyTE=}
-
 logging:
   level:
     com.spotit.api: INFO

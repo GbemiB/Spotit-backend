@@ -3,6 +3,7 @@ package com.spotit.api.rewards.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.rewards.LevelUtil;
 import com.spotit.api.rewards.dto.PointsHistoryEntryResponse;
 import com.spotit.api.rewards.dto.PointsHistoryPageResponse;
@@ -24,11 +25,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RewardsReadServiceImpl implements RewardsReadService {
 
-    private static final int DEFAULT_HISTORY_PAGE_SIZE = 20;
-
     private final UserRepository userRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
     private final LevelDefinitionService levelDefinitionService;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     @Transactional(readOnly = true)
@@ -44,7 +44,7 @@ public class RewardsReadServiceImpl implements RewardsReadService {
     @Override
     @Transactional(readOnly = true)
     public PointsHistoryPageResponse getHistory(UUID userId, Integer limit, String cursor) {
-        int pageSize = limit == null ? DEFAULT_HISTORY_PAGE_SIZE : limit;
+        int pageSize = limit == null ? configurationDomainService.getRewardsHistoryPageSize() : limit;
         int offset = decodeCursor(cursor);
 
         List<PointsHistoryEntry> page = pointsHistoryRepository

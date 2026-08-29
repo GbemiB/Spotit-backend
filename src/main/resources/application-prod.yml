@@ -7,10 +7,6 @@ spring:
   jpa:
     show-sql: false
 
-spotit:
-  crypto:
-    aes-key: ${CRYPTO_AES_KEY}
-
 logging:
   level:
     com.spotit.api: INFO

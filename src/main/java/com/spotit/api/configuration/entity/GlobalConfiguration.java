@@ -38,6 +38,11 @@ public class GlobalConfiguration {
     @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
 
+    // Not a DB enum on purpose — see PropertyNames' GROUP_* constants for the fixed set this
+    // codebase actually uses; free text here just avoids a migration every time a new group is added.
+    @Column(name = "group_name", length = 50)
+    private String groupName;
+
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 

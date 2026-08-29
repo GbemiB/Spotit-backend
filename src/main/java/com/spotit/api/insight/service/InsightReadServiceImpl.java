@@ -33,8 +33,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InsightReadServiceImpl implements InsightReadService {
 
-    private static final int DEFAULT_CYCLES = 6;
-
     private final CycleLogRepository cycleLogRepository;
     private final UserRepository userRepository;
     private final ConfigurationDomainService configurationDomainService;
@@ -42,7 +40,7 @@ public class InsightReadServiceImpl implements InsightReadService {
     @Override
     @Transactional(readOnly = true)
     public CycleTrendsResponse getTrends(UUID userId, Integer cyclesParam) {
-        int cycles = cyclesParam == null ? DEFAULT_CYCLES : cyclesParam;
+        int cycles = cyclesParam == null ? configurationDomainService.getInsightDefaultCycles() : cyclesParam;
         User user = requireUser(userId);
 
         List<PeriodEpisode> episodes = detectPeriodEpisodes(userId);
@@ -92,7 +90,7 @@ public class InsightReadServiceImpl implements InsightReadService {
             return new RegularityResponse("insufficient_data", List.of(), "This is not medical advice.");
         }
 
-        List<Integer> cycleLengths = cycleLengthsFrom(episodes, DEFAULT_CYCLES);
+        List<Integer> cycleLengths = cycleLengthsFrom(episodes, configurationDomainService.getInsightDefaultCycles());
 
         List<String> flags = new ArrayList<>();
         if (cycleLengths.size() >= 2) {

@@ -48,9 +48,15 @@ public interface ConfigurationDomainService {
 
     int getInsightUnusualPeriodLengthDeltaDays();
 
+    int getInsightDefaultCycles();
+
     long getSubscriptionPeriodDays();
 
     int getLogMaxPeriodRangeDays();
+
+    int getRewardsHistoryPageSize();
+
+    int getContentFeedDefaultLimit();
 
     // -- SMTP: primary first, then backup, omitting whichever role has no host configured --------
 
