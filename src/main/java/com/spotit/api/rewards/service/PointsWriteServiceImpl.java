@@ -20,7 +20,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PointsWriteServiceImpl implements PointsWriteService {
-
     private final UserRepository userRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
     private final ConfigurationDomainService configurationDomainService;
@@ -31,10 +30,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     public LogPointsResult recordDailyLog(UUID userId, LocalDate logDate, boolean isNewEntry) {
         User user = requireUserForUpdate(userId);
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        // isNewEntry alone is the right earn signal — logDate itself is deliberately not
-        // restricted to "today" since period/day logging both let a user pick any date
-        // (e.g. marking a period that started a few days ago, or backfilling yesterday's
-        // symptoms). Requiring an exact match to today blocked points for exactly that.
+
         boolean earns = isNewEntry;
 
         if (!earns) {
@@ -105,8 +101,6 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Override
     @Transactional
     public AdWatchResult watchAd(UUID userId) {
-        // Lock the user row first so a concurrent watchAd call for the same user is forced to
-        // wait here rather than both readers passing the daily-limit count check at once.
         User user = requireUserForUpdate(userId);
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
         long watchedToday = pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad");

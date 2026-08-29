@@ -19,7 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Device {
-
     @Id
     @UuidGenerator
     private UUID id;

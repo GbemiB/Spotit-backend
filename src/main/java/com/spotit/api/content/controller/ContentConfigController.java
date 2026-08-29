@@ -23,13 +23,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-/** Global-configuration admin surface for the content feed. */
 @Tag(name = "Content Config (Admin)", description = "Admin CRUD surface for the content-feed catalog. No auth check is currently enforced on these endpoints.")
 @RestController
 @RequestMapping("/api/v1/config/content")
 @RequiredArgsConstructor
 public class ContentConfigController {
-
     private final ContentReadService contentReadService;
     private final ContentWriteService contentWriteService;
 

@@ -2,13 +2,6 @@ package com.spotit.api.log.entity;
 
 import java.util.List;
 
-/**
- * {@link com.spotit.api.log.entity.CycleLog#getSymptoms()} stores this enum's
- * {@code value} (an {@code integer[]} column) rather than names, so entries
- * stay compact. {@link #toValues} / {@link #fromValues} do the conversion at
- * the service layer so the REST contract (log entries as symptom name
- * strings) never changes shape.
- */
 public enum SymptomType {
     cramps(1, "symptomType.cramps"),
     headache(2, "symptomType.headache"),

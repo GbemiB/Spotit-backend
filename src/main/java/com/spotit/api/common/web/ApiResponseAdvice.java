@@ -15,18 +15,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
-/**
- * Wraps every response from our own controllers (and GlobalExceptionHandler)
- * in the standard {code, message, data} envelope, so individual controller
- * methods keep returning plain DTOs instead of constructing ApiResponse
- * themselves. Two body shapes get special-cased so the envelope's top-level
- * `message` carries something meaningful instead of a generic "OK":
- *   - ApiErrorBody (from GlobalExceptionHandler) -> message = the error text, data = ErrorDetail
- *   - MessageResponse (simple confirmations like "Signed out.") -> message = that text, data = null
- */
 @RestControllerAdvice(basePackages = "com.spotit.api")
 public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
-
     @Override
     public boolean supports(@NonNull MethodParameter returnType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
         return !ApiResponse.class.isAssignableFrom(returnType.getParameterType());

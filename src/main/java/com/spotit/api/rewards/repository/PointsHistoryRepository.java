@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PointsHistoryRepository extends JpaRepository<PointsHistoryEntry, UUID> {
-
     List<PointsHistoryEntry> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
     long countByUserIdAndOccurredOnAndLabel(UUID userId, LocalDate occurredOn, String label);

@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface DeviceRepository extends JpaRepository<Device, UUID> {
-
     Optional<Device> findByPushToken(String pushToken);
 
     void deleteByPushToken(String pushToken);

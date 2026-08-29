@@ -26,7 +26,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
-
     private final AuthWriteService authWriteService;
 
     @Operation(summary = AuthControllerSwagger.SIGNUP_SUMMARY, description = AuthControllerSwagger.SIGNUP_DESCRIPTION)

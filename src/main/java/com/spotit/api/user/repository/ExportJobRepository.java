@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ExportJobRepository extends JpaRepository<ExportJob, UUID> {
-
     Optional<ExportJob> findByIdAndUserId(UUID id, UUID userId);
 
     void deleteByUserId(UUID userId);

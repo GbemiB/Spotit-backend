@@ -15,13 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Global-configuration admin surface for SpotPoints level tiers (was a hardcoded LEVELS array). */
 @Tag(name = "Level Config (Admin)", description = "Admin CRUD surface for SpotPoints level tiers. No auth check is currently enforced beyond being signed in.")
 @RestController
 @RequestMapping("/api/v1/config/levels")
 @RequiredArgsConstructor
 public class LevelConfigController {
-
     private final LevelDefinitionService levelDefinitionService;
 
     @Operation(summary = "List level tiers", description = "All level tiers, in progression order.")

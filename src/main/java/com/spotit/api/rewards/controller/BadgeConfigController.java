@@ -22,13 +22,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Global-configuration admin surface for badge definitions. */
 @Tag(name = "Badge Config (Admin)", description = "Admin CRUD surface for badge definitions. No auth check is currently enforced on these endpoints.")
 @RestController
 @RequestMapping("/api/v1/config/badges")
 @RequiredArgsConstructor
 public class BadgeConfigController {
-
     private final BadgeReadService badgeReadService;
     private final BadgeWriteService badgeWriteService;
 

@@ -13,7 +13,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class DeviceWriteServiceImpl implements DeviceWriteService {
-
     private final DeviceRepository deviceRepository;
 
     @Override

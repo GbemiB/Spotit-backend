@@ -27,7 +27,6 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
-
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final OtpCodeRepository otpCodeRepository;
@@ -43,9 +42,7 @@ public class OtpServiceImpl implements OtpService {
         long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
         otpCodeRepository.invalidateActive(user.getId(), purpose);
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
-        // TEMPORARY, remove once SMTP delivery is confirmed reliable: logs the plaintext code
-        // so it can be read off Render's logs while email delivery is unreliable. Never on
-        // prod — a code logged in plaintext defeats the point of it being a secret.
+
         if (environment.matchesProfiles("!prod")) {
             log.info("[DEV OTP] {} code for user {} ({}): {}", purpose, user.getId(), user.getEmail(), code);
         }
@@ -76,10 +73,6 @@ public class OtpServiceImpl implements OtpService {
             emailService.send(user.getEmail(), subject, html, text);
             log.info("OTP email sent to user {} for purpose {}", user.getId(), purpose);
         } catch (MailException e) {
-            // Swallowed on purpose (a mail outage shouldn't block signup/login), but logged at
-            // error with the full stack trace — this is the first place to look when a user
-            // reports never receiving a code. Common cause: no smtp-*-host configured in
-            // global_configuration, or a bad username/password — see ConfigurationDomainService.
             log.error("Failed to send OTP email to user {} for purpose {}", user.getId(), purpose, e);
         }
     }

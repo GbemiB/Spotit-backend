@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface OtpCodeRepository extends JpaRepository<OtpCode, UUID> {
-
     Optional<OtpCode> findFirstByIdAndConsumedFalseOrderByCreatedAtDesc(UUID id);
 
     Optional<OtpCode> findFirstByUserIdAndPurposeAndConsumedFalseOrderByCreatedAtDesc(UUID userId, OtpPurpose purpose);

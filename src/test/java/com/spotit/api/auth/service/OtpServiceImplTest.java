@@ -30,7 +30,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OtpServiceImplTest {
-
     @Mock OtpCodeRepository otpCodeRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock ConfigurationDomainService configurationDomainService;

@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
-
     Optional<Subscription> findByUserId(UUID userId);
 
     List<Subscription> findByStatusAndAutoRenewFalseAndRenewsAtBefore(SubscriptionStatus status, Instant instant);

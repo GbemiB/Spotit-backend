@@ -18,7 +18,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class BadgeDefinition {
-
     @Id
     @Column(length = 40)
     private String id;

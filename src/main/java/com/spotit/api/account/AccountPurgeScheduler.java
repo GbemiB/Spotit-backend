@@ -21,18 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Hard-deletes accounts whose 30-day deletion grace
- * period (set by {@code DELETE /auth/account}) has elapsed. Since feature
- * packages deliberately don't hold JPA relationships to User (see the
- * package-by-feature notes), cascading delete has to happen here rather than
- * via a DB foreign key.
- */
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class AccountPurgeScheduler {
-
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final OtpCodeRepository otpCodeRepository;
@@ -45,7 +37,6 @@ public class AccountPurgeScheduler {
     private final DeviceRepository deviceRepository;
     private final ExportJobRepository exportJobRepository;
 
-    /** Runs daily; picks up any account past its scheduled purge date. */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void purgeDueAccounts() {

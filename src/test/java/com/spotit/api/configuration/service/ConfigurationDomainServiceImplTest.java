@@ -24,7 +24,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ConfigurationDomainServiceImplTest {
-
     @Mock GlobalConfigurationRepository repository;
     @Mock EncryptionService encryptionService;
 
@@ -32,8 +31,6 @@ class ConfigurationDomainServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        // Not exercising @PostConstruct seeding here — these tests target update()/getByName()
-        // in isolation, so avoid stubbing every seedIfAbsent lookup it would otherwise trigger.
         service = new ConfigurationDomainServiceImpl(repository, encryptionService);
     }
 

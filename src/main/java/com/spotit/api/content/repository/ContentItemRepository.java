@@ -7,6 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ContentItemRepository extends JpaRepository<ContentItem, java.util.UUID> {
-
     List<ContentItem> findAllByOrderBySortOrderAsc(Pageable pageable);
 }

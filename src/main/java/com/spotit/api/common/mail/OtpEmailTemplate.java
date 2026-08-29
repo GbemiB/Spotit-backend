@@ -1,13 +1,6 @@
 package com.spotit.api.common.mail;
 
-/**
- * Builds the HTML + plain-text bodies for OTP emails (signup verification and password
- * reset). Kept as static string templates rather than a template engine — the two OTP
- * emails are the only transactional mail this app sends, so pulling in Thymeleaf/Freemarker
- * for it isn't worth the dependency.
- */
 public final class OtpEmailTemplate {
-
     private static final String ACCENT = "#C04E68";
     private static final String ACCENT_SOFT = "#DC5A74";
     private static final String INK = "#2E2429";

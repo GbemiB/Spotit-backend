@@ -22,13 +22,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Global-configuration admin surface for weekly-challenge definitions. */
 @Tag(name = "Challenge Config (Admin)", description = "Admin CRUD surface for weekly-challenge definitions. No auth check is currently enforced on these endpoints.")
 @RestController
 @RequestMapping("/api/v1/config/challenges")
 @RequiredArgsConstructor
 public class ChallengeConfigController {
-
     private final ChallengeReadService challengeReadService;
     private final ChallengeWriteService challengeWriteService;
 

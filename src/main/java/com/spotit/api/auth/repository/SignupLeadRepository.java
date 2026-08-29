@@ -7,6 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SignupLeadRepository extends JpaRepository<SignupLead, UUID> {
-
     Optional<SignupLead> findByEmailIgnoreCase(String email);
 }

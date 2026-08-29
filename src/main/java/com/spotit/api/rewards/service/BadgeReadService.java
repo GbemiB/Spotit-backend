@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BadgeReadService {
-
-    /** Re-evaluates badge-earning (a write, delegated to BadgeWriteService) before rendering the current list. */
     List<BadgeResponse> getBadgesSyncingNewlyEarned(UUID userId);
 
     List<BadgeDefinitionAdminResponse> listDefinitionsForAdmin();

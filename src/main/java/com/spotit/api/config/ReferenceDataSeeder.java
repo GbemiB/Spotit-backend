@@ -19,15 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Idempotently seeds the small set of reference/definition rows the app
- * needs to function (badge & challenge definitions, shop products, a starter
- * content feed) — the equivalent of what used to be a Flyway seed migration.
- */
 @Component
 @RequiredArgsConstructor
 public class ReferenceDataSeeder implements ApplicationRunner {
-
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final ChallengeDefinitionRepository challengeDefinitionRepository;
     private final ProductRepository productRepository;

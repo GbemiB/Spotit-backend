@@ -23,7 +23,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ChallengeWriteServiceImpl implements ChallengeWriteService {
-
     private final ChallengeDefinitionRepository challengeDefinitionRepository;
     private final UserChallengeProgressRepository progressRepository;
     private final ChallengeCalculator calculator;

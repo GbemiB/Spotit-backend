@@ -34,7 +34,6 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthWriteServiceImpl implements AuthWriteService {
-
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
@@ -47,11 +46,6 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private final ConfigurationDomainService configurationDomainService;
     private final Environment environment;
 
-    // Signup is a two-step process: (1) SignupRequest captures name/email and creates/refreshes
-    // a SignupLead — no password, no User row yet, so there's nothing a bypass could log into.
-    // (2) Only after the OTP on that lead is verified does completeSignup() take a password and
-    // create the real User. A lead that never verifies is left in signup_leads (not deleted) so
-    // it can be followed up on (e.g. re-engagement email/ads) instead of silently vanishing.
     @Override
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -63,11 +57,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         lead.setLastName(request.lastName());
         lead.setEmail(request.email().toLowerCase());
         lead.setOtpVerified(false);
-        // Don't save here — otp_code_hash/otp_expires_at are NOT NULL columns, and a brand-new
-        // lead doesn't have them set yet at this point. issueLeadOtp() sets both and saves;
-        // saving before that (as this used to) violated the not-null constraint on every
-        // first-time signup, since only a re-signup on an *existing* lead row happened to
-        // already have non-null values left over from before.
+
         long ttlSeconds = issueLeadOtp(lead);
         return new SignupResponse(lead.getId(), lead.getEmail(), ttlSeconds);
     }
@@ -96,7 +86,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         if (!lead.isOtpVerified()) {
             throw new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.OTP_NOT_VERIFIED);
         }
-        // Re-check uniqueness: another signup for the same email could have completed first.
+
         if (userRepository.existsByEmailIgnoreCase(lead.getEmail())) {
             throw new ApiException(ErrorCode.EMAIL_ALREADY_REGISTERED, ErrorMessage.EMAIL_ALREADY_REGISTERED);
         }
@@ -129,9 +119,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private long issueLeadOtp(SignupLead lead) {
         long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
-        // TEMPORARY, remove once SMTP delivery is confirmed reliable: logs the plaintext code
-        // so it can be read off Render's logs while email delivery is unreliable. Never on
-        // prod — a code logged in plaintext defeats the point of it being a secret.
+
         if (environment.matchesProfiles("!prod")) {
             log.info("[DEV OTP] signup code for lead {} ({}): {}", lead.getId(), lead.getEmail(), code);
         }
@@ -147,9 +135,6 @@ public class AuthWriteServiceImpl implements AuthWriteService {
             emailService.send(lead.getEmail(), "Verify your Spot it account", html, text);
             log.info("Signup OTP email sent to lead {}", lead.getId());
         } catch (MailException e) {
-            // Swallowed on purpose (a mail outage shouldn't block signup) but logged with the
-            // full stack trace — this lead now just sits unverified in signup_leads until a
-            // resend succeeds or it's picked up for follow-up. See EmailServiceImpl/ConfigurationDomainService.
             log.error("Failed to send signup OTP email to lead {}", lead.getId(), e);
         }
         return ttlSeconds;
@@ -163,13 +148,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
         }
-        // A User is only ever created with emailVerified=true now (see completeSignup), but a
-        // stray account from before that guarantee existed (created with a password but never
-        // finished verification — e.g. the OTP email never arrived) still has the right
-        // password and would otherwise be a dead end. Rather than reject it outright, issue a
-        // fresh OTP and hand the client its id so it can route straight to verifying it —
-        // OtpPurpose.signup is otherwise unused now that fresh signups go through SignupLead
-        // instead, so this reuses it for exactly this recovery path. See verifyLoginOtp.
+
         if (!user.isEmailVerified()) {
             OtpCode otp = otpService.issue(user, OtpPurpose.signup);
             throw new ApiException(ErrorCode.EMAIL_NOT_VERIFIED, ErrorMessage.EMAIL_NOT_VERIFIED, otp.getId(), otpService.ttlSeconds());
@@ -193,16 +172,13 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     public OtpRequestResponse forgotPassword(EmailRequest request) {
         userRepository.findByEmailIgnoreCase(request.email()).ifPresent(user ->
                 otpService.issue(user, OtpPurpose.password_reset));
-        // Same response whether or not the email exists, to avoid account enumeration.
+
         return new OtpRequestResponse("If that email exists, a reset code has been sent.", null, otpService.ttlSeconds());
     }
 
     @Override
     @Transactional
     public OtpRequestResponse resendOtp(OtpResendRequest request) {
-        // Two possible owners for this id: a SignupLead mid-signup, or (see login/
-        // verifyLoginOtp) an OtpCode tied to an existing User recovering an unverified
-        // account. Password-reset resend goes through forgotPassword instead, not this.
         var lead = signupLeadRepository.findById(request.otpId());
         if (lead.isPresent()) {
             long ttlSeconds = issueLeadOtp(lead.get());
@@ -215,7 +191,6 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Override
     @Transactional(readOnly = true)
     public void verifyResetOtp(ResetOtpVerifyRequest request) {
-        // Same error whether the email doesn't exist or the code is wrong, to avoid account enumeration.
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
         otpService.checkValid(user.getId(), request.code(), OtpPurpose.password_reset);
@@ -224,7 +199,6 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Override
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        // Same error whether the email doesn't exist or the code is wrong, to avoid account enumeration.
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
         otpService.verifyLatest(user.getId(), request.code(), OtpPurpose.password_reset);

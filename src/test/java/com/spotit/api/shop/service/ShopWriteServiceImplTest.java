@@ -32,7 +32,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ShopWriteServiceImplTest {
-
     @Mock ProductRepository productRepository;
     @Mock ShopOrderRepository shopOrderRepository;
     @Mock UserRepository userRepository;
@@ -53,9 +52,6 @@ class ShopWriteServiceImplTest {
         when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
     }
 
-    // Only stubbed by tests that actually reach the level check (redeem() throws NOT_FOUND for
-    // an unknown/inactive product before ever getting there) — matches the original hardcoded
-    // LEVELS/LEVEL_ORDER exactly, now sourced from the (mocked) DB-backed service instead.
     private void stubLevels() {
         List<LevelUtil.LevelDef> defs = List.of(
                 new LevelUtil.LevelDef("Blush", 0, 500),
@@ -102,7 +98,7 @@ class ShopWriteServiceImplTest {
     @Test
     void redeemingBelowTheRequiredLevelIsRejected() {
         stubLevels();
-        stubUser(0, false); // 0 points -> Blush, product needs Petal
+        stubUser(0, false);
         Product product = activeProduct(800, "Petal", false);
         when(productRepository.findById("rosewater_mist")).thenReturn(Optional.of(product));
 
@@ -116,7 +112,7 @@ class ShopWriteServiceImplTest {
     @Test
     void redeemingAPremiumOnlyItemWithoutPremiumIsRejected() {
         stubLevels();
-        stubUser(10_000, false); // Wildflower level, but not premium
+        stubUser(10_000, false);
         Product product = activeProduct(4000, "Bloom", true);
         when(productRepository.findById("sheet_mask_set")).thenReturn(Optional.of(product));
 
@@ -130,7 +126,7 @@ class ShopWriteServiceImplTest {
     @Test
     void redeemingWithoutEnoughPointsIsRejected() {
         stubLevels();
-        stubUser(600, false); // Blush->Petal boundary but below the 800 cost
+        stubUser(600, false);
         Product product = activeProduct(800, "Petal", false);
         when(productRepository.findById("rosewater_mist")).thenReturn(Optional.of(product));
 

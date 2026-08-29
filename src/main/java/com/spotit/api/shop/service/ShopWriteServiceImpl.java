@@ -26,7 +26,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ShopWriteServiceImpl implements ShopWriteService {
-
     private final ProductRepository productRepository;
     private final ShopOrderRepository shopOrderRepository;
     private final UserRepository userRepository;
@@ -36,9 +35,6 @@ public class ShopWriteServiceImpl implements ShopWriteService {
     @Override
     @Transactional
     public RedeemResponse redeem(UUID userId, String productId) {
-        // Lock the user row before checking the balance so a second, concurrent redeem for the
-        // same user can't read the same pre-deduction balance and also pass the cost check —
-        // that race would let both redemptions succeed and drive the balance negative.
         User user = requireUserForUpdate(userId);
         Product product = productRepository.findById(productId)
                 .filter(Product::isActive)

@@ -19,7 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class RefreshToken {
-
     @Id
     @UuidGenerator
     private UUID id;

@@ -23,16 +23,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Replaces the mobile app's hardcoded trend/regularity placeholders with real
- * computation over logged data: a "period episode" is a run of consecutive
- * days with a flow logged; its first day is treated as a period start, and
- * the gap between consecutive starts is a cycle length.
- */
 @Service
 @RequiredArgsConstructor
 public class InsightReadServiceImpl implements InsightReadService {
-
     private final CycleLogRepository cycleLogRepository;
     private final UserRepository userRepository;
     private final ConfigurationDomainService configurationDomainService;
@@ -84,8 +77,6 @@ public class InsightReadServiceImpl implements InsightReadService {
         User user = requireUser(userId);
         List<PeriodEpisode> episodes = detectPeriodEpisodes(userId);
 
-        // Nothing logged yet — "regular" would be a false positive since there's no data to
-        // support it, not an actual finding. Say so instead of defaulting to a clean bill of health.
         if (episodes.isEmpty()) {
             return new RegularityResponse("insufficient_data", List.of(), "This is not medical advice.");
         }
@@ -110,8 +101,6 @@ public class InsightReadServiceImpl implements InsightReadService {
                 flags.get(0).contains("period") ? "unusual_period_length" : "irregular_cycle");
         return new RegularityResponse(status, flags, "This is not medical advice.");
     }
-
-    // -- period-episode detection --------------------------------------
 
     private record PeriodEpisode(LocalDate start, LocalDate end) {
         int lengthDays() {

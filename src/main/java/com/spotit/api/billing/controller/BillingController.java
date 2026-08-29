@@ -23,7 +23,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/billing")
 @RequiredArgsConstructor
 public class BillingController {
-
     private final BillingReadService billingReadService;
     private final BillingWriteService billingWriteService;
 

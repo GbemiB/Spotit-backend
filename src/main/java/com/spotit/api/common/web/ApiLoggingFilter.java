@@ -16,20 +16,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-/**
- * Logs every API call's method, URL, request body, response status, and
- * response body at INFO level. Wraps the request/response in Spring's
- * content-caching wrappers since servlet streams can only be read once —
- * {@link ContentCachingResponseWrapper#copyBodyToResponse()} must run after
- * logging or the client would receive an empty body. Ordered ahead of
- * everything (including the Spring Security chain) so auth failures and
- * their real status codes get logged too.
- */
 @Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class ApiLoggingFilter extends OncePerRequestFilter {
-
     private static final Pattern SENSITIVE_FIELD = Pattern.compile(
             "(\"(?:password|newPassword|receipt|pushToken|accessToken|refreshToken)\"\\s*:\\s*)\"[^\"]*\"",
             Pattern.CASE_INSENSITIVE);

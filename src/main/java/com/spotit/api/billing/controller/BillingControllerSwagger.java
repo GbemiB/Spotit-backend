@@ -1,13 +1,6 @@
 package com.spotit.api.billing.controller;
 
-/**
- * Swagger/OpenAPI summaries, descriptions, and example payloads for
- * {@link BillingController}, kept out of the controller so endpoint methods
- * stay focused on request handling. Mirrors the companion-class convention
- * used by Apache Fineract's {@code *ApiResourceSwagger} classes.
- */
 final class BillingControllerSwagger {
-
     private BillingControllerSwagger() {
     }
 

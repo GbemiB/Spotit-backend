@@ -29,7 +29,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/rewards")
 @RequiredArgsConstructor
 public class RewardsController {
-
     private final RewardsReadService rewardsReadService;
     private final RewardsWriteService rewardsWriteService;
     private final BadgeReadService badgeReadService;

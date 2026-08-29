@@ -20,10 +20,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ChallengeReadServiceImpl implements ChallengeReadService {
-
-    // Not a real challenge — see the seeded "daily_log" row's comment in ReferenceDataSeeder.
-    // It stores the per-log SpotPoints reward in the DB but has no claim flow, so it's excluded
-    // from the challenges list shown in the app.
     private static final String DAILY_LOG_DEFINITION_ID = "daily_log";
 
     private final ChallengeDefinitionRepository challengeDefinitionRepository;

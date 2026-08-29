@@ -26,7 +26,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/cycle")
 @RequiredArgsConstructor
 public class CycleController {
-
     private final CycleReadService cycleReadService;
 
     @Operation(summary = CycleControllerSwagger.CURRENT_SUMMARY, description = CycleControllerSwagger.CURRENT_DESCRIPTION,

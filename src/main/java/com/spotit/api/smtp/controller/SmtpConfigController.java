@@ -14,19 +14,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Admin surface for the smtp-* rows in {@code global_configuration} that {@link com.spotit.api.common.mail.EmailServiceImpl}
- * sends all mail through (OTP codes, password resets) — one set for {@code primary}, optionally
- * one for {@code backup}, which is only used when sending via primary fails. Requires the caller
- * to be signed in, same as the other {@code /config/*} admin controllers in this codebase — there
- * is no separate admin role, so use any authenticated account's access token.
- */
 @Tag(name = "Smtp Config (Admin)", description = "Admin surface for the primary/backup SMTP relay settings used to send all transactional mail.")
 @RestController
 @RequestMapping("/api/v1/config/smtp")
 @RequiredArgsConstructor
 public class SmtpConfigController {
-
     private final ConfigurationDomainService configurationDomainService;
 
     @Operation(summary = "Get SMTP status", description = "Returns what's configured for primary and backup (never the password) so an admin can confirm settings without guessing.")

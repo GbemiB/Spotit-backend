@@ -5,10 +5,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TokenHasherTest {
-
     @Test
     void producesTheKnownSha256HexDigest() {
-        // Well-known test vector: sha256("hello")
         assertThat(TokenHasher.sha256Hex("hello"))
                 .isEqualTo("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824");
     }

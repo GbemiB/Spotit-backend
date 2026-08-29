@@ -20,7 +20,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class LogReadServiceImpl implements LogReadService {
-
     private final CycleLogRepository cycleLogRepository;
 
     @Override

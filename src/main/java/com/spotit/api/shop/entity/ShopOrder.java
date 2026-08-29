@@ -19,7 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class ShopOrder {
-
     @Id
     @UuidGenerator
     private UUID id;

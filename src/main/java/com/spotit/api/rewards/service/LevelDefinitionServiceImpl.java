@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class LevelDefinitionServiceImpl implements LevelDefinitionService {
-
     private final LevelDefinitionRepository levelDefinitionRepository;
 
     @Override

@@ -7,7 +7,6 @@ import com.spotit.api.user.dto.UserResponse;
 import java.util.UUID;
 
 public interface UserReadService {
-
     UserResponse getProfile(UUID userId);
 
     NotificationPrefsResponse getNotificationPrefs(UUID userId);

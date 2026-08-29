@@ -2,13 +2,7 @@ package com.spotit.api.rewards;
 
 import java.util.List;
 
-/**
- * Pure level-tier math — no longer holds the tier data itself (that's admin-configurable now,
- * see LevelDefinition/LevelDefinitionService); callers pass in the current tiers, in ascending
- * sortOrder, and the level-order list (tier names + MAX_LEVEL_NAME) to rank against.
- */
 public final class LevelUtil {
-
     private LevelUtil() {
     }
 
@@ -33,7 +27,6 @@ public final class LevelUtil {
         return new LevelInfo(MAX_LEVEL_NAME, top, top, null, null, 1.0);
     }
 
-    /** True if `levelName` meets or exceeds the `minLevel` requirement, using levelOrder's rank. */
     public static boolean meetsMinLevel(String levelName, String minLevel, List<String> levelOrder) {
         return levelOrder.indexOf(levelName) >= levelOrder.indexOf(minLevel);
     }

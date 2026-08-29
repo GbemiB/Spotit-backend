@@ -5,13 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
-/**
- * Deterministic SHA-256 hashing for high-entropy opaque tokens (refresh tokens,
- * push tokens) so they can be looked up by hash. Not for passwords/OTP codes —
- * those are low-entropy and must use a slow, salted hash (BCrypt).
- */
 public final class TokenHasher {
-
     private TokenHasher() {
     }
 

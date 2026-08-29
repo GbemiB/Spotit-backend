@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface UserChallengeProgressRepository extends JpaRepository<UserChallengeProgress, UUID> {
-
     Optional<UserChallengeProgress> findByUserIdAndChallengeIdAndWeekStartDate(UUID userId, String challengeId, LocalDate weekStartDate);
 
     void deleteByUserId(UUID userId);

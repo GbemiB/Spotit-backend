@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class BadgeReadServiceImpl implements BadgeReadService {
-
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final UserBadgeRepository userBadgeRepository;
     private final BadgeWriteService badgeWriteService;

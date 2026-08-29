@@ -20,7 +20,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class User {
-
     @Id
     @UuidGenerator
     @Column(nullable = false, updatable = false)
@@ -86,8 +85,6 @@ public class User {
     @Column(name = "last_log_date")
     private LocalDate lastLogDate;
 
-    // Distinct from lastLogDate: gates period-logging points to the first period save in a
-    // given calendar month, so correcting/updating the same period repeatedly doesn't re-earn.
     @Column(name = "last_period_log_date")
     private LocalDate lastPeriodLogDate;
 

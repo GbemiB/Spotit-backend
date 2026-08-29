@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public interface LogWriteService {
-
     SaveLogResponse saveLog(UUID userId, LocalDate date, SaveLogRequest request);
 
     LogPeriodResponse logPeriod(UUID userId, LogPeriodRequest request);

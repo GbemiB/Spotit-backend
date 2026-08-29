@@ -12,7 +12,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BillingReadServiceImpl implements BillingReadService {
-
     private final SubscriptionRepository subscriptionRepository;
 
     @Override

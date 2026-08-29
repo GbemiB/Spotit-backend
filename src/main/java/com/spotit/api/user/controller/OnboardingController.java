@@ -31,7 +31,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/onboarding")
 @RequiredArgsConstructor
 public class OnboardingController {
-
     private final UserWriteService userWriteService;
 
     @Operation(summary = OnboardingControllerSwagger.TEMPLATE_SUMMARY, description = OnboardingControllerSwagger.TEMPLATE_DESCRIPTION,

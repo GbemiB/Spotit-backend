@@ -27,7 +27,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/shop")
 @RequiredArgsConstructor
 public class ShopController {
-
     private final ShopReadService shopReadService;
     private final ShopWriteService shopWriteService;
 

@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/content")
 @RequiredArgsConstructor
 public class ContentController {
-
     private final ContentReadService contentReadService;
 
     @Operation(summary = ContentControllerSwagger.FEED_SUMMARY, description = ContentControllerSwagger.FEED_DESCRIPTION)

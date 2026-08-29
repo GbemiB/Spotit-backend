@@ -12,15 +12,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * A single named row in the app-wide configuration store — replaces what used to be separate
- * fixed-column tables (app_settings, smtp_settings) and a handful of hardcoded Java constants
- * (badge-earning thresholds, account purge grace period, etc.) with one generic table, in the
- * style of Fineract's global configuration properties. Only the column matching the property's
- * actual type is populated; the rest stay null. {@code stringValue} holds AES-GCM ciphertext for
- * any property that's a secret (jwt-secret, smtp-*-password) — see
- * {@link com.spotit.api.common.crypto.EncryptionService}.
- */
 @Entity
 @Table(name = "global_configuration")
 @Getter
@@ -29,7 +20,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class GlobalConfiguration {
-
     @Id
     @UuidGenerator
     @Column(nullable = false, updatable = false)
@@ -38,8 +28,6 @@ public class GlobalConfiguration {
     @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
 
-    // Not a DB enum on purpose — see PropertyNames' GROUP_* constants for the fixed set this
-    // codebase actually uses; free text here just avoids a migration every time a new group is added.
     @Column(name = "group_name", length = 50)
     private String groupName;
 

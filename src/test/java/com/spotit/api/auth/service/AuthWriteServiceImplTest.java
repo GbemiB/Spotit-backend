@@ -35,7 +35,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthWriteServiceImplTest {
-
     @Mock UserRepository userRepository;
     @Mock RefreshTokenRepository refreshTokenRepository;
     @Mock SignupLeadRepository signupLeadRepository;
@@ -63,8 +62,6 @@ class AuthWriteServiceImplTest {
         return SignupLead.builder().id(id).firstName("Jane").lastName("Doe").email("jane@example.com")
                 .otpCodeHash("hashed-code").otpExpiresAt(Instant.now().plusSeconds(300)).otpVerified(otpVerified).build();
     }
-
-    // --- signup (step 1: creates/refreshes a lead, no account yet) ---
 
     @Test
     void signupRejectsAnAlreadyRegisteredEmail() {
@@ -100,8 +97,6 @@ class AuthWriteServiceImplTest {
         verify(signupLeadRepository, atLeastOnce()).save(argThat(l -> !l.isOtpVerified() && "jane@example.com".equals(l.getEmail())));
         verify(userRepository, never()).save(any());
     }
-
-    // --- verifySignupOtp (step 2) ---
 
     @Test
     void verifySignupOtpRejectsAnUnknownLead() {
@@ -141,8 +136,6 @@ class AuthWriteServiceImplTest {
         verify(userRepository, never()).save(any());
     }
 
-    // --- completeSignup (step 3: only place a password/User is ever created) ---
-
     @Test
     void completeSignupRejectsAnUnverifiedLead() {
         UUID leadId = UUID.randomUUID();
@@ -178,8 +171,6 @@ class AuthWriteServiceImplTest {
         verify(signupLeadRepository).delete(lead);
     }
 
-    // --- verifyResetOtp ---
-
     @Test
     void verifyResetOtpRejectsAnUnknownEmailWithoutRevealingThat() {
         when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.empty());
@@ -204,8 +195,6 @@ class AuthWriteServiceImplTest {
         verify(otpService).checkValid(userId, "482913", OtpPurpose.password_reset);
         verify(userRepository, never()).save(any());
     }
-
-    // --- login ---
 
     @Test
     void loginRejectsAnUnknownEmail() {
@@ -265,8 +254,6 @@ class AuthWriteServiceImplTest {
         verify(refreshTokenRepository, never()).save(any());
     }
 
-    // --- verifyLoginOtp ---
-
     @Test
     void verifyLoginOtpMarksTheUserVerifiedAndIssuesTokens() {
         UUID id = UUID.randomUUID();
@@ -283,8 +270,6 @@ class AuthWriteServiceImplTest {
         assertThat(response.accessToken()).isEqualTo("access-token");
         verify(userRepository).save(argThat(User::isEmailVerified));
     }
-
-    // --- refresh ---
 
     @Test
     void refreshRejectsATokenThatDoesNotParseAsARefreshToken() {
@@ -340,8 +325,6 @@ class AuthWriteServiceImplTest {
         assertThat(response.expiresIn()).isEqualTo(3600L);
     }
 
-    // --- logout / account deletion ---
-
     @Test
     void logoutRevokesAllRefreshTokensForTheUser() {
         UUID userId = UUID.randomUUID();
@@ -364,9 +347,6 @@ class AuthWriteServiceImplTest {
         verify(refreshTokenRepository).deleteByUserId(userId);
     }
 
-    // userId is only used to pin the stub to a specific id when the caller already knows it
-    // (login/refresh); pass null to match any id, e.g. when the User is created inside the
-    // call under test and its id isn't known until then (completeSignup).
     private void stubTokenIssuance(UUID userId) {
         when(jwtService.generateAccessToken(userId == null ? any() : eq(userId), any(), anyBoolean())).thenReturn("access-token");
         when(jwtService.generateRefreshToken(userId == null ? any() : eq(userId))).thenReturn("refresh-token");

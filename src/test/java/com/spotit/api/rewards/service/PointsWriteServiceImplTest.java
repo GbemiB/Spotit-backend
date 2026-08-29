@@ -24,7 +24,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PointsWriteServiceImplTest {
-
     @Mock UserRepository userRepository;
     @Mock PointsHistoryRepository pointsHistoryRepository;
     @Mock ConfigurationDomainService configurationDomainService;
@@ -59,14 +58,8 @@ class PointsWriteServiceImplTest {
         return user;
     }
 
-    // --- recordDailyLog ---
-
     @Test
     void backfillingAnOlderDateStillAwardsPointsWhenNew() {
-        // logDate itself isn't restricted to today — period/day logging both let a user pick
-        // any date (e.g. marking a period that started a few days ago). isNewEntry alone is
-        // the anti-double-counting signal; the streak math below is about today's app usage,
-        // independent of which date was actually logged.
         userWith(100, 3, 5, today.minusDays(1));
         when(challengeReadService.getDailyLogReward()).thenReturn(10);
 
@@ -128,10 +121,8 @@ class PointsWriteServiceImplTest {
 
         service.recordDailyLog(userId, today, true);
 
-        assertThat(user.getLongestStreak()).isEqualTo(12); // new streak (1) doesn't beat the old record
+        assertThat(user.getLongestStreak()).isEqualTo(12);
     }
-
-    // --- recordPeriodLog ---
 
     @Test
     void firstPeriodLogOfTheMonthAwardsPoints() {
@@ -147,7 +138,6 @@ class PointsWriteServiceImplTest {
 
     @Test
     void aSecondPeriodLogTheSameMonthAwardsNoPoints() {
-        // Correcting/updating the same period again later this month must not re-earn.
         userWithPeriodLog(100, today);
 
         var result = service.recordPeriodLog(userId);
@@ -167,8 +157,6 @@ class PointsWriteServiceImplTest {
         assertThat(result.pointsAwarded()).isEqualTo(10);
         assertThat(result.newBalance()).isEqualTo(110);
     }
-
-    // --- claimDaily ---
 
     @Test
     void claimingTwiceInOneDayIsANoOp() {
@@ -192,8 +180,6 @@ class PointsWriteServiceImplTest {
         assertThat(result.pointsAwarded()).isEqualTo(50);
         assertThat(result.newBalance()).isEqualTo(150);
     }
-
-    // --- watchAd ---
 
     @Test
     void watchingAnAdBeyondTheDailyLimitIsRejected() {
@@ -222,8 +208,6 @@ class PointsWriteServiceImplTest {
         assertThat(result.pointsAwarded()).isEqualTo(25);
         assertThat(result.newBalance()).isEqualTo(125);
     }
-
-    // --- adjust ---
 
     @Test
     void adjustAppliesAPositiveOrNegativeDeltaToTheBalance() {

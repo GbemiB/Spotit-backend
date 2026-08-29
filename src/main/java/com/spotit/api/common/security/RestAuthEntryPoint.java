@@ -13,15 +13,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-/**
- * Fires for 401s that occur before a controller is reached (bad/missing JWT),
- * so it never passes through {@link com.spotit.api.common.web.ApiResponseAdvice}
- * — it has to build the same {code, message, data} envelope by hand.
- */
 @Component
 @RequiredArgsConstructor
 public class RestAuthEntryPoint implements AuthenticationEntryPoint {
-
     private final ObjectMapper objectMapper;
 
     @Override

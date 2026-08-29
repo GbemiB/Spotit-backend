@@ -23,7 +23,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BadgeWriteServiceImpl implements BadgeWriteService {
-
     private final UserBadgeRepository userBadgeRepository;
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final CycleLogRepository cycleLogRepository;
@@ -40,7 +39,6 @@ public class BadgeWriteServiceImpl implements BadgeWriteService {
         awardIfEarned(userId, "know_your_body", logCount >= configurationDomainService.getBadgeKnowYourBodyThreshold());
         awardIfEarned(userId, "cycle_veteran", logCount >= configurationDomainService.getBadgeCycleVeteranThreshold());
         awardIfEarned(userId, "week_warrior", longestStreak >= configurationDomainService.getBadgeWeekWarriorStreakThreshold());
-        // ovulation_oracle, health_nerd: intentionally never awarded — no underlying feature yet.
     }
 
     private void awardIfEarned(UUID userId, String badgeId, boolean earned) {

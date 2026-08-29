@@ -28,7 +28,6 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class BillingWriteServiceImpl implements BillingWriteService {
-
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
     private final ConfigurationDomainService configurationDomainService;
@@ -84,9 +83,6 @@ public class BillingWriteServiceImpl implements BillingWriteService {
         sub.setPlatform(Platform.valueOf(request.platform()));
         sub.setReceipt(request.receipt());
         if (!alreadyEntitled) {
-            // Only grant a fresh period when reactivating a lapsed subscription;
-            // restoring an already-active one must not push renewsAt further out
-            // each time this is called (double-crediting).
             sub.setRenewsAt(Instant.now().plus(subscriptionPeriod()));
         }
         subscriptionRepository.save(sub);

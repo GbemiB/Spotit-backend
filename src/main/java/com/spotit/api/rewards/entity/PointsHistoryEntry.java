@@ -20,7 +20,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class PointsHistoryEntry {
-
     @Id
     @UuidGenerator
     private UUID id;

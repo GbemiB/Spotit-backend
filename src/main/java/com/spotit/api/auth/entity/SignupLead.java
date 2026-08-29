@@ -11,14 +11,6 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * A prospective signup that has supplied name/email but has not yet verified the OTP and
- * created a password. No {@link com.spotit.api.user.entity.User} row — and therefore no
- * password, no session, nothing loggable-into — exists until {@code otpVerified} is true and
- * signup is completed via {@code AuthWriteService#completeSignup}. Rows that never verify are
- * kept (not purged) so marketing can follow up with the lead; one row per email is reused
- * across repeated signup attempts rather than accumulating duplicates.
- */
 @Entity
 @Table(name = "signup_leads")
 @Getter
@@ -27,7 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class SignupLead {
-
     @Id
     @UuidGenerator
     @Column(nullable = false, updatable = false)

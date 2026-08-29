@@ -3,9 +3,7 @@ package com.spotit.api.user.service;
 import com.spotit.api.user.dto.UserResponse;
 import com.spotit.api.user.entity.User;
 
-/** Shared by UserReadServiceImpl and UserWriteServiceImpl so both sides of the CQRS split render a User identically. */
 final class UserMapper {
-
     private UserMapper() {
     }
 

@@ -23,7 +23,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/devices")
 @RequiredArgsConstructor
 public class DeviceController {
-
     private final DeviceWriteService deviceWriteService;
 
     @Operation(summary = DeviceControllerSwagger.REGISTER_SUMMARY, description = DeviceControllerSwagger.REGISTER_DESCRIPTION,

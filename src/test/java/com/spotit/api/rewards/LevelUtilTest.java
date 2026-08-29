@@ -9,9 +9,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LevelUtilTest {
-
-    // Same thresholds the original hardcoded LEVELS array had — now the shape callers pass in
-    // (see LevelDefinitionService), LevelUtil itself no longer holds any tier data.
     private static final List<LevelUtil.LevelDef> LEVELS = List.of(
             new LevelUtil.LevelDef("Blush", 0, 500),
             new LevelUtil.LevelDef("Petal", 500, 2000),
@@ -55,7 +52,6 @@ class LevelUtilTest {
 
     @Test
     void midLevelComputesProgressPercentage() {
-        // Rosé spans [2000, 5000); 3500 is exactly halfway through the 3000-point range.
         LevelUtil.LevelInfo info = LevelUtil.levelFor(3500, LEVELS);
 
         assertThat(info.name()).isEqualTo("Rosé");

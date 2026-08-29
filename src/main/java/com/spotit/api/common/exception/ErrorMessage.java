@@ -1,17 +1,9 @@
 package com.spotit.api.common.exception;
 
-/**
- * Central home for human-readable message strings — error text thrown via
- * {@link ApiException} or returned by {@link GlobalExceptionHandler}, plus a
- * few adjacent success messages — so copy changes happen in one place
- * instead of being scattered across service classes.
- */
 public final class ErrorMessage {
-
     private ErrorMessage() {
     }
 
-    // Auth
     public static final String INVALID_OR_USED_CODE = "Invalid or already-used code.";
     public static final String CODE_EXPIRED = "This code has expired.";
     public static final String CODE_VERIFIED = "Code verified.";
@@ -24,13 +16,11 @@ public final class ErrorMessage {
     public static final String SIGNUP_NOT_FOUND = "We couldn't find that signup. Please start over.";
     public static final String OTP_NOT_VERIFIED = "Please verify your email code before creating a password.";
 
-    // Cycle / User settings
     public static final String MONTH_OUT_OF_RANGE = "month must be between 1 and 12.";
     public static final String CYCLE_LENGTH_OUT_OF_RANGE = "cycleLength must be between 21 and 45.";
     public static final String PERIOD_LENGTH_OUT_OF_RANGE = "periodLength must be between 2 and 10.";
     public static final String EXPORT_JOB_NOT_FOUND = "Export job not found.";
 
-    // Rewards - badges, challenges & levels
     public static final String BADGE_NOT_FOUND = "Badge definition not found.";
     public static final String LEVEL_NOT_FOUND = "Level definition not found.";
     public static final String CHALLENGE_DEFINITION_NOT_FOUND = "Challenge definition not found.";
@@ -39,27 +29,22 @@ public final class ErrorMessage {
     public static final String CHALLENGE_ALREADY_CLAIMED = "This challenge's reward has already been claimed this week.";
     public static final String DAILY_AD_LIMIT_REACHED = "You've reached today's rewarded-ad limit.";
 
-    // Shop
     public static final String PRODUCT_NOT_FOUND = "Product not found.";
     public static final String PREMIUM_REQUIRED = "This item requires Premium.";
     public static final String INSUFFICIENT_POINTS = "Not enough SpotPoints yet.";
 
-    // Content
     public static final String CONTENT_ITEM_NOT_FOUND = "Content item not found.";
 
-    // Logs
     public static final String INVALID_DATE_RANGE = "'from' must be before or equal to 'to'.";
     public static final String PERIOD_START_AFTER_END = "'startDate' must be before or equal to 'endDate'.";
     public static final String PERIOD_RANGE_TOO_LONG = "Period range cannot exceed 14 days.";
     public static final String PERIOD_DETAIL_DATE_OUT_OF_RANGE = "'detailDate' must fall within 'startDate' and 'endDate'.";
 
-    // Billing
     public static final String RECEIPT_INVALID = "Receipt could not be verified.";
     public static final String ALREADY_SUBSCRIBED = "You already have an active subscription.";
     public static final String SUBSCRIPTION_NOT_FOUND = "No subscription found.";
     public static final String NO_PURCHASE_FOUND = "No previous purchase found for this account.";
 
-    // Generic / GlobalExceptionHandler
     public static final String NO_SUCH_ENDPOINT = "No such endpoint.";
     public static final String INTERNAL_ERROR = "Something went wrong. Please try again.";
 

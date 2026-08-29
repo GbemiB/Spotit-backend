@@ -30,7 +30,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class LogWriteServiceImpl implements LogWriteService {
-
     private final CycleLogRepository cycleLogRepository;
     private final PointsWriteService pointsWriteService;
     private final UserRepository userRepository;
@@ -100,12 +99,6 @@ public class LogWriteServiceImpl implements LogWriteService {
             }
             cycleLogRepository.save(entry);
 
-            // Points/streak are awarded once per logPeriod action (on the detail day), not once
-            // per day in the range — otherwise a multi-day backfill earns N x the daily reward
-            // and can inflate the streak counter multiple times within a single request. And
-            // recordPeriodLog (unlike recordDailyLog) gates on the calendar month rather than
-            // per-day isNewEntry, so re-saving/correcting the same period later this month
-            // doesn't earn again.
             if (isDetailDay) {
                 var pointsResult = pointsWriteService.recordPeriodLog(userId);
                 pointsAwarded = pointsResult.pointsAwarded();
@@ -118,9 +111,6 @@ public class LogWriteServiceImpl implements LogWriteService {
 
         List<LogEntryResponse> clearedEntries = clearStalePeriodDays(userId, startDate, endDate);
 
-        // The picker only ever edits the user's one tracked "current period," so whatever date
-        // they land on always becomes the new prediction baseline — no distance guard against
-        // the previously stored lastPeriodDate.
         user.setLastPeriodDate(startDate);
         userRepository.save(user);
 
@@ -136,12 +126,6 @@ public class LogWriteServiceImpl implements LogWriteService {
         cycleLogRepository.deleteByUserIdAndLogDate(userId, date);
     }
 
-    // Only the most recently logged period should ever show as flow-logged — logging a new one
-    // clears the flow on every previously flow-logged day outside this range (deleting the row
-    // outright if it had no other data, or just nulling flow if it did), not just days adjacent
-    // to this range. Returns each cleared day's corrected state so the caller can fix its own
-    // cached copy — clearing the row here alone doesn't help a client that already has the day
-    // cached from before this edit.
     private List<LogEntryResponse> clearStalePeriodDays(UUID userId, LocalDate newStart, LocalDate newEnd) {
         List<LogEntryResponse> cleared = new ArrayList<>();
         for (CycleLog entry : cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)) {

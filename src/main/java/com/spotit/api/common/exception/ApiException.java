@@ -6,11 +6,8 @@ import java.util.UUID;
 
 @Getter
 public class ApiException extends RuntimeException {
-
     private final ErrorCode errorCode;
-    // Only populated where the client needs it to act on the error immediately — e.g.
-    // EMAIL_NOT_VERIFIED hands back the id (and TTL) of the OTP just issued, so the client can
-    // go straight to verifying it without a separate lookup. Null/0 for every other error.
+
     private final UUID otpId;
     private final long expiresInSeconds;
 

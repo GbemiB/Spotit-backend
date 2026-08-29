@@ -8,10 +8,7 @@ import com.spotit.api.shop.dto.UpdateProductRequest;
 import java.util.UUID;
 
 public interface ShopWriteService {
-
     RedeemResponse redeem(UUID userId, String productId);
-
-    // -- global configuration: admin CRUD over the product catalog ------
 
     ProductAdminResponse createProduct(CreateProductRequest request);
 

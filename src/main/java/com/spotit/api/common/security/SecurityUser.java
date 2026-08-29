@@ -8,12 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Spring Security principal wrapping only what request handling needs —
- * avoids loading the full JPA User entity on every authenticated request.
- */
 public record SecurityUser(UUID userId, String email, boolean premium) implements UserDetails {
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return premium

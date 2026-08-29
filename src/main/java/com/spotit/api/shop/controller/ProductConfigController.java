@@ -22,17 +22,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Global-configuration admin surface for the rewards-shop catalog — this is
- * what used to be fixed at boot via ReferenceDataSeeder; these endpoints let
- * an admin (eventually a UI) add/change/retire products without a redeploy.
- */
 @Tag(name = "Product Config (Admin)", description = "Admin CRUD surface for the rewards-shop product catalog. No auth check is currently enforced on these endpoints.")
 @RestController
 @RequestMapping("/api/v1/config/products")
 @RequiredArgsConstructor
 public class ProductConfigController {
-
     private final ShopReadService shopReadService;
     private final ShopWriteService shopWriteService;
 

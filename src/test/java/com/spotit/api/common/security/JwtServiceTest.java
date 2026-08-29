@@ -14,7 +14,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JwtServiceTest {
-
     private static final String SECRET = "a-very-long-test-only-secret-that-is-definitely-long-enough-for-hmac";
 
     @Mock ConfigurationDomainService configurationDomainService;

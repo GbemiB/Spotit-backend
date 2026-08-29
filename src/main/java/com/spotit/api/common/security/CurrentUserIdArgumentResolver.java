@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @Component
 public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResolver {
-
     @Override
     public boolean supportsParameter(@NonNull MethodParameter parameter) {
         return parameter.hasParameterAnnotation(CurrentUserId.class)

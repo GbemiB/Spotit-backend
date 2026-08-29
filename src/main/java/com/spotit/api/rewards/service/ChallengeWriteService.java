@@ -8,10 +8,7 @@ import com.spotit.api.rewards.dto.UpdateChallengeDefinitionRequest;
 import java.util.UUID;
 
 public interface ChallengeWriteService {
-
     ChallengeClaimResponse claim(UUID userId, String challengeId);
-
-    // -- global configuration: admin CRUD over challenge definitions ----
 
     ChallengeDefinitionAdminResponse createDefinition(CreateChallengeDefinitionRequest request);
 

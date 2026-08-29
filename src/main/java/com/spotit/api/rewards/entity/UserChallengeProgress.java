@@ -21,7 +21,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class UserChallengeProgress {
-
     @Id
     @UuidGenerator
     private UUID id;

@@ -16,30 +16,14 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-/**
- * AES/GCM at-rest encryption for secrets like SMTP passwords. Each call generates a fresh random
- * IV and prepends it to the ciphertext ({@code iv || ciphertext+tag}, then Base64-encoded) so the
- * same plaintext never produces the same stored value twice and decrypt() has what it needs to
- * reverse it without a separate IV column.
- *
- * <p>The root key itself ({@code global_configuration.crypto-aes-key}) is read/self-seeded here,
- * as plaintext, directly via {@link GlobalConfigurationRepository} rather than through
- * {@code ConfigurationDomainService} — that service depends on this one to decrypt jwt-secret and
- * smtp-*-password, so going through it here would be circular. It can't be stored encrypted
- * either: a key encrypted with itself can't be decrypted without already knowing it. Storing the
- * root key in the same table as the values it protects means DB read access alone is enough to
- * decrypt everything in it — a deliberate tradeoff, not an oversight; see the git history for
- * this file for the discussion.
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class AesGcmEncryptionService implements EncryptionService {
-
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int IV_LENGTH_BYTES = 12;
     private static final int TAG_LENGTH_BITS = 128;
-    // Same shape as `openssl rand -base64 32` — 32 random bytes is exactly AES-256.
+
     private static final int KEY_BYTES = 32;
 
     private final GlobalConfigurationRepository repository;

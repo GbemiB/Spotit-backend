@@ -26,7 +26,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/insights")
 @RequiredArgsConstructor
 public class InsightController {
-
     private final InsightReadService insightReadService;
 
     @Operation(summary = InsightControllerSwagger.TRENDS_SUMMARY, description = InsightControllerSwagger.TRENDS_DESCRIPTION,

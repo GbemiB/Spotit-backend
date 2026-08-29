@@ -24,7 +24,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/users/me")
 @RequiredArgsConstructor
 public class UserController {
-
     private final UserReadService userReadService;
     private final UserWriteService userWriteService;
 

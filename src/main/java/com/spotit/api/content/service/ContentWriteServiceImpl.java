@@ -17,7 +17,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ContentWriteServiceImpl implements ContentWriteService {
-
     private final ContentItemRepository contentItemRepository;
 
     @Override

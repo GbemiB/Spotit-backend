@@ -19,7 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class OtpCode {
-
     @Id
     @UuidGenerator
     private UUID id;

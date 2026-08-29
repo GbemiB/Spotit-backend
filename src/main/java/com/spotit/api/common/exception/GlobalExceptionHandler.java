@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiErrorBody> handleApiException(ApiException ex) {
         return ResponseEntity.status(ex.getErrorCode().getStatus())

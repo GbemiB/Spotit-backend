@@ -22,7 +22,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class CycleReadServiceImpl implements CycleReadService {
-
     private final UserRepository userRepository;
     private final CycleLogRepository cycleLogRepository;
     private final ConfigurationDomainService configurationDomainService;
@@ -31,9 +30,7 @@ public class CycleReadServiceImpl implements CycleReadService {
     @Transactional(readOnly = true)
     public CycleCurrentResponse getCurrent(UUID userId) {
         User user = requireUser(userId);
-        // No period logged yet — there's nothing to compute a cycle day/phase/prediction from.
-        // Treating "today" as an implicit period start would fabricate a confident-looking
-        // result (e.g. "Day 1 · Period") out of zero real data.
+
         if (user.getLastPeriodDate() == null) {
             return new CycleCurrentResponse(null, null, null, null, "insufficient_data");
         }
@@ -64,8 +61,6 @@ public class CycleReadServiceImpl implements CycleReadService {
         LocalDate first = LocalDate.of(year, month, 1);
         int daysInMonth = first.lengthOfMonth();
 
-        // No period logged yet — same reasoning as getCurrent(): every day gets a null phase
-        // rather than one fabricated from treating today as an implicit period start.
         List<CycleCalendarResponse.DayPhase> days = first.datesUntil(first.plusDays(daysInMonth))
                 .map(date -> {
                     if (lastPeriod == null) {

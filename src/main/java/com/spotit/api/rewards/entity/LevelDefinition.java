@@ -10,13 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * A SpotPoints level tier — was a hardcoded LEVELS array (mirrored in spotit-mobile's
- * levels.js and this module's LevelUtil), now admin-configurable like badges/challenges/
- * products. {@code sortOrder} defines progression order; {@code pointsHigh} is exclusive
- * (a user with exactly {@code pointsHigh} points has rolled into the next tier) — see
- * LevelUtil#levelFor.
- */
 @Entity
 @Table(name = "level_definitions")
 @Getter
@@ -25,7 +18,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class LevelDefinition {
-
     @Id
     @Column(length = 40)
     private String id;

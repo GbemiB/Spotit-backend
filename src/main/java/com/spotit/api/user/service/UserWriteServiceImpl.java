@@ -25,7 +25,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class UserWriteServiceImpl implements UserWriteService {
-
     private final UserRepository userRepository;
     private final ExportJobRepository exportJobRepository;
     private final CycleLogRepository cycleLogRepository;

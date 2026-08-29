@@ -12,20 +12,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Admin surface for every row in {@code global_configuration} — business thresholds (badge
- * requirements, cycle defaults, points, etc.) and infrastructure secrets (JWT signing key, SMTP
- * credentials) alike. Secret-holding properties (jwt-secret, smtp-*-password) never return their
- * stringValue in a response — see {@link ConfigurationDomainService}. Requires the caller to be
- * signed in, same as the other {@code /config/*} admin controllers in this codebase — there is no
- * separate admin role, so use any authenticated account's access token.
- */
 @Tag(name = "Global Config (Admin)", description = "Admin surface for the single global_configuration table backing all app settings, thresholds, and secrets.")
 @RestController
 @RequestMapping("/api/v1/config/global")
 @RequiredArgsConstructor
 public class GlobalConfigurationController {
-
     private final ConfigurationDomainService configurationDomainService;
 
     @Operation(summary = "List all properties", description = "Every row in global_configuration, ordered by name. Secret values are redacted.")

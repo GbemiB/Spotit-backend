@@ -18,17 +18,10 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * All SMTP config (host/port/credentials/from-address) comes exclusively from the {@code global_configuration}
- * table (smtp-* properties) via {@link ConfigurationDomainService} — there is no env-var/yml fallback.
- * Seed the primary (and, optionally, backup) role via {@code ConfigurationDomainService.saveSmtpSettings(...)}
- * before mail can be sent.
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
-
     private static final String SENDER_DISPLAY_NAME = "Spot it";
 
     private final ConfigurationDomainService configurationDomainService;
@@ -41,10 +34,6 @@ public class EmailServiceImpl implements EmailService {
                     "No SMTP role configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail.");
         }
 
-        // Primary is tried first; backup (if configured) only gets used when primary throws —
-        // e.g. the provider is down, rate-limited, or (as happened with Gmail from this host)
-        // silently unreachable. Only the final failure propagates, so a caller catching
-        // MailException still sees exactly one exception either way.
         MailException lastFailure = null;
         for (int i = 0; i < candidates.size(); i++) {
             ResolvedSmtpSettings settings = candidates.get(i);
@@ -68,9 +57,6 @@ public class EmailServiceImpl implements EmailService {
         JavaMailSender mailSender = buildMailSender(settings);
         MimeMessage message = mailSender.createMimeMessage();
         try {
-            // multipart=true + setText(text, html) builds a multipart/alternative message —
-            // clients that can't/won't render HTML (and spam filters that penalize HTML-only
-            // mail) fall back to the plain-text part instead of showing nothing.
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(settings.fromAddress(), SENDER_DISPLAY_NAME);
             helper.setTo(to);
@@ -92,18 +78,12 @@ public class EmailServiceImpl implements EmailService {
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
-        // Port 465 is implicit TLS — the connection must be SSL from the first byte, STARTTLS
-        // is never negotiated on it. Port 587 (and 25) is plaintext-then-upgrade: STARTTLS is
-        // issued after connecting. Setting starttls.enable on a 465 host (or ssl.enable on a
-        // 587 host) leaves the handshake mismatched and the send silently times out/fails —
-        // which is what was happening against providers configured on 465.
+
         boolean implicitSsl = settings.port() == 465;
         props.put("mail.smtp.ssl.enable", String.valueOf(implicitSsl));
         props.put("mail.smtp.starttls.enable", String.valueOf(!implicitSsl && settings.useTls()));
         props.put("mail.smtp.starttls.required", String.valueOf(!implicitSsl && settings.useTls()));
-        // JavaMail's default for these is infinite — without them, an unreachable/filtered SMTP
-        // host (e.g. outbound SMTP blocked by the hosting provider) hangs the request thread
-        // instead of failing fast.
+
         props.put("mail.smtp.connectiontimeout", "5000");
         props.put("mail.smtp.timeout", "5000");
         props.put("mail.smtp.writetimeout", "5000");

@@ -7,7 +7,6 @@ import com.spotit.api.insight.dto.WeeklyDigestResponse;
 import java.util.UUID;
 
 public interface InsightReadService {
-
     CycleTrendsResponse getTrends(UUID userId, Integer cyclesParam);
 
     WeeklyDigestResponse getWeeklyDigest(UUID userId);

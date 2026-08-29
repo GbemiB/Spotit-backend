@@ -19,7 +19,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AesGcmEncryptionServiceTest {
-
     @Mock GlobalConfigurationRepository repository;
 
     private AesGcmEncryptionService service() {

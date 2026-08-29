@@ -31,7 +31,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LogWriteServiceImplTest {
-
     @Mock CycleLogRepository cycleLogRepository;
     @Mock PointsWriteService pointsWriteService;
     @Mock UserRepository userRepository;
@@ -46,10 +45,9 @@ class LogWriteServiceImplTest {
         service = new LogWriteServiceImpl(cycleLogRepository, pointsWriteService, userRepository, configurationDomainService);
         userId = UUID.randomUUID();
         date = LocalDate.of(2026, 7, 28);
-        // Default: no other flow-logged days exist to clear. lenient() since not every test
-        // (e.g. saveLog tests) exercises logPeriod's stale-clearing path at all.
+
         lenient().when(cycleLogRepository.findByUserIdAndFlowIsNotNull(any())).thenReturn(List.of());
-        // Default max range; lenient() since only logPeriod tests exercise this check.
+
         lenient().when(configurationDomainService.getLogMaxPeriodRangeDays()).thenReturn(14);
     }
 
@@ -174,9 +172,6 @@ class LogWriteServiceImplTest {
         when(pointsWriteService.recordPeriodLog(any()))
                 .thenReturn(new PointsWriteService.LogPointsResult(0, 100, 3, true));
 
-        // User opened the sheet on the LAST day of their period (endDate) and filled in
-        // mood/notes there — detailDate says so explicitly, so the end day gets full detail
-        // instead of the day the flow-continuation logic would otherwise default to (startDate).
         LogPeriodRequest request = new LogPeriodRequest(date, endDate, endDate, "medium", "calm", List.of("cramps"), "period ending", true);
         LogPeriodResponse response = service.logPeriod(userId, request);
 
@@ -198,9 +193,6 @@ class LogWriteServiceImplTest {
 
     @Test
     void logPeriodAwardsTheDailyRewardOnceRegardlessOfRangeLength() {
-        // A multi-day period shouldn't earn N x the daily reward just because it spans more
-        // days — it's one logging action, so recordPeriodLog is called exactly once (for the
-        // detail day) even though 5 CycleLog rows get written.
         LocalDate endDate = date.plusDays(4);
         when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(null, 28)));
         when(cycleLogRepository.findByUserIdAndLogDate(any(), any())).thenReturn(Optional.empty());
@@ -218,9 +210,6 @@ class LogWriteServiceImplTest {
 
     @Test
     void loggingANewPeriodClearsEveryOtherFlowLoggedDayEvenFarInThePast() {
-        // Old period: Aug 1-5, flow-only (no other data), plus a genuinely separate, much older
-        // period back in May — logging a new period at Aug 3-7 must clear BOTH: only the most
-        // recently logged period should ever show as flow-logged, not just adjacent stale days.
         LocalDate aug1 = LocalDate.of(2026, 8, 1);
         LocalDate aug2 = LocalDate.of(2026, 8, 2);
         LocalDate may5 = LocalDate.of(2026, 5, 5);
@@ -247,8 +236,7 @@ class LogWriteServiceImplTest {
         verify(cycleLogRepository).delete(staleAug1);
         verify(cycleLogRepository).delete(staleAug2);
         verify(cycleLogRepository).delete(staleMay);
-        // The response must report what got cleared — the caller has to fix its own cached
-        // copy of these days too, or a UI like a calendar dot keeps showing them as logged.
+
         assertThat(response.clearedEntries()).hasSize(3);
         assertThat(response.clearedEntries()).extracting(com.spotit.api.log.dto.LogEntryResponse::date)
                 .containsExactlyInAnyOrder(aug1, aug2, may5);
@@ -257,8 +245,6 @@ class LogWriteServiceImplTest {
 
     @Test
     void loggingANewPeriodPreservesAStaleDayThatHasOtherData() {
-        // Same as above, but Aug 1 also has a note unrelated to flow — clearing the stale flow
-        // shouldn't delete data the user actually entered, just stop it counting as a period day.
         LocalDate aug1 = LocalDate.of(2026, 8, 1);
         LocalDate newStart = LocalDate.of(2026, 8, 2);
         LocalDate newEnd = LocalDate.of(2026, 8, 6);
@@ -279,8 +265,7 @@ class LogWriteServiceImplTest {
         verify(cycleLogRepository, never()).delete(staleAug1);
         assertThat(staleAug1.getFlow()).isNull();
         assertThat(staleAug1.getNotes()).isEqualTo("felt off today");
-        // Even a "preserved" day must appear in clearedEntries — the caller needs the corrected
-        // (flow: null) state to stop treating it as a period day, while keeping the real note.
+
         assertThat(response.clearedEntries()).hasSize(1);
         assertThat(response.clearedEntries().get(0).date()).isEqualTo(aug1);
         assertThat(response.clearedEntries().get(0).flow()).isNull();
@@ -314,8 +299,6 @@ class LogWriteServiceImplTest {
 
     @Test
     void logPeriodResyncsLastPeriodDateEvenForAnOldBackfill() {
-        // The picker is the user's only way to correct their tracked period, so whatever date
-        // they pick — even one far in the past — always becomes the new prediction baseline.
         LocalDate current = LocalDate.of(2026, 7, 28);
         User user = userWith(current, 28);
         when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));

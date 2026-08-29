@@ -6,7 +6,6 @@ import com.spotit.api.rewards.dto.DailyClaimResponse;
 import java.util.UUID;
 
 public interface RewardsWriteService {
-
     DailyClaimResponse claimDaily(UUID userId);
 
     AdWatchResponse watchAd(UUID userId);

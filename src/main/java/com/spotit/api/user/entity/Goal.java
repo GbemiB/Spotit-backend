@@ -1,13 +1,5 @@
 package com.spotit.api.user.entity;
 
-/**
- * Onboarding goal options. {@code code}/{@code descriptionCode} are
- * message-bundle keys (see {@link com.spotit.api.common.i18n.EnumMessages})
- * resolved into display text for {@code GET /api/v1/onboarding/template} —
- * the mobile goals step renders from that response instead of hardcoding
- * copy, and {@link com.spotit.api.user.dto.OnboardingRequest#goal()} is
- * validated against these same constants.
- */
 public enum Goal {
     track(1, "goal.track", "goal.track.description"),
     conceive(2, "goal.conceive", "goal.conceive.description"),

@@ -40,7 +40,6 @@ import java.util.UUID;
 @RequestMapping("/api/v1/logs")
 @RequiredArgsConstructor
 public class LogController {
-
     private final LogReadService logReadService;
     private final LogWriteService logWriteService;
     private final ChallengeReadService challengeReadService;

@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface GlobalConfigurationRepository extends JpaRepository<GlobalConfiguration, UUID> {
-
     Optional<GlobalConfiguration> findByName(String name);
 
     List<GlobalConfiguration> findAllByOrderByNameAsc();

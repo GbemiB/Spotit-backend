@@ -7,13 +7,11 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ChallengeReadService {
-
     List<ChallengeResponse> getChallenges(UUID userId);
 
     List<ChallengeDefinitionAdminResponse> listDefinitionsForAdmin();
 
     ChallengeDefinitionAdminResponse getDefinitionForAdmin(String id);
 
-    /** The "daily_log" ChallengeDefinition's reward — the SpotPoints PointsWriteService pays out per log. */
     int getDailyLogReward();
 }

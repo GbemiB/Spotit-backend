@@ -1,8 +1,6 @@
 package com.spotit.api.configuration;
 
-/** Names of every row in {@code global_configuration} — the single source of truth so a typo can't silently create a duplicate property. */
 public final class PropertyNames {
-
     private PropertyNames() {
     }
 
@@ -30,8 +28,6 @@ public final class PropertyNames {
     public static final String REWARDS_HISTORY_PAGE_SIZE = "rewards-history-page-size";
     public static final String CONTENT_FEED_DEFAULT_LIMIT = "content-feed-default-limit";
 
-    // Fixed set of groups this codebase actually assigns (see GlobalConfiguration#groupName) —
-    // purely a UI/organizational grouping, nothing enforces a property belongs to only these.
     public static final String GROUP_SECURITY = "security";
     public static final String GROUP_POINTS = "points";
     public static final String GROUP_CYCLE = "cycle";
@@ -44,8 +40,6 @@ public final class PropertyNames {
     public static final String GROUP_CONTENT = "content";
     public static final String GROUP_SMTP = "smtp";
 
-    // SMTP: 6 properties per role, not auto-seeded — a role stays "not configured" (see
-    // ConfigurationDomainService#getSmtpSettingsInPriorityOrder) until an admin sets its host.
     public static String smtpHost(String role) {
         return "smtp-" + role + "-host";
     }

@@ -19,10 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    // Only the truly anonymous auth endpoints — /auth/logout and /auth/account
-    // require a Bearer token (they resolve @CurrentUserId) and are deliberately
-    // left out of this list so anyRequest().authenticated() covers them.
     private static final String[] PUBLIC_PATHS = {
             "/api/v1/auth/signup",
             "/api/v1/auth/signup/complete",

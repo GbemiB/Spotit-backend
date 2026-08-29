@@ -10,7 +10,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class RewardsWriteServiceImpl implements RewardsWriteService {
-
     private final PointsWriteService pointsWriteService;
 
     @Override

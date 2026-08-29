@@ -14,23 +14,8 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Issues and verifies signed JWT access/refresh tokens. Access tokens carry
- * enough claims (email, premium flag) to build a {@link SecurityUser} without
- * a DB round-trip on every request; refresh tokens are opaque beyond the
- * subject + type so they can't be used as access tokens if leaked.
- *
- * <p>The signing key and TTLs are resolved once from {@link ConfigurationDomainService} at
- * construction time, not re-read per call — {@link com.spotit.api.common.security.JwtAuthenticationFilter}
- * runs on every request, so re-querying the DB there would add a round-trip to every API call.
- * Changing the JWT secret/TTLs in {@code global_configuration} therefore takes effect on next
- * restart, not live — appropriate for a signing key, which shouldn't rotate silently underneath
- * issued tokens anyway. {@code ConfigurationDomainServiceImpl} seeds its rows via
- * {@code @PostConstruct}, so they're guaranteed present by the time this constructor runs.
- */
 @Service
 public class JwtService {
-
     private static final String CLAIM_TYPE = "type";
     private static final String CLAIM_EMAIL = "email";
     private static final String CLAIM_PREMIUM = "premium";

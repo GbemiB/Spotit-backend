@@ -20,7 +20,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ContentReadServiceImpl implements ContentReadService {
-
     private final ContentItemRepository contentItemRepository;
     private final ConfigurationDomainService configurationDomainService;
 

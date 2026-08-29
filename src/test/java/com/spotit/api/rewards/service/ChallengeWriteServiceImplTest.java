@@ -26,7 +26,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ChallengeWriteServiceImplTest {
-
     @Mock ChallengeDefinitionRepository challengeDefinitionRepository;
     @Mock UserChallengeProgressRepository progressRepository;
     @Mock ChallengeCalculator calculator;
@@ -59,7 +58,7 @@ class ChallengeWriteServiceImplTest {
     void claimingBeforeTheChallengeIsCompleteIsRejected() {
         when(challengeDefinitionRepository.findById("log_week")).thenReturn(Optional.of(definition));
         when(calculator.currentWeekStart()).thenReturn(weekStart);
-        when(calculator.computeDone(userId, definition)).thenReturn(3); // total is 7
+        when(calculator.computeDone(userId, definition)).thenReturn(3);
 
         assertThatThrownBy(() -> service.claim(userId, "log_week"))
                 .isInstanceOf(ApiException.class)

@@ -23,7 +23,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ShopReadServiceImpl implements ShopReadService {
-
     private final ProductRepository productRepository;
     private final ShopOrderRepository shopOrderRepository;
     private final UserRepository userRepository;

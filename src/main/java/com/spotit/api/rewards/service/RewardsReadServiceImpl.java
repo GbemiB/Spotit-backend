@@ -24,7 +24,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class RewardsReadServiceImpl implements RewardsReadService {
-
     private final UserRepository userRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
     private final LevelDefinitionService levelDefinitionService;

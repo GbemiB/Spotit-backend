@@ -24,7 +24,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class CycleLog {
-
     @Id
     @UuidGenerator
     private UUID id;

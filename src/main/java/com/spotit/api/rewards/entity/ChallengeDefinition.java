@@ -15,7 +15,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class ChallengeDefinition {
-
     @Id
     @Column(length = 40)
     private String id;

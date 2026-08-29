@@ -20,7 +20,6 @@ import java.util.UUID;
 @Builder
 @IdClass(UserBadge.Key.class)
 public class UserBadge {
-
     @Id
     @Column(name = "user_id", nullable = false)
     private UUID userId;

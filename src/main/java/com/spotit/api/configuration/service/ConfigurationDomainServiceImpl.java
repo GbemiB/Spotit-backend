@@ -23,32 +23,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Backs every property in {@code global_configuration}. Non-SMTP properties (other than
- * crypto-aes-key, seeded by {@link com.spotit.api.common.crypto.AesGcmEncryptionService} itself)
- * are eagerly seeded in {@link #PostConstruct} (not via {@code ReferenceDataSeeder}, which is an
- * ApplicationRunner and therefore runs too late) so that {@code JwtService}'s constructor-time
- * read of jwt-secret always finds a row, even on a brand-new database. SMTP properties are left
- * unseeded — a role only becomes "configured" once an admin PUTs its host via SmtpConfigController.
- */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ConfigurationDomainServiceImpl implements ConfigurationDomainService {
-
-    // Same shape as `openssl rand -base64 48` — 48 random bytes is comfortably enough for HS512.
     private static final int GENERATED_JWT_SECRET_BYTES = 48;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    // Encrypted-at-rest: written through EncryptionService.encrypt() and read back through
-    // .decrypt(). crypto-aes-key is NOT here — it's the key that encrypts these, so it's stored
-    // as plaintext (see AesGcmEncryptionService) and only ever appears in REDACTED_NAMES below.
     private static final Set<String> ENCRYPTED_SECRET_NAMES = Set.of(
             PropertyNames.JWT_SECRET,
             PropertyNames.smtpPassword(SmtpRole.primary.name()),
             PropertyNames.smtpPassword(SmtpRole.backup.name()));
 
-    // Every property whose stringValue is hidden from admin API responses.
     private static final Set<String> REDACTED_NAMES = Set.of(
             PropertyNames.JWT_SECRET,
             PropertyNames.smtpPassword(SmtpRole.primary.name()),
@@ -58,12 +44,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     private final GlobalConfigurationRepository repository;
     private final EncryptionService encryptionService;
 
-    // Runs before the @Transactional proxy wraps this bean, so each repository.save() below gets
-    // its own transaction from SimpleJpaRepository rather than one shared transaction — fine here,
-    // since seeding is idempotent (seedIfAbsent) and there's no partial-write concern. Note:
-    // crypto-aes-key is seeded by AesGcmEncryptionService itself, not here — encryptionService
-    // (injected below) is only usable once that seeding has already happened, since it's the key
-    // this class's own encrypt() calls depend on.
     @PostConstruct
     void seedDefaults() {
         seedIfAbsent(PropertyNames.JWT_SECRET, PropertyNames.GROUP_SECURITY, null, generateEncryptedJwtSecret(), "Encrypted JWT signing secret");
@@ -111,8 +91,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         log.info("Seeded global_configuration.{} with a freshly generated JWT secret — edit the row to change it.", PropertyNames.JWT_SECRET);
         return encryptionService.encrypt(jwtSecret);
     }
-
-    // -- typed getters --------
 
     @Override
     @Transactional(readOnly = true)
@@ -240,8 +218,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         return require(PropertyNames.CONTENT_FEED_DEFAULT_LIMIT).getValue().intValue();
     }
 
-    // -- SMTP --------
-
     @Override
     @Transactional(readOnly = true)
     public List<ResolvedSmtpSettings> getSmtpSettingsInPriorityOrder() {
@@ -310,8 +286,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         return repository.findByName(name).map(GlobalConfiguration::getValue).orElse(null);
     }
 
-    // -- generic admin CRUD --------
-
     @Override
     @Transactional(readOnly = true)
     public List<GlobalConfigurationResponse> listAll() {
@@ -327,10 +301,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Override
     @Transactional
     public GlobalConfigurationResponse update(String name, UpdateGlobalConfigurationRequest request) {
-        // Rotating crypto-aes-key here would silently strand every ciphertext already written
-        // with the old key (jwt-secret, smtp-*-password) — undecryptable forever, no error until
-        // the next read. Rotation needs a dedicated re-encrypt-everything operation, not a blind
-        // PATCH, so it's blocked outright rather than allowed to quietly corrupt the DB.
         if (PropertyNames.CRYPTO_AES_KEY.equals(name) && request.stringValue() != null) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR,
                     "crypto-aes-key can't be changed via this endpoint — rotating it would strand every secret already encrypted with the old key.");
