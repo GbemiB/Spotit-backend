@@ -79,10 +79,10 @@ class ConfigurationDomainServiceImplTest {
 
     @Test
     void getByNameDoesNotRedactAnOrdinaryProperty() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.smtpHost("primary")).stringValue("smtp.example.com").build();
-        when(repository.findByName(PropertyNames.smtpHost("primary"))).thenReturn(Optional.of(row));
+        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.SMTP_HOST).stringValue("smtp.example.com").build();
+        when(repository.findByName(PropertyNames.SMTP_HOST)).thenReturn(Optional.of(row));
 
-        GlobalConfigurationResponse response = service.getByName(PropertyNames.smtpHost("primary"));
+        GlobalConfigurationResponse response = service.getByName(PropertyNames.SMTP_HOST);
 
         assertThat(response.stringValue()).isEqualTo("smtp.example.com");
     }

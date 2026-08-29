@@ -8,7 +8,6 @@ import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
 import com.spotit.api.configuration.entity.GlobalConfiguration;
 import com.spotit.api.configuration.repository.GlobalConfigurationRepository;
-import com.spotit.api.smtp.entity.SmtpRole;
 import com.spotit.api.smtp.service.ResolvedSmtpSettings;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -32,13 +30,11 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     private static final Set<String> ENCRYPTED_SECRET_NAMES = Set.of(
             PropertyNames.JWT_SECRET,
-            PropertyNames.smtpPassword(SmtpRole.primary.name()),
-            PropertyNames.smtpPassword(SmtpRole.backup.name()));
+            PropertyNames.SMTP_PASSWORD);
 
     private static final Set<String> REDACTED_NAMES = Set.of(
             PropertyNames.JWT_SECRET,
-            PropertyNames.smtpPassword(SmtpRole.primary.name()),
-            PropertyNames.smtpPassword(SmtpRole.backup.name()),
+            PropertyNames.SMTP_PASSWORD,
             PropertyNames.CRYPTO_AES_KEY);
 
     private final GlobalConfigurationRepository repository;
@@ -220,43 +216,34 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
-    public List<ResolvedSmtpSettings> getSmtpSettingsInPriorityOrder() {
-        List<ResolvedSmtpSettings> ordered = new ArrayList<>();
-        resolveSmtp(SmtpRole.primary).ifPresent(ordered::add);
-        resolveSmtp(SmtpRole.backup).ifPresent(ordered::add);
-        return ordered;
-    }
-
-    private Optional<ResolvedSmtpSettings> resolveSmtp(SmtpRole role) {
-        String roleName = role.name();
-        var host = repository.findByName(PropertyNames.smtpHost(roleName));
+    public Optional<ResolvedSmtpSettings> getSmtpSettings() {
+        var host = repository.findByName(PropertyNames.SMTP_HOST);
         if (host.isEmpty() || host.get().getStringValue() == null || host.get().getStringValue().isBlank()) {
             return Optional.empty();
         }
-        String username = stringValueOrNull(PropertyNames.smtpUsername(roleName));
-        String encryptedPassword = stringValueOrNull(PropertyNames.smtpPassword(roleName));
-        String fromAddress = stringValueOrNull(PropertyNames.smtpFromAddress(roleName));
-        Long port = valueOrNull(PropertyNames.smtpPort(roleName));
-        boolean useTls = repository.findByName(PropertyNames.smtpUseTls(roleName)).map(GlobalConfiguration::isEnabled).orElse(true);
+        String username = stringValueOrNull(PropertyNames.SMTP_USERNAME);
+        String encryptedPassword = stringValueOrNull(PropertyNames.SMTP_PASSWORD);
+        String fromAddress = stringValueOrNull(PropertyNames.SMTP_FROM_ADDRESS);
+        Long port = valueOrNull(PropertyNames.SMTP_PORT);
+        boolean useTls = repository.findByName(PropertyNames.SMTP_USE_TLS).map(GlobalConfiguration::isEnabled).orElse(true);
 
-        return Optional.of(new ResolvedSmtpSettings(role, host.get().getStringValue(),
+        return Optional.of(new ResolvedSmtpSettings(host.get().getStringValue(),
                 port == null ? 587 : port.intValue(), username, encryptedPassword == null ? null : encryptionService.decrypt(encryptedPassword),
                 fromAddress, useTls));
     }
 
     @Override
     @Transactional
-    public void saveSmtpSettings(SmtpRole role, String host, int port, String username, String password, String fromAddress, boolean useTls) {
-        String roleName = role.name();
-        upsert(PropertyNames.smtpHost(roleName), null, host, "SMTP host for the " + roleName + " relay");
-        upsert(PropertyNames.smtpPort(roleName), (long) port, null, "SMTP port for the " + roleName + " relay");
-        upsert(PropertyNames.smtpUsername(roleName), null, username, "SMTP username for the " + roleName + " relay");
-        upsert(PropertyNames.smtpFromAddress(roleName), null, fromAddress, "From address for the " + roleName + " relay");
-        upsertEnabled(PropertyNames.smtpUseTls(roleName), useTls, "Whether the " + roleName + " relay uses TLS");
+    public void saveSmtpSettings(String host, int port, String username, String password, String fromAddress, boolean useTls) {
+        upsert(PropertyNames.SMTP_HOST, null, host, "SMTP host used to send all transactional mail");
+        upsert(PropertyNames.SMTP_PORT, (long) port, null, "SMTP port");
+        upsert(PropertyNames.SMTP_USERNAME, null, username, "SMTP username");
+        upsert(PropertyNames.SMTP_FROM_ADDRESS, null, fromAddress, "From address for outgoing mail");
+        upsertEnabled(PropertyNames.SMTP_USE_TLS, useTls, "Whether the SMTP relay uses TLS");
 
         if (password != null && !password.isBlank()) {
-            upsert(PropertyNames.smtpPassword(roleName), null, encryptionService.encrypt(password), "Encrypted SMTP password for the " + roleName + " relay");
-        } else if (repository.findByName(PropertyNames.smtpPassword(roleName)).isEmpty()) {
+            upsert(PropertyNames.SMTP_PASSWORD, null, encryptionService.encrypt(password), "Encrypted SMTP password");
+        } else if (repository.findByName(PropertyNames.SMTP_PASSWORD).isEmpty()) {
             throw new IllegalArgumentException("password is required when creating SMTP settings for the first time");
         }
     }

@@ -6,7 +6,6 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.MailException;
 import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,7 +14,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 import java.util.Properties;
 
 @Service
@@ -28,29 +26,10 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void send(String to, String subject, String htmlBody, String textBody) {
-        List<ResolvedSmtpSettings> candidates = configurationDomainService.getSmtpSettingsInPriorityOrder();
-        if (candidates.isEmpty()) {
-            throw new MailPreparationException(
-                    "No SMTP role configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail.");
-        }
-
-        MailException lastFailure = null;
-        for (int i = 0; i < candidates.size(); i++) {
-            ResolvedSmtpSettings settings = candidates.get(i);
-            try {
-                sendVia(settings, to, subject, htmlBody, textBody);
-                if (i > 0) {
-                    log.warn("Sent via {} SMTP ({}) after {} failed", settings.role(), settings.host(), candidates.get(i - 1).role());
-                }
-                return;
-            } catch (MailException e) {
-                lastFailure = e;
-                boolean hasNext = i < candidates.size() - 1;
-                log.warn("SMTP send via {} ({}) failed{}", settings.role(), settings.host(),
-                        hasNext ? " — trying backup" : " — no more providers configured", e);
-            }
-        }
-        throw lastFailure;
+        ResolvedSmtpSettings settings = configurationDomainService.getSmtpSettings()
+                .orElseThrow(() -> new MailPreparationException(
+                        "No SMTP settings configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail."));
+        sendVia(settings, to, subject, htmlBody, textBody);
     }
 
     private void sendVia(ResolvedSmtpSettings settings, String to, String subject, String htmlBody, String textBody) {

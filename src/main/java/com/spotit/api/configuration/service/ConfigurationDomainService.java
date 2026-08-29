@@ -2,10 +2,10 @@ package com.spotit.api.configuration.service;
 
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
-import com.spotit.api.smtp.entity.SmtpRole;
 import com.spotit.api.smtp.service.ResolvedSmtpSettings;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ConfigurationDomainService {
     String getJwtSecret();
@@ -50,9 +50,9 @@ public interface ConfigurationDomainService {
 
     int getContentFeedDefaultLimit();
 
-    List<ResolvedSmtpSettings> getSmtpSettingsInPriorityOrder();
+    Optional<ResolvedSmtpSettings> getSmtpSettings();
 
-    void saveSmtpSettings(SmtpRole role, String host, int port, String username, String password, String fromAddress, boolean useTls);
+    void saveSmtpSettings(String host, int port, String username, String password, String fromAddress, boolean useTls);
 
     List<GlobalConfigurationResponse> listAll();
 

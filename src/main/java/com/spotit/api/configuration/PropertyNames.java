@@ -40,27 +40,10 @@ public final class PropertyNames {
     public static final String GROUP_CONTENT = "content";
     public static final String GROUP_SMTP = "smtp";
 
-    public static String smtpHost(String role) {
-        return "smtp-" + role + "-host";
-    }
-
-    public static String smtpPort(String role) {
-        return "smtp-" + role + "-port";
-    }
-
-    public static String smtpUsername(String role) {
-        return "smtp-" + role + "-username";
-    }
-
-    public static String smtpPassword(String role) {
-        return "smtp-" + role + "-password";
-    }
-
-    public static String smtpFromAddress(String role) {
-        return "smtp-" + role + "-from-address";
-    }
-
-    public static String smtpUseTls(String role) {
-        return "smtp-" + role + "-use-tls";
-    }
+    public static final String SMTP_HOST = "smtp-host";
+    public static final String SMTP_PORT = "smtp-port";
+    public static final String SMTP_USERNAME = "smtp-username";
+    public static final String SMTP_PASSWORD = "smtp-password";
+    public static final String SMTP_FROM_ADDRESS = "smtp-from-address";
+    public static final String SMTP_USE_TLS = "smtp-use-tls";
 }
