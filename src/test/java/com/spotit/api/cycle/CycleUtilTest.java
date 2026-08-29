@@ -36,13 +36,14 @@ class CycleUtilTest {
     void phaseIsNullOutsidePeriodFertileOvulation() {
         int cycleLength = 28;
         int periodLength = 5;
-        // ovDay = 28 - 14 = 14. Luteal/follicular stretches aren't tracked — phaseFor returns
-        // null for those days rather than labeling them.
+        // ovDay = 28 - 14 = 14, fertile window is the 5 days immediately before it (9-13).
+        // Luteal/follicular stretches aren't tracked — phaseFor returns null for those days
+        // rather than labeling them.
         assertThat(phase(1, periodLength, cycleLength)).isEqualTo(CyclePhase.period);
         assertThat(phase(5, periodLength, cycleLength)).isEqualTo(CyclePhase.period);
         assertThat(phase(6, periodLength, cycleLength)).isNull();
-        assertThat(phase(9, periodLength, cycleLength)).isNull();
-        assertThat(phase(10, periodLength, cycleLength)).isEqualTo(CyclePhase.fertile);
+        assertThat(phase(8, periodLength, cycleLength)).isNull();
+        assertThat(phase(9, periodLength, cycleLength)).isEqualTo(CyclePhase.fertile);
         assertThat(phase(13, periodLength, cycleLength)).isEqualTo(CyclePhase.fertile);
         assertThat(phase(14, periodLength, cycleLength)).isEqualTo(CyclePhase.ovulation);
         assertThat(phase(15, periodLength, cycleLength)).isNull();

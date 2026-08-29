@@ -17,12 +17,18 @@ public final class CycleUtil {
         return (int) (Math.floorMod(diff, cycleLength) + 1);
     }
 
-    /** Null outside period/fertile/ovulation — the luteal and follicular stretches aren't tracked. */
+    /**
+     * Null outside period/fertile/ovulation — the luteal and follicular stretches aren't tracked.
+     * Fertile window is the 5 days immediately before ovulation (sperm survive up to 5 days; the
+     * egg itself is only viable ~24h on the ovulation day, which gets its own distinct label) —
+     * matches spotit-mobile's cycle.js and the app's own "5 days before ovulation through the
+     * day of ovulation itself" educational copy.
+     */
     public static Phase phaseFor(int cycleDay, int periodLength, int cycleLength) {
         int ovDay = cycleLength - 14;
         if (cycleDay <= periodLength) return new Phase(CyclePhase.period, CyclePhase.period.getCode());
         if (cycleDay == ovDay) return new Phase(CyclePhase.ovulation, CyclePhase.ovulation.getCode());
-        if (cycleDay >= ovDay - 4 && cycleDay < ovDay) return new Phase(CyclePhase.fertile, CyclePhase.fertile.getCode());
+        if (cycleDay >= ovDay - 5 && cycleDay < ovDay) return new Phase(CyclePhase.fertile, CyclePhase.fertile.getCode());
         return null;
     }
 
