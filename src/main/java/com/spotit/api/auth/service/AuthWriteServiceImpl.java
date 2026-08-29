@@ -1,6 +1,7 @@
 package com.spotit.api.auth.service;
 
 import com.spotit.api.auth.dto.*;
+import com.spotit.api.auth.entity.OtpCode;
 import com.spotit.api.auth.entity.OtpPurpose;
 import com.spotit.api.auth.entity.RefreshToken;
 import com.spotit.api.auth.entity.SignupLead;
@@ -163,12 +164,28 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
         }
-        // Defense in depth: a User is only ever created with emailVerified=true (see
-        // completeSignup), so this should be unreachable — but if it ever isn't, login must
-        // not silently grant a session to an unverified account.
+        // A User is only ever created with emailVerified=true now (see completeSignup), but a
+        // stray account from before that guarantee existed (created with a password but never
+        // finished verification — e.g. the OTP email never arrived) still has the right
+        // password and would otherwise be a dead end. Rather than reject it outright, issue a
+        // fresh OTP and hand the client its id so it can route straight to verifying it —
+        // OtpPurpose.signup is otherwise unused now that fresh signups go through SignupLead
+        // instead, so this reuses it for exactly this recovery path. See verifyLoginOtp.
         if (!user.isEmailVerified()) {
-            throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
+            OtpCode otp = otpService.issue(user, OtpPurpose.signup);
+            throw new ApiException(ErrorCode.EMAIL_NOT_VERIFIED, ErrorMessage.EMAIL_NOT_VERIFIED, otp.getId(), otpService.ttlSeconds());
         }
+        return issueTokens(user);
+    }
+
+    @Override
+    @Transactional
+    public TokenResponse verifyLoginOtp(OtpVerifyRequest request) {
+        OtpCode otp = otpService.verify(request.otpId(), request.code(), OtpPurpose.signup);
+        User user = userRepository.findById(otp.getUserId())
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
+        user.setEmailVerified(true);
+        userRepository.save(user);
         return issueTokens(user);
     }
 
@@ -184,12 +201,16 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     @Override
     @Transactional
     public OtpRequestResponse resendOtp(OtpResendRequest request) {
-        // Only used to resend a signup-verification code (password-reset resend goes through
-        // forgotPassword instead), so this resends against the SignupLead.
-        SignupLead lead = signupLeadRepository.findById(request.otpId())
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
-        long ttlSeconds = issueLeadOtp(lead);
-        return new OtpRequestResponse("A new code has been sent.", lead.getId(), ttlSeconds);
+        // Two possible owners for this id: a SignupLead mid-signup, or (see login/
+        // verifyLoginOtp) an OtpCode tied to an existing User recovering an unverified
+        // account. Password-reset resend goes through forgotPassword instead, not this.
+        var lead = signupLeadRepository.findById(request.otpId());
+        if (lead.isPresent()) {
+            long ttlSeconds = issueLeadOtp(lead.get());
+            return new OtpRequestResponse("A new code has been sent.", lead.get().getId(), ttlSeconds);
+        }
+        OtpCode otp = otpService.resend(request.otpId());
+        return new OtpRequestResponse("A new code has been sent.", otp.getId(), otpService.ttlSeconds());
     }
 
     @Override

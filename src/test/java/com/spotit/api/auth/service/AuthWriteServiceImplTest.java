@@ -248,6 +248,46 @@ class AuthWriteServiceImplTest {
         verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
+    @Test
+    void loginWithCorrectPasswordButUnverifiedEmailIssuesAnOtpInsteadOfRejectingOutright() {
+        UUID id = UUID.randomUUID();
+        User user = existingUser(id);
+        user.setEmailVerified(false);
+        when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("correct", "hashed")).thenReturn(true);
+        UUID otpId = UUID.randomUUID();
+        com.spotit.api.auth.entity.OtpCode otp = com.spotit.api.auth.entity.OtpCode.builder().id(otpId).build();
+        when(otpService.issue(user, OtpPurpose.signup)).thenReturn(otp);
+
+        assertThatThrownBy(() -> service.login(new LoginRequest("jane@example.com", "correct")))
+                .isInstanceOf(ApiException.class)
+                .satisfies(e -> {
+                    ApiException apiEx = (ApiException) e;
+                    assertThat(apiEx.getErrorCode()).isEqualTo(ErrorCode.EMAIL_NOT_VERIFIED);
+                    assertThat(apiEx.getOtpId()).isEqualTo(otpId);
+                });
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    // --- verifyLoginOtp ---
+
+    @Test
+    void verifyLoginOtpMarksTheUserVerifiedAndIssuesTokens() {
+        UUID id = UUID.randomUUID();
+        UUID otpId = UUID.randomUUID();
+        User user = existingUser(id);
+        user.setEmailVerified(false);
+        com.spotit.api.auth.entity.OtpCode otp = com.spotit.api.auth.entity.OtpCode.builder().id(otpId).userId(id).build();
+        when(otpService.verify(otpId, "482913", OtpPurpose.signup)).thenReturn(otp);
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        stubTokenIssuance(id);
+
+        TokenResponse response = service.verifyLoginOtp(new OtpVerifyRequest(otpId, "482913"));
+
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        verify(userRepository).save(argThat(User::isEmailVerified));
+    }
+
     // --- refresh ---
 
     @Test

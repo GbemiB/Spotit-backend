@@ -114,11 +114,34 @@ public class AuthController {
                     examples = @ExampleObject(value = AuthControllerSwagger.LOGIN_200_EXAMPLE))),
             @ApiResponse(responseCode = "401", description = "Invalid email or password.", content = @Content(
                     schema = @Schema(implementation = ErrorDetail.class),
-                    examples = @ExampleObject(value = AuthControllerSwagger.INVALID_CREDENTIALS_401_EXAMPLE)))
+                    examples = @ExampleObject(value = AuthControllerSwagger.INVALID_CREDENTIALS_401_EXAMPLE))),
+            @ApiResponse(responseCode = "403", description = "Correct credentials, but this account never finished email verification — a fresh code was just issued; data.otpId is where to verify it.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.EMAIL_NOT_VERIFIED_403_EXAMPLE)))
     })
     @PostMapping("/login")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
         return authWriteService.login(request);
+    }
+
+    @Operation(summary = AuthControllerSwagger.LOGIN_VERIFY_OTP_SUMMARY, description = AuthControllerSwagger.LOGIN_VERIFY_OTP_DESCRIPTION)
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
+            schema = @Schema(implementation = OtpVerifyRequest.class),
+            examples = @ExampleObject(value = AuthControllerSwagger.VERIFY_OTP_REQUEST_EXAMPLE)))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Verified; tokens issued.", content = @Content(
+                    schema = @Schema(implementation = TokenResponse.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.COMPLETE_SIGNUP_200_EXAMPLE))),
+            @ApiResponse(responseCode = "400", description = "Invalid or already-used code.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.INVALID_CODE_400_EXAMPLE))),
+            @ApiResponse(responseCode = "410", description = "This code has expired.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = AuthControllerSwagger.OTP_EXPIRED_410_EXAMPLE)))
+    })
+    @PostMapping("/login/verify-otp")
+    public TokenResponse verifyLoginOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        return authWriteService.verifyLoginOtp(request);
     }
 
     @Operation(summary = AuthControllerSwagger.FORGOT_PASSWORD_SUMMARY, description = AuthControllerSwagger.FORGOT_PASSWORD_DESCRIPTION)

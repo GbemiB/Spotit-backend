@@ -39,7 +39,7 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
         int status = currentStatus(response);
 
         if (body instanceof ApiErrorBody error) {
-            return ApiResponse.of(status, error.message(), new ErrorDetail(error.errorCode()));
+            return ApiResponse.of(status, error.message(), new ErrorDetail(error.errorCode(), error.otpId(), error.expiresInSeconds()));
         }
         if (body instanceof MessageResponse msg) {
             return ApiResponse.of(status, msg.message(), null);

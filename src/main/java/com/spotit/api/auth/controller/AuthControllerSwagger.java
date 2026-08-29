@@ -142,6 +142,17 @@ final class AuthControllerSwagger {
               "data": { "errorCode": "invalid_credentials" }
             }
             """;
+    static final String EMAIL_NOT_VERIFIED_403_EXAMPLE = """
+            {
+              "code": 403,
+              "message": "Please verify your email to continue. We've sent you a new code.",
+              "data": { "errorCode": "email_not_verified", "otpId": "9d1e2b0a-1234-4c56-9abc-1234567890ab" }
+            }
+            """;
+
+    static final String LOGIN_VERIFY_OTP_SUMMARY = "Verify the recovery OTP from a not-yet-verified login";
+    static final String LOGIN_VERIFY_OTP_DESCRIPTION = "Completes the recovery path login() sends an unverified-but-correct-password account "
+            + "down (see the 403 email_not_verified response there). Unlike /signup/complete, issues tokens directly — this account already has a password.";
 
     static final String FORGOT_PASSWORD_SUMMARY = "Request a password reset";
     static final String FORGOT_PASSWORD_DESCRIPTION = "Issues a one-time code to reset the password. Always returns the same message, whether or not the email is registered, to avoid account enumeration.";

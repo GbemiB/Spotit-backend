@@ -17,6 +17,7 @@ public final class ErrorMessage {
     public static final String CODE_VERIFIED = "Code verified.";
     public static final String EMAIL_ALREADY_REGISTERED = "An account with this email already exists.";
     public static final String INVALID_CREDENTIALS = "Invalid email or password.";
+    public static final String EMAIL_NOT_VERIFIED = "Please verify your email to continue. We've sent you a new code.";
     public static final String INVALID_REFRESH_TOKEN = "Invalid or expired refresh token.";
     public static final String USER_NOT_FOUND = "User not found.";
     public static final String ACCOUNT_DELETION_SCHEDULED = "Account deletion scheduled.";
