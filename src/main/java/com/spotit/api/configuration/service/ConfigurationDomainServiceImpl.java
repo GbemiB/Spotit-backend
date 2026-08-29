@@ -281,6 +281,18 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
+    public List<String> listGroupNames() {
+        return repository.findDistinctGroupNames();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GlobalConfigurationResponse> listByGroup(String groupName) {
+        return repository.findByGroupNameOrderByNameAsc(groupName).stream().map(this::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public GlobalConfigurationResponse getByName(String name) {
         return toResponse(require(name));
     }

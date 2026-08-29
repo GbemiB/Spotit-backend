@@ -56,6 +56,10 @@ public interface ConfigurationDomainService {
 
     List<GlobalConfigurationResponse> listAll();
 
+    List<String> listGroupNames();
+
+    List<GlobalConfigurationResponse> listByGroup(String groupName);
+
     GlobalConfigurationResponse getByName(String name);
 
     GlobalConfigurationResponse update(String name, UpdateGlobalConfigurationRequest request);

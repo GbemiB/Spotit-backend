@@ -25,6 +25,18 @@ public class GlobalConfigurationController {
         return configurationDomainService.listAll();
     }
 
+    @Operation(summary = "List all group names", description = "Every distinct group_name in global_configuration (e.g. security, points, badges, smtp) — every row belongs to exactly one.")
+    @GetMapping("/groups")
+    public List<String> listGroups() {
+        return configurationDomainService.listGroupNames();
+    }
+
+    @Operation(summary = "List properties in a group", description = "Every row whose group_name matches, ordered by name. Secret values are redacted.")
+    @GetMapping("/group/{groupName}")
+    public List<GlobalConfigurationResponse> listByGroup(@Parameter(description = "Group name", example = "badges") @PathVariable String groupName) {
+        return configurationDomainService.listByGroup(groupName);
+    }
+
     @Operation(summary = "Get a property", description = "Fetch a single property by its name (e.g. cycle-default-length, smtp-primary-host).")
     @GetMapping("/{name}")
     public GlobalConfigurationResponse get(@Parameter(description = "Property name", example = "cycle-default-length") @PathVariable String name) {

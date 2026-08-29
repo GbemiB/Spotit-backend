@@ -40,6 +40,7 @@ public final class PropertyNames {
     public static final String GROUP_CONTENT = "content";
     public static final String GROUP_SMTP = "smtp";
     public static final String GROUP_CHALLENGES = "challenges";
+    public static final String GROUP_LEVELS = "levels";
 
     public static final String SMTP_HOST = "smtp-host";
     public static final String SMTP_PORT = "smtp-port";
@@ -53,6 +54,7 @@ public final class PropertyNames {
     // than one row per field. See BadgeDefinitionRepository/ChallengeDefinitionRepository.
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";
+    public static final String LEVEL_DEFINITION_PREFIX = "level-definition-";
 
     public static String badgeDefinitionName(String id) {
         return BADGE_DEFINITION_PREFIX + id;
@@ -60,5 +62,9 @@ public final class PropertyNames {
 
     public static String challengeDefinitionName(String id) {
         return CHALLENGE_DEFINITION_PREFIX + id;
+    }
+
+    public static String levelDefinitionName(String id) {
+        return LEVEL_DEFINITION_PREFIX + id;
     }
 }

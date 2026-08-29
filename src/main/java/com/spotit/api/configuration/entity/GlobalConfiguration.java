@@ -28,7 +28,7 @@ public class GlobalConfiguration {
     @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
 
-    @Column(name = "group_name", length = 50)
+    @Column(name = "group_name", nullable = false, length = 50)
     private String groupName;
 
     @Column(name = "enabled", nullable = false)
