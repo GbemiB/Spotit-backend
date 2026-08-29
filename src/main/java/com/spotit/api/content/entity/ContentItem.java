@@ -30,8 +30,16 @@ public class ContentItem {
     @Column(nullable = false, length = 300)
     private String title;
 
+    @Column(columnDefinition = "text")
+    private String body;
+
     @Column(name = "image_url", length = 500)
     private String imageUrl;
+
+    // Presentation-only: the client maps this to a locally bundled image rather than fetching
+    // imageUrl remotely (mirrors how badge/product icons are mapped locally by id elsewhere).
+    @Column(name = "image_key", length = 60)
+    private String imageKey;
 
     @Column(nullable = false)
     private boolean sponsored;

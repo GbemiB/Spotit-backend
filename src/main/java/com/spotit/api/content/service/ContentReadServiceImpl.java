@@ -29,7 +29,7 @@ public class ContentReadServiceImpl implements ContentReadService {
     public ContentFeedResponse getFeed(Integer limit) {
         int pageSize = limit == null ? DEFAULT_LIMIT : limit;
         var items = contentItemRepository.findAllByOrderBySortOrderAsc(PageRequest.of(0, pageSize)).stream()
-                .map(i -> new ContentItemResponse(i.getId().toString(), i.getTag(), i.getTitle(), i.getImageUrl(), i.isSponsored(), i.getAdvertiser()))
+                .map(i -> new ContentItemResponse(i.getId().toString(), i.getTag(), i.getTitle(), i.getBody(), i.getImageKey(), i.isSponsored(), i.getAdvertiser()))
                 .toList();
         return new ContentFeedResponse(items);
     }
@@ -49,6 +49,7 @@ public class ContentReadServiceImpl implements ContentReadService {
     }
 
     private ContentItemAdminResponse toAdminResponse(ContentItem i) {
-        return new ContentItemAdminResponse(i.getId(), i.getTag(), i.getTitle(), i.getImageUrl(), i.isSponsored(), i.getAdvertiser(), i.getSortOrder());
+        return new ContentItemAdminResponse(i.getId(), i.getTag(), i.getTitle(), i.getBody(), i.getImageUrl(), i.getImageKey(), i.isSponsored(),
+                i.getAdvertiser(), i.getSortOrder());
     }
 }

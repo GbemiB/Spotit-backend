@@ -78,9 +78,38 @@ public class ReferenceDataSeeder implements ApplicationRunner {
     private void seedContent() {
         if (contentItemRepository.count() > 0) return;
         contentItemRepository.saveAll(List.of(
-                ContentItem.builder().tag("Education").title("Understanding your fertile window").imageUrl("https://cdn.spotit.app/content/lifestyle.jpg").sponsored(false).sortOrder(1).build(),
-                ContentItem.builder().tag("Nutrition").title("5 foods that support ovulation").imageUrl("https://cdn.spotit.app/content/food.jpg").sponsored(false).sortOrder(2).build(),
-                ContentItem.builder().tag("Sponsored").title("Nourish prenatal multivitamins").imageUrl("https://cdn.spotit.app/content/product.jpg").sponsored(true).advertiser("Nourish").sortOrder(3).build()
+                ContentItem.builder().tag("Education").title("Understanding your fertile window").imageKey("lifestyle").sponsored(false).sortOrder(1)
+                        .body("""
+                                Your fertile window is the stretch of each cycle when pregnancy is possible — typically the 5 days before ovulation through the day of ovulation itself.
+
+                                Why that range? Sperm can survive in the body for up to 5 days, while an egg lives for only about 24 hours after release. So the "window" is really sperm waiting for an egg, not the other way around.
+
+                                Spot it estimates your window from your average cycle length. You can narrow it down further by tracking signs your body already gives you:
+
+                                • Cervical mucus that turns clear and stretchy, like raw egg white
+                                • A slight rise in resting body temperature after ovulation
+                                • Mild one-sided pelvic twinges ("mittelschmerz")
+
+                                Cycles vary month to month, so treat this as a well-informed estimate, not a guarantee — and check in with a doctor if you're planning or avoiding pregnancy and want more precision.""")
+                        .build(),
+                ContentItem.builder().tag("Nutrition").title("5 foods that support ovulation").imageKey("food").sponsored(false).sortOrder(2)
+                        .body("""
+                                Diet alone won't control ovulation, but certain nutrients give your hormones the raw materials they need to function well:
+
+                                • Leafy greens (spinach, kale) — folate, which supports healthy ovulation and early fetal development
+                                • Berries — antioxidants that help protect egg cells from oxidative stress
+                                • Fatty fish (salmon, sardines) — omega-3s linked to more regular cycles
+                                • Whole grains (oats, quinoa) — steadier blood sugar, which helps keep reproductive hormones balanced
+                                • Nuts and seeds — vitamin E and zinc, both tied to hormone production
+
+                                None of these guarantee ovulation or a pregnancy outcome on their own — think of them as one supporting factor alongside sleep, stress, and overall health. A doctor or registered dietitian can tailor this to your specific needs.""")
+                        .build(),
+                ContentItem.builder().tag("Sponsored").title("Nourish prenatal multivitamins").imageKey("product").sponsored(true).advertiser("Nourish").sortOrder(3)
+                        .body("""
+                                A prenatal multivitamin formulated to help meet essential nutrient needs before and during pregnancy, including folate, iron, and vitamin D.
+
+                                As with any supplement, check with your doctor before starting — especially if you take other medications, are breastfeeding, or manage an existing medical condition.""")
+                        .build()
         ));
     }
 
