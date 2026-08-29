@@ -11,8 +11,7 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
-import com.spotit.api.settings.service.AppSettingsService;
-import com.spotit.api.settings.service.ResolvedAppSettings;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +43,7 @@ class AuthWriteServiceImplTest {
     @Mock JwtService jwtService;
     @Mock OtpService otpService;
     @Mock EmailService emailService;
-    @Mock AppSettingsService appSettingsService;
+    @Mock ConfigurationDomainService configurationDomainService;
     @Mock Environment environment;
 
     AuthWriteServiceImpl service;
@@ -52,11 +51,7 @@ class AuthWriteServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, signupLeadRepository,
-                passwordEncoder, jwtService, otpService, emailService, appSettingsService, environment);
-    }
-
-    private static ResolvedAppSettings settingsWithCycleDefaults(int cycleLength, int periodLength) {
-        return new ResolvedAppSettings("test-jwt-secret", 3600, 2_592_000, 600, 5, cycleLength, periodLength, 50, 100);
+                passwordEncoder, jwtService, otpService, emailService, configurationDomainService, environment);
     }
 
     private User existingUser(UUID id) {
@@ -88,7 +83,7 @@ class AuthWriteServiceImplTest {
     void signupCreatesAnUnverifiedLeadAndIssuesAnOtp() {
         when(userRepository.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
         when(signupLeadRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.empty());
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWithCycleDefaults(28, 5));
+        when(configurationDomainService.getOtpTtlSeconds()).thenReturn(600L);
         when(passwordEncoder.encode(any())).thenReturn("hashed-code");
         when(signupLeadRepository.save(any(SignupLead.class))).thenAnswer(inv -> {
             SignupLead l = inv.getArgument(0);
@@ -166,7 +161,8 @@ class AuthWriteServiceImplTest {
         SignupLead lead = existingLead(leadId, true);
         when(signupLeadRepository.findById(leadId)).thenReturn(Optional.of(lead));
         when(userRepository.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWithCycleDefaults(28, 5));
+        when(configurationDomainService.getCycleDefaultLength()).thenReturn(28);
+        when(configurationDomainService.getCycleDefaultPeriodLength()).thenReturn(5);
         when(passwordEncoder.encode("password123")).thenReturn("hashed-password");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
@@ -359,6 +355,7 @@ class AuthWriteServiceImplTest {
     void schedulingAccountDeletionSetsAFutureGracePeriodAndRevokesTokens() {
         UUID userId = UUID.randomUUID();
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser(userId)));
+        when(configurationDomainService.getAccountPurgeGraceDays()).thenReturn(30L);
 
         AccountDeletionResponse response = service.scheduleAccountDeletion(userId);
 

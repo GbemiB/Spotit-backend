@@ -1,7 +1,6 @@
 package com.spotit.api.common.security;
 
-import com.spotit.api.settings.service.AppSettingsService;
-import com.spotit.api.settings.service.ResolvedAppSettings;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -21,12 +20,13 @@ import java.util.UUID;
  * a DB round-trip on every request; refresh tokens are opaque beyond the
  * subject + type so they can't be used as access tokens if leaked.
  *
- * <p>The signing key and TTLs are resolved once from {@link AppSettingsService} at construction
- * time, not re-read per call — {@link com.spotit.api.common.security.JwtAuthenticationFilter}
+ * <p>The signing key and TTLs are resolved once from {@link ConfigurationDomainService} at
+ * construction time, not re-read per call — {@link com.spotit.api.common.security.JwtAuthenticationFilter}
  * runs on every request, so re-querying the DB there would add a round-trip to every API call.
- * Changing the JWT secret/TTLs in {@code app_settings} therefore takes effect on next restart,
- * not live — appropriate for a signing key, which shouldn't rotate silently underneath issued
- * tokens anyway.
+ * Changing the JWT secret/TTLs in {@code global_configuration} therefore takes effect on next
+ * restart, not live — appropriate for a signing key, which shouldn't rotate silently underneath
+ * issued tokens anyway. {@code ConfigurationDomainServiceImpl} seeds its rows via
+ * {@code @PostConstruct}, so they're guaranteed present by the time this constructor runs.
  */
 @Service
 public class JwtService {
@@ -38,11 +38,13 @@ public class JwtService {
     private static final String TYPE_REFRESH = "refresh";
 
     private final SecretKey key;
-    private final ResolvedAppSettings settings;
+    private final long accessTokenTtlSeconds;
+    private final long refreshTokenTtlSeconds;
 
-    public JwtService(AppSettingsService appSettingsService) {
-        this.settings = appSettingsService.getActiveSettings();
-        this.key = Keys.hmacShaKeyFor(settings.jwtSecret().getBytes(StandardCharsets.UTF_8));
+    public JwtService(ConfigurationDomainService configurationDomainService) {
+        this.key = Keys.hmacShaKeyFor(configurationDomainService.getJwtSecret().getBytes(StandardCharsets.UTF_8));
+        this.accessTokenTtlSeconds = configurationDomainService.getJwtAccessTokenTtlSeconds();
+        this.refreshTokenTtlSeconds = configurationDomainService.getJwtRefreshTokenTtlSeconds();
     }
 
     public String generateAccessToken(UUID userId, String email, boolean premium) {
@@ -53,7 +55,7 @@ public class JwtService {
                 .claim(CLAIM_EMAIL, email)
                 .claim(CLAIM_PREMIUM, premium)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(settings.jwtAccessTokenTtlSeconds())))
+                .expiration(Date.from(now.plusSeconds(accessTokenTtlSeconds)))
                 .signWith(key)
                 .compact();
     }
@@ -65,17 +67,17 @@ public class JwtService {
                 .id(UUID.randomUUID().toString())
                 .claim(CLAIM_TYPE, TYPE_REFRESH)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(settings.jwtRefreshTokenTtlSeconds())))
+                .expiration(Date.from(now.plusSeconds(refreshTokenTtlSeconds)))
                 .signWith(key)
                 .compact();
     }
 
     public long accessTokenTtlSeconds() {
-        return settings.jwtAccessTokenTtlSeconds();
+        return accessTokenTtlSeconds;
     }
 
     public long refreshTokenTtlSeconds() {
-        return settings.jwtRefreshTokenTtlSeconds();
+        return refreshTokenTtlSeconds;
     }
 
     public Optional<SecurityUser> parseAccessToken(String token) {

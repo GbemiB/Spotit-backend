@@ -6,6 +6,7 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.cycle.CycleUtil;
 import com.spotit.api.cycle.dto.CycleCalendarResponse;
 import com.spotit.api.cycle.dto.CycleCurrentResponse;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -22,10 +23,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CycleReadServiceImpl implements CycleReadService {
 
-    private static final long HIGH_CONFIDENCE_LOG_THRESHOLD = 3;
-
     private final UserRepository userRepository;
     private final CycleLogRepository cycleLogRepository;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     @Transactional(readOnly = true)
@@ -47,7 +47,7 @@ public class CycleReadServiceImpl implements CycleReadService {
         long daysUntil = ChronoUnit.DAYS.between(today, nextPeriod);
 
         long totalLogs = cycleLogRepository.countByUserId(userId);
-        String confidence = totalLogs >= HIGH_CONFIDENCE_LOG_THRESHOLD ? "high" : "estimated";
+        String confidence = totalLogs >= configurationDomainService.getCycleHighConfidenceLogThreshold() ? "high" : "estimated";
 
         return new CycleCurrentResponse(cycleDay, phase == null ? null : phase.key().name(), nextPeriod, Math.max(0, daysUntil), confidence);
     }

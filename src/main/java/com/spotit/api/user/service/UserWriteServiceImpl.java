@@ -7,7 +7,7 @@ import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.rewards.repository.UserBadgeRepository;
 import com.spotit.api.rewards.repository.UserChallengeProgressRepository;
-import com.spotit.api.settings.service.AppSettingsService;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.dto.*;
 import com.spotit.api.user.entity.ExportJob;
 import com.spotit.api.user.entity.Goal;
@@ -32,7 +32,7 @@ public class UserWriteServiceImpl implements UserWriteService {
     private final PointsHistoryRepository pointsHistoryRepository;
     private final UserBadgeRepository userBadgeRepository;
     private final UserChallengeProgressRepository userChallengeProgressRepository;
-    private final AppSettingsService appSettingsService;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     @Transactional
@@ -130,9 +130,8 @@ public class UserWriteServiceImpl implements UserWriteService {
         user.setGoal(null);
         user.setDob(null);
         user.setLastPeriodDate(null);
-        var settings = appSettingsService.getActiveSettings();
-        user.setCycleLength(settings.cycleDefaultLength());
-        user.setPeriodLength(settings.cycleDefaultPeriodLength());
+        user.setCycleLength(configurationDomainService.getCycleDefaultLength());
+        user.setPeriodLength(configurationDomainService.getCycleDefaultPeriodLength());
         user.setThemePref(ThemePref.system);
         user.setNotifPeriod(true);
         user.setNotifOvulation(true);

@@ -5,7 +5,7 @@ import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.entity.PointsHistoryEntry;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
-import com.spotit.api.settings.service.AppSettingsService;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
 
     private final UserRepository userRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
-    private final AppSettingsService appSettingsService;
+    private final ConfigurationDomainService configurationDomainService;
     private final ChallengeReadService challengeReadService;
 
     @Override
@@ -94,7 +94,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         if (today.equals(user.getLastClaimedDate())) {
             return new DailyClaimResult(0, user.getPoints(), true);
         }
-        int points = appSettingsService.getActiveSettings().pointsDailyClaim();
+        int points = configurationDomainService.getPointsDailyClaim();
         user.setLastClaimedDate(today);
         user.setPoints(user.getPoints() + points);
         userRepository.save(user);
@@ -109,12 +109,11 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         // wait here rather than both readers passing the daily-limit count check at once.
         User user = requireUserForUpdate(userId);
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
-        var settings = appSettingsService.getActiveSettings();
         long watchedToday = pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad");
-        if (watchedToday >= settings.adsDailyLimit()) {
+        if (watchedToday >= configurationDomainService.getAdsDailyLimit()) {
             throw new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, ErrorMessage.DAILY_AD_LIMIT_REACHED);
         }
-        int points = settings.pointsWatchAd();
+        int points = configurationDomainService.getPointsWatchAd();
         user.setPoints(user.getPoints() + points);
         userRepository.save(user);
         recordHistory(userId, "🎬", "Watched a rewarded ad", points);

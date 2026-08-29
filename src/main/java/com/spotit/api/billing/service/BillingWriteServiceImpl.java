@@ -11,6 +11,7 @@ import com.spotit.api.billing.repository.SubscriptionRepository;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BillingWriteServiceImpl implements BillingWriteService {
 
-    private static final Duration SUBSCRIPTION_PERIOD = Duration.ofDays(30);
-
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
+    private final ConfigurationDomainService configurationDomainService;
+
+    private Duration subscriptionPeriod() {
+        return Duration.ofDays(configurationDomainService.getSubscriptionPeriodDays());
+    }
 
     @Override
     @Transactional
@@ -44,7 +48,7 @@ public class BillingWriteServiceImpl implements BillingWriteService {
             throw new ApiException(ErrorCode.ALREADY_SUBSCRIBED, ErrorMessage.ALREADY_SUBSCRIBED);
         }
 
-        Instant renewsAt = Instant.now().plus(SUBSCRIPTION_PERIOD);
+        Instant renewsAt = Instant.now().plus(subscriptionPeriod());
         Subscription sub = existing.orElseGet(() -> Subscription.builder().userId(userId).build());
         sub.setPlan(request.planId());
         sub.setPlatform(Platform.valueOf(request.platform()));
@@ -83,7 +87,7 @@ public class BillingWriteServiceImpl implements BillingWriteService {
             // Only grant a fresh period when reactivating a lapsed subscription;
             // restoring an already-active one must not push renewsAt further out
             // each time this is called (double-crediting).
-            sub.setRenewsAt(Instant.now().plus(SUBSCRIPTION_PERIOD));
+            sub.setRenewsAt(Instant.now().plus(subscriptionPeriod()));
         }
         subscriptionRepository.save(sub);
         setPremium(userId, true);

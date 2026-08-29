@@ -1,5 +1,6 @@
 package com.spotit.api.log.service;
 
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
 import com.spotit.api.log.dto.SaveLogRequest;
@@ -34,6 +35,7 @@ class LogWriteServiceImplTest {
     @Mock CycleLogRepository cycleLogRepository;
     @Mock PointsWriteService pointsWriteService;
     @Mock UserRepository userRepository;
+    @Mock ConfigurationDomainService configurationDomainService;
 
     LogWriteServiceImpl service;
     UUID userId;
@@ -41,12 +43,14 @@ class LogWriteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new LogWriteServiceImpl(cycleLogRepository, pointsWriteService, userRepository);
+        service = new LogWriteServiceImpl(cycleLogRepository, pointsWriteService, userRepository, configurationDomainService);
         userId = UUID.randomUUID();
         date = LocalDate.of(2026, 7, 28);
         // Default: no other flow-logged days exist to clear. lenient() since not every test
         // (e.g. saveLog tests) exercises logPeriod's stale-clearing path at all.
         lenient().when(cycleLogRepository.findByUserIdAndFlowIsNotNull(any())).thenReturn(List.of());
+        // Default max range; lenient() since only logPeriod tests exercise this check.
+        lenient().when(configurationDomainService.getLogMaxPeriodRangeDays()).thenReturn(14);
     }
 
     private User userWith(LocalDate lastPeriodDate, int cycleLength) {

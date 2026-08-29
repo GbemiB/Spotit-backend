@@ -1,7 +1,6 @@
 package com.spotit.api.common.security;
 
-import com.spotit.api.settings.service.AppSettingsService;
-import com.spotit.api.settings.service.ResolvedAppSettings;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -18,12 +17,13 @@ class JwtServiceTest {
 
     private static final String SECRET = "a-very-long-test-only-secret-that-is-definitely-long-enough-for-hmac";
 
-    @Mock AppSettingsService appSettingsService;
+    @Mock ConfigurationDomainService configurationDomainService;
 
     private JwtService serviceWithTtl(long accessTtlSeconds, long refreshTtlSeconds) {
-        when(appSettingsService.getActiveSettings()).thenReturn(
-                new ResolvedAppSettings(SECRET, accessTtlSeconds, refreshTtlSeconds, 600, 5, 28, 5, 50, 100));
-        return new JwtService(appSettingsService);
+        when(configurationDomainService.getJwtSecret()).thenReturn(SECRET);
+        when(configurationDomainService.getJwtAccessTokenTtlSeconds()).thenReturn(accessTtlSeconds);
+        when(configurationDomainService.getJwtRefreshTokenTtlSeconds()).thenReturn(refreshTtlSeconds);
+        return new JwtService(configurationDomainService);
     }
 
     private JwtService service() {

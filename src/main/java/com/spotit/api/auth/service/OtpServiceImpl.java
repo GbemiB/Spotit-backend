@@ -8,7 +8,7 @@ import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.common.mail.OtpEmailTemplate;
-import com.spotit.api.settings.service.AppSettingsService;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class OtpServiceImpl implements OtpService {
 
     private final OtpCodeRepository otpCodeRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AppSettingsService appSettingsService;
+    private final ConfigurationDomainService configurationDomainService;
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final Environment environment;
@@ -40,7 +40,7 @@ public class OtpServiceImpl implements OtpService {
     @Override
     @Transactional
     public OtpCode issue(User user, OtpPurpose purpose) {
-        long ttlSeconds = appSettingsService.getActiveSettings().otpTtlSeconds();
+        long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
         otpCodeRepository.invalidateActive(user.getId(), purpose);
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
         // TEMPORARY, remove once SMTP delivery is confirmed reliable: logs the plaintext code
@@ -78,8 +78,8 @@ public class OtpServiceImpl implements OtpService {
         } catch (MailException e) {
             // Swallowed on purpose (a mail outage shouldn't block signup/login), but logged at
             // error with the full stack trace — this is the first place to look when a user
-            // reports never receiving a code. Common cause: no smtp_settings row configured, or
-            // bad username/password in it — see SmtpSettingsService.
+            // reports never receiving a code. Common cause: no smtp-*-host configured in
+            // global_configuration, or a bad username/password — see ConfigurationDomainService.
             log.error("Failed to send OTP email to user {} for purpose {}", user.getId(), purpose, e);
         }
     }
@@ -124,7 +124,7 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public long ttlSeconds() {
-        return appSettingsService.getActiveSettings().otpTtlSeconds();
+        return configurationDomainService.getOtpTtlSeconds();
     }
 
     private OtpCode checkAndConsume(OtpCode otp, String code) {

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 // password is nullable on purpose: omit it to edit host/port/etc. without touching the
-// previously stored (encrypted) password — see SmtpSettingsService#saveSettings.
+// previously stored (encrypted) password — see ConfigurationDomainService#saveSmtpSettings.
 public record SaveSmtpSettingsRequest(
         @NotNull SmtpRole role,
         @NotBlank String host,

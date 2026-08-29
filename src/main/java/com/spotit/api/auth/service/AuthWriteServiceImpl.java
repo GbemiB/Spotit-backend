@@ -14,7 +14,7 @@ import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.common.mail.OtpEmailTemplate;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
-import com.spotit.api.settings.service.AppSettingsService;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -35,7 +35,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthWriteServiceImpl implements AuthWriteService {
 
-    private static final long ACCOUNT_PURGE_GRACE_DAYS = 30;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
@@ -45,7 +44,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private final JwtService jwtService;
     private final OtpService otpService;
     private final EmailService emailService;
-    private final AppSettingsService appSettingsService;
+    private final ConfigurationDomainService configurationDomainService;
     private final Environment environment;
 
     // Signup is a two-step process: (1) SignupRequest captures name/email and creates/refreshes
@@ -108,8 +107,8 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .email(lead.getEmail())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .emailVerified(true)
-                .cycleLength(appSettingsService.getActiveSettings().cycleDefaultLength())
-                .periodLength(appSettingsService.getActiveSettings().cycleDefaultPeriodLength())
+                .cycleLength(configurationDomainService.getCycleDefaultLength())
+                .periodLength(configurationDomainService.getCycleDefaultPeriodLength())
                 .themePref(ThemePref.system)
                 .onboarded(false)
                 .notifPeriod(true)
@@ -128,7 +127,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     }
 
     private long issueLeadOtp(SignupLead lead) {
-        long ttlSeconds = appSettingsService.getActiveSettings().otpTtlSeconds();
+        long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
         // TEMPORARY, remove once SMTP delivery is confirmed reliable: logs the plaintext code
         // so it can be read off Render's logs while email delivery is unreliable. Never on
@@ -150,7 +149,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         } catch (MailException e) {
             // Swallowed on purpose (a mail outage shouldn't block signup) but logged with the
             // full stack trace — this lead now just sits unverified in signup_leads until a
-            // resend succeeds or it's picked up for follow-up. See EmailServiceImpl/SmtpSettingsService.
+            // resend succeeds or it's picked up for follow-up. See EmailServiceImpl/ConfigurationDomainService.
             log.error("Failed to send signup OTP email to lead {}", lead.getId(), e);
         }
         return ttlSeconds;
@@ -264,7 +263,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     public AccountDeletionResponse scheduleAccountDeletion(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
-        Instant purgeBy = Instant.now().plus(java.time.Duration.ofDays(ACCOUNT_PURGE_GRACE_DAYS));
+        Instant purgeBy = Instant.now().plus(java.time.Duration.ofDays(configurationDomainService.getAccountPurgeGraceDays()));
         user.setPendingDeletionAt(purgeBy);
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(userId);

@@ -3,6 +3,7 @@ package com.spotit.api.log.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.exception.ErrorMessage;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.log.dto.LogEntryResponse;
 import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
@@ -30,11 +31,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LogWriteServiceImpl implements LogWriteService {
 
-    private static final int MAX_PERIOD_RANGE_DAYS = 14;
-
     private final CycleLogRepository cycleLogRepository;
     private final PointsWriteService pointsWriteService;
     private final UserRepository userRepository;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     @Transactional
@@ -66,7 +66,7 @@ public class LogWriteServiceImpl implements LogWriteService {
         if (endDate.isBefore(startDate)) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PERIOD_START_AFTER_END);
         }
-        if (ChronoUnit.DAYS.between(startDate, endDate) + 1 > MAX_PERIOD_RANGE_DAYS) {
+        if (ChronoUnit.DAYS.between(startDate, endDate) + 1 > configurationDomainService.getLogMaxPeriodRangeDays()) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PERIOD_RANGE_TOO_LONG);
         }
 

@@ -3,6 +3,7 @@ package com.spotit.api.insight.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.insight.dto.CycleTrendsResponse;
 import com.spotit.api.insight.dto.RegularityResponse;
 import com.spotit.api.insight.dto.WeeklyDigestResponse;
@@ -33,11 +34,10 @@ import java.util.stream.Collectors;
 public class InsightReadServiceImpl implements InsightReadService {
 
     private static final int DEFAULT_CYCLES = 6;
-    private static final int IRREGULAR_VARIATION_THRESHOLD_DAYS = 4;
-    private static final int UNUSUAL_PERIOD_LENGTH_DELTA_DAYS = 3;
 
     private final CycleLogRepository cycleLogRepository;
     private final UserRepository userRepository;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     @Transactional(readOnly = true)
@@ -97,12 +97,13 @@ public class InsightReadServiceImpl implements InsightReadService {
         List<String> flags = new ArrayList<>();
         if (cycleLengths.size() >= 2) {
             int variation = java.util.Collections.max(cycleLengths) - java.util.Collections.min(cycleLengths);
-            if (variation > IRREGULAR_VARIATION_THRESHOLD_DAYS) {
-                flags.add("Your recent cycle lengths have varied by more than " + IRREGULAR_VARIATION_THRESHOLD_DAYS + " days.");
+            int irregularVariationThresholdDays = configurationDomainService.getInsightIrregularVariationThresholdDays();
+            if (variation > irregularVariationThresholdDays) {
+                flags.add("Your recent cycle lengths have varied by more than " + irregularVariationThresholdDays + " days.");
             }
         }
         episodes.stream().reduce((a, b) -> b).ifPresent(last -> {
-            if (Math.abs(last.lengthDays() - user.getPeriodLength()) > UNUSUAL_PERIOD_LENGTH_DELTA_DAYS) {
+            if (Math.abs(last.lengthDays() - user.getPeriodLength()) > configurationDomainService.getInsightUnusualPeriodLengthDeltaDays()) {
                 flags.add("Your most recent period lasted longer or shorter than usual.");
             }
         });

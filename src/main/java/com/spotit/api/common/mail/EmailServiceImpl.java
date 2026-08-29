@@ -1,7 +1,7 @@
 package com.spotit.api.common.mail;
 
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.smtp.service.ResolvedSmtpSettings;
-import com.spotit.api.smtp.service.SmtpSettingsService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +19,10 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * All SMTP config (host/port/credentials/from-address) comes exclusively from the {@code smtp_settings}
- * DB table via {@link SmtpSettingsService} — there is no env-var/yml fallback. Seed the primary (and,
- * optionally, backup) row via {@code SmtpSettingsService.saveSettings(...)} before mail can be sent.
+ * All SMTP config (host/port/credentials/from-address) comes exclusively from the {@code global_configuration}
+ * table (smtp-* properties) via {@link ConfigurationDomainService} — there is no env-var/yml fallback.
+ * Seed the primary (and, optionally, backup) role via {@code ConfigurationDomainService.saveSmtpSettings(...)}
+ * before mail can be sent.
  */
 @Service
 @Slf4j
@@ -30,14 +31,14 @@ public class EmailServiceImpl implements EmailService {
 
     private static final String SENDER_DISPLAY_NAME = "Spot it";
 
-    private final SmtpSettingsService smtpSettingsService;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     public void send(String to, String subject, String htmlBody, String textBody) {
-        List<ResolvedSmtpSettings> candidates = smtpSettingsService.getSettingsInPriorityOrder();
+        List<ResolvedSmtpSettings> candidates = configurationDomainService.getSmtpSettingsInPriorityOrder();
         if (candidates.isEmpty()) {
             throw new MailPreparationException(
-                    "No smtp_settings row configured — seed one via SmtpSettingsService.saveSettings(...) before sending mail.");
+                    "No SMTP role configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail.");
         }
 
         // Primary is tried first; backup (if configured) only gets used when primary throws —

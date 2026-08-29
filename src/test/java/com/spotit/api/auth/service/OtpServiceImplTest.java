@@ -6,8 +6,7 @@ import com.spotit.api.auth.repository.OtpCodeRepository;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
-import com.spotit.api.settings.service.AppSettingsService;
-import com.spotit.api.settings.service.ResolvedAppSettings;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +33,7 @@ class OtpServiceImplTest {
 
     @Mock OtpCodeRepository otpCodeRepository;
     @Mock PasswordEncoder passwordEncoder;
-    @Mock AppSettingsService appSettingsService;
+    @Mock ConfigurationDomainService configurationDomainService;
     @Mock EmailService emailService;
     @Mock UserRepository userRepository;
     @Mock Environment environment;
@@ -44,17 +43,13 @@ class OtpServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new OtpServiceImpl(otpCodeRepository, passwordEncoder, appSettingsService, emailService, userRepository, environment);
+        service = new OtpServiceImpl(otpCodeRepository, passwordEncoder, configurationDomainService, emailService, userRepository, environment);
         user = User.builder().id(UUID.randomUUID()).firstName("Jane").email("jane@example.com").build();
-    }
-
-    private static ResolvedAppSettings settingsWithOtpTtl(long otpTtlSeconds) {
-        return new ResolvedAppSettings("test-jwt-secret", 3600, 2_592_000, otpTtlSeconds, 5, 28, 5, 50, 100);
     }
 
     @Test
     void issueInvalidatesOlderCodesAndSendsAnEmail() {
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWithOtpTtl(600));
+        when(configurationDomainService.getOtpTtlSeconds()).thenReturn(600L);
         when(passwordEncoder.encode(anyString())).thenReturn("hashed-code");
         when(otpCodeRepository.save(any(OtpCode.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -69,7 +64,7 @@ class OtpServiceImplTest {
 
     @Test
     void issueSwallowsMailFailuresRatherThanFailingTheRequest() {
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWithOtpTtl(600));
+        when(configurationDomainService.getOtpTtlSeconds()).thenReturn(600L);
         when(passwordEncoder.encode(anyString())).thenReturn("hashed-code");
         when(otpCodeRepository.save(any(OtpCode.class))).thenAnswer(inv -> inv.getArgument(0));
         doThrow(new org.springframework.mail.MailSendException("smtp down"))
@@ -203,7 +198,7 @@ class OtpServiceImplTest {
         OtpCode existing = OtpCode.builder().id(otpId).userId(user.getId()).purpose(OtpPurpose.password_reset).build();
         when(otpCodeRepository.findById(otpId)).thenReturn(Optional.of(existing));
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWithOtpTtl(600));
+        when(configurationDomainService.getOtpTtlSeconds()).thenReturn(600L);
         when(passwordEncoder.encode(anyString())).thenReturn("hashed-code");
         when(otpCodeRepository.save(any(OtpCode.class))).thenAnswer(inv -> inv.getArgument(0));
 

@@ -2,9 +2,8 @@ package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
-import com.spotit.api.settings.service.AppSettingsService;
-import com.spotit.api.settings.service.ResolvedAppSettings;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +27,7 @@ class PointsWriteServiceImplTest {
 
     @Mock UserRepository userRepository;
     @Mock PointsHistoryRepository pointsHistoryRepository;
-    @Mock AppSettingsService appSettingsService;
+    @Mock ConfigurationDomainService configurationDomainService;
     @Mock ChallengeReadService challengeReadService;
 
     PointsWriteServiceImpl service;
@@ -37,13 +36,9 @@ class PointsWriteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new PointsWriteServiceImpl(userRepository, pointsHistoryRepository, appSettingsService, challengeReadService);
+        service = new PointsWriteServiceImpl(userRepository, pointsHistoryRepository, configurationDomainService, challengeReadService);
         userId = UUID.randomUUID();
         today = LocalDate.now(ZoneOffset.UTC);
-    }
-
-    private static ResolvedAppSettings settingsWith(int adsDailyLimit, int pointsDailyClaim, int pointsWatchAd) {
-        return new ResolvedAppSettings("test-jwt-secret", 3600, 2_592_000, 600, adsDailyLimit, 28, 5, pointsDailyClaim, pointsWatchAd);
     }
 
     private User userWith(long points, int streak, int longestStreak, LocalDate lastLogDate) {
@@ -189,7 +184,7 @@ class PointsWriteServiceImplTest {
     @Test
     void firstClaimOfTheDayAwardsConfiguredPoints() {
         userWith(100, 0, 0, null).setLastClaimedDate(today.minusDays(1));
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWith(5, 50, 100));
+        when(configurationDomainService.getPointsDailyClaim()).thenReturn(50);
 
         var result = service.claimDaily(userId);
 
@@ -203,7 +198,7 @@ class PointsWriteServiceImplTest {
     @Test
     void watchingAnAdBeyondTheDailyLimitIsRejected() {
         userWith(100, 0, 0, null);
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWith(5, 50, 100));
+        when(configurationDomainService.getAdsDailyLimit()).thenReturn(5);
         when(pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad"))
                 .thenReturn(5L);
 
@@ -217,7 +212,8 @@ class PointsWriteServiceImplTest {
     @Test
     void watchingAnAdUnderTheLimitAwardsPoints() {
         userWith(100, 0, 0, null);
-        when(appSettingsService.getActiveSettings()).thenReturn(settingsWith(5, 50, 25));
+        when(configurationDomainService.getAdsDailyLimit()).thenReturn(5);
+        when(configurationDomainService.getPointsWatchAd()).thenReturn(25);
         when(pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad"))
                 .thenReturn(2L);
 

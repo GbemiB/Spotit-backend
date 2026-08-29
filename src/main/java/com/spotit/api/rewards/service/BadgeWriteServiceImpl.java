@@ -3,6 +3,7 @@ package com.spotit.api.rewards.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.dto.BadgeDefinitionAdminResponse;
 import com.spotit.api.rewards.dto.CreateBadgeDefinitionRequest;
@@ -23,14 +24,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BadgeWriteServiceImpl implements BadgeWriteService {
 
-    private static final int KNOW_YOUR_BODY_THRESHOLD = 10;
-    private static final int CYCLE_VETERAN_THRESHOLD = 28;
-    private static final int WEEK_WARRIOR_STREAK_THRESHOLD = 7;
-
     private final UserBadgeRepository userBadgeRepository;
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final CycleLogRepository cycleLogRepository;
     private final UserRepository userRepository;
+    private final ConfigurationDomainService configurationDomainService;
 
     @Override
     @Transactional
@@ -39,9 +37,9 @@ public class BadgeWriteServiceImpl implements BadgeWriteService {
         int longestStreak = userRepository.findById(userId).map(u -> u.getLongestStreak()).orElse(0);
 
         awardIfEarned(userId, "first_flow", logCount >= 1);
-        awardIfEarned(userId, "know_your_body", logCount >= KNOW_YOUR_BODY_THRESHOLD);
-        awardIfEarned(userId, "cycle_veteran", logCount >= CYCLE_VETERAN_THRESHOLD);
-        awardIfEarned(userId, "week_warrior", longestStreak >= WEEK_WARRIOR_STREAK_THRESHOLD);
+        awardIfEarned(userId, "know_your_body", logCount >= configurationDomainService.getBadgeKnowYourBodyThreshold());
+        awardIfEarned(userId, "cycle_veteran", logCount >= configurationDomainService.getBadgeCycleVeteranThreshold());
+        awardIfEarned(userId, "week_warrior", longestStreak >= configurationDomainService.getBadgeWeekWarriorStreakThreshold());
         // ovulation_oracle, health_nerd: intentionally never awarded — no underlying feature yet.
     }
 
