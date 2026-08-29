@@ -11,4 +11,6 @@ public interface GlobalConfigurationRepository extends JpaRepository<GlobalConfi
     Optional<GlobalConfiguration> findByName(String name);
 
     List<GlobalConfiguration> findAllByOrderByNameAsc();
+
+    List<GlobalConfiguration> findByNameStartingWithOrderByNameAsc(String namePrefix);
 }
