@@ -28,12 +28,13 @@ public class RewardsReadServiceImpl implements RewardsReadService {
 
     private final UserRepository userRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
+    private final LevelDefinitionService levelDefinitionService;
 
     @Override
     @Transactional(readOnly = true)
     public RewardsSummaryResponse getSummary(UUID userId) {
         User user = requireUser(userId);
-        LevelUtil.LevelInfo level = LevelUtil.levelFor(user.getPoints());
+        LevelUtil.LevelInfo level = LevelUtil.levelFor(user.getPoints(), levelDefinitionService.getLevelDefs());
         return new RewardsSummaryResponse(
                 user.getPoints(), level.name(), new RewardsSummaryResponse.LevelRange(level.lo(), level.hi()),
                 level.nextLevelName(), level.pointsToNextLevel(), user.getStreak(), user.getLongestStreak()

@@ -4,6 +4,7 @@ import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.LevelUtil;
+import com.spotit.api.rewards.service.LevelDefinitionService;
 import com.spotit.api.shop.dto.OrderResponse;
 import com.spotit.api.shop.dto.ProductAdminResponse;
 import com.spotit.api.shop.dto.ProductResponse;
@@ -26,15 +27,17 @@ public class ShopReadServiceImpl implements ShopReadService {
     private final ProductRepository productRepository;
     private final ShopOrderRepository shopOrderRepository;
     private final UserRepository userRepository;
+    private final LevelDefinitionService levelDefinitionService;
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponse> listProducts(UUID userId) {
         User user = requireUser(userId);
-        String levelName = LevelUtil.levelFor(user.getPoints()).name();
+        String levelName = LevelUtil.levelFor(user.getPoints(), levelDefinitionService.getLevelDefs()).name();
+        List<String> levelOrder = levelDefinitionService.getLevelOrder();
 
         return productRepository.findByActiveTrue().stream()
-                .map(p -> toResponse(p, levelName, user.isPremium()))
+                .map(p -> toResponse(p, levelName, levelOrder, user.isPremium()))
                 .toList();
     }
 
@@ -60,8 +63,8 @@ public class ShopReadServiceImpl implements ShopReadService {
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
     }
 
-    private ProductResponse toResponse(Product p, String levelName, boolean premium) {
-        boolean levelOk = LevelUtil.meetsMinLevel(levelName, p.getMinLevel());
+    private ProductResponse toResponse(Product p, String levelName, List<String> levelOrder, boolean premium) {
+        boolean levelOk = LevelUtil.meetsMinLevel(levelName, p.getMinLevel(), levelOrder);
         boolean premiumOk = !p.isPremiumOnly() || premium;
         boolean locked = !levelOk || !premiumOk;
         String reason = !levelOk ? "level_too_low" : (!premiumOk ? "premium_required" : null);

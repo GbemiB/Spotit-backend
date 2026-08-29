@@ -30,8 +30,9 @@ public final class ErrorMessage {
     public static final String PERIOD_LENGTH_OUT_OF_RANGE = "periodLength must be between 2 and 10.";
     public static final String EXPORT_JOB_NOT_FOUND = "Export job not found.";
 
-    // Rewards - badges & challenges
+    // Rewards - badges, challenges & levels
     public static final String BADGE_NOT_FOUND = "Badge definition not found.";
+    public static final String LEVEL_NOT_FOUND = "Level definition not found.";
     public static final String CHALLENGE_DEFINITION_NOT_FOUND = "Challenge definition not found.";
     public static final String CHALLENGE_NOT_FOUND = "Challenge not found.";
     public static final String CHALLENGE_NOT_YET_COMPLETE = "This challenge isn't complete yet.";
@@ -64,6 +65,10 @@ public final class ErrorMessage {
 
     public static String badgeAlreadyExists(String id) {
         return "A badge with id '" + id + "' already exists.";
+    }
+
+    public static String levelAlreadyExists(String id) {
+        return "A level with id '" + id + "' already exists.";
     }
 
     public static String challengeAlreadyExists(String id) {

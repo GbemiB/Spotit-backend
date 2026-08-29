@@ -6,6 +6,7 @@ import com.spotit.api.rewards.dto.*;
 import com.spotit.api.rewards.service.BadgeReadService;
 import com.spotit.api.rewards.service.ChallengeReadService;
 import com.spotit.api.rewards.service.ChallengeWriteService;
+import com.spotit.api.rewards.service.LevelDefinitionService;
 import com.spotit.api.rewards.service.RewardsReadService;
 import com.spotit.api.rewards.service.RewardsWriteService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,18 @@ public class RewardsController {
     private final BadgeReadService badgeReadService;
     private final ChallengeReadService challengeReadService;
     private final ChallengeWriteService challengeWriteService;
+    private final LevelDefinitionService levelDefinitionService;
+
+    @Operation(summary = "List level tiers", description = "SpotPoints level tiers in progression order — was a hardcoded client-side array, now admin-configurable.",
+            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Level tiers.", content = @Content(
+                    schema = @Schema(implementation = LevelDefinitionResponse.class)))
+    })
+    @GetMapping("/levels")
+    public List<LevelDefinitionResponse> levels() {
+        return levelDefinitionService.getLevels();
+    }
 
     @Operation(summary = RewardsControllerSwagger.SUMMARY_SUMMARY, description = RewardsControllerSwagger.SUMMARY_DESCRIPTION,
             security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))

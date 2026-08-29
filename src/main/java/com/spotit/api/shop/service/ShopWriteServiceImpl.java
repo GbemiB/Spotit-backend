@@ -4,6 +4,7 @@ import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.LevelUtil;
+import com.spotit.api.rewards.service.LevelDefinitionService;
 import com.spotit.api.rewards.service.PointsWriteService;
 import com.spotit.api.shop.dto.CreateProductRequest;
 import com.spotit.api.shop.dto.ProductAdminResponse;
@@ -30,6 +31,7 @@ public class ShopWriteServiceImpl implements ShopWriteService {
     private final ShopOrderRepository shopOrderRepository;
     private final UserRepository userRepository;
     private final PointsWriteService pointsWriteService;
+    private final LevelDefinitionService levelDefinitionService;
 
     @Override
     @Transactional
@@ -42,8 +44,8 @@ public class ShopWriteServiceImpl implements ShopWriteService {
                 .filter(Product::isActive)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
 
-        String levelName = LevelUtil.levelFor(user.getPoints()).name();
-        if (!LevelUtil.meetsMinLevel(levelName, product.getMinLevel())) {
+        String levelName = LevelUtil.levelFor(user.getPoints(), levelDefinitionService.getLevelDefs()).name();
+        if (!LevelUtil.meetsMinLevel(levelName, product.getMinLevel(), levelDefinitionService.getLevelOrder())) {
             throw new ApiException(ErrorCode.LEVEL_TOO_LOW, ErrorMessage.unlocksAtLevel(product.getMinLevel()));
         }
         if (product.isPremiumOnly() && !user.isPremium()) {
