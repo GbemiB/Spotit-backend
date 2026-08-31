@@ -2,7 +2,7 @@ spring:
   application:
     name: spotit-backend
   profiles:
-    active: local
+    active: dev
 
   datasource:
     hikari:
