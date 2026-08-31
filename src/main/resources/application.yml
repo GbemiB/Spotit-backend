@@ -2,7 +2,12 @@ spring:
   application:
     name: spotit-backend
   profiles:
-    active: dev
+    active: local
+
+  datasource:
+    hikari:
+      connection-timeout: 5000
+      keepalive-time: 300000
 
   jpa:
     hibernate:

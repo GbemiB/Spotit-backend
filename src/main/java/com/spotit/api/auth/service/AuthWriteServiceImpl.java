@@ -3,8 +3,10 @@ package com.spotit.api.auth.service;
 import com.spotit.api.auth.dto.*;
 import com.spotit.api.auth.entity.OtpCode;
 import com.spotit.api.auth.entity.OtpPurpose;
+import com.spotit.api.auth.entity.PasswordHistory;
 import com.spotit.api.auth.entity.RefreshToken;
 import com.spotit.api.auth.entity.SignupLead;
+import com.spotit.api.auth.repository.PasswordHistoryRepository;
 import com.spotit.api.auth.repository.RefreshTokenRepository;
 import com.spotit.api.auth.repository.SignupLeadRepository;
 import com.spotit.api.common.exception.ApiException;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,6 +41,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordHistoryRepository passwordHistoryRepository;
     private final SignupLeadRepository signupLeadRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -112,6 +116,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .build();
         user = userRepository.save(user);
         signupLeadRepository.delete(lead);
+        recordPasswordHistory(user.getId(), user.getPasswordHash());
 
         return issueTokens(user);
     }
@@ -202,9 +207,11 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
         otpService.verifyLatest(user.getId(), request.code(), OtpPurpose.password_reset);
+        enforcePasswordHistory(user.getId(), request.newPassword());
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(user.getId());
+        recordPasswordHistory(user.getId(), user.getPasswordHash());
     }
 
     @Override
@@ -242,6 +249,23 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(userId);
         return new AccountDeletionResponse(ErrorMessage.ACCOUNT_DELETION_SCHEDULED, purgeBy);
+    }
+
+    private void enforcePasswordHistory(UUID userId, String rawPassword) {
+        List<PasswordHistory> recent = passwordHistoryRepository.findTop3ByUserIdOrderByCreatedAtDesc(userId);
+        for (PasswordHistory entry : recent) {
+            if (passwordEncoder.matches(rawPassword, entry.getPasswordHash())) {
+                throw new ApiException(ErrorCode.PASSWORD_REUSED, ErrorMessage.PASSWORD_REUSED);
+            }
+        }
+    }
+
+    private void recordPasswordHistory(UUID userId, String passwordHash) {
+        PasswordHistory entry = PasswordHistory.builder()
+                .userId(userId)
+                .passwordHash(passwordHash)
+                .build();
+        passwordHistoryRepository.save(entry);
     }
 
     private TokenResponse issueTokens(User user) {

@@ -28,6 +28,7 @@ public enum ErrorCode {
     ALREADY_SUBSCRIBED(HttpStatus.CONFLICT),
     NO_PURCHASE_FOUND(HttpStatus.NOT_FOUND),
     RESOURCE_ALREADY_EXISTS(HttpStatus.CONFLICT),
+    PASSWORD_REUSED(HttpStatus.UNPROCESSABLE_ENTITY),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final HttpStatus status;

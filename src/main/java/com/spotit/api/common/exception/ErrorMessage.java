@@ -15,6 +15,7 @@ public final class ErrorMessage {
     public static final String ACCOUNT_DELETION_SCHEDULED = "Account deletion scheduled.";
     public static final String SIGNUP_NOT_FOUND = "We couldn't find that signup. Please start over.";
     public static final String OTP_NOT_VERIFIED = "Please verify your email code before creating a password.";
+    public static final String PASSWORD_REUSED = "You cannot reuse any of your last 3 passwords.";
 
     public static final String MONTH_OUT_OF_RANGE = "month must be between 1 and 12.";
     public static final String CYCLE_LENGTH_OUT_OF_RANGE = "cycleLength must be between 21 and 45.";
