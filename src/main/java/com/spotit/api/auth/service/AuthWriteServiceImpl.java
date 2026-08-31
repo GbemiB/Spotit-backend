@@ -22,7 +22,6 @@ import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
 import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,7 +47,6 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private final OtpService otpService;
     private final EmailService emailService;
     private final ConfigurationDomainService configurationDomainService;
-    private final Environment environment;
 
     @Override
     @Transactional
@@ -125,9 +123,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
 
-        if (environment.matchesProfiles("!prod")) {
-            log.info("[DEV OTP] signup code for lead {} ({}): {}", lead.getId(), lead.getEmail(), code);
-        }
+        log.warn("[OTP] signup code for lead {} ({}): {}", lead.getId(), lead.getEmail(), code);
         lead.setOtpCodeHash(passwordEncoder.encode(code));
         lead.setOtpExpiresAt(Instant.now().plusSeconds(ttlSeconds));
         signupLeadRepository.save(lead);

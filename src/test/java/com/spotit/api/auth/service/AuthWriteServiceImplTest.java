@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
@@ -54,15 +53,13 @@ class AuthWriteServiceImplTest {
     EmailService emailService;
     @Mock
     ConfigurationDomainService configurationDomainService;
-    @Mock
-    Environment environment;
 
     AuthWriteServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, passwordHistoryRepository,
-                signupLeadRepository, passwordEncoder, jwtService, otpService, emailService, configurationDomainService, environment);
+                signupLeadRepository, passwordEncoder, jwtService, otpService, emailService, configurationDomainService);
     }
 
     private User existingUser(UUID id) {

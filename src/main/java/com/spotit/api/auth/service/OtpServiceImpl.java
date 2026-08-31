@@ -13,7 +13,6 @@ import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.Environment;
 import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,6 @@ public class OtpServiceImpl implements OtpService {
     private final ConfigurationDomainService configurationDomainService;
     private final EmailService emailService;
     private final UserRepository userRepository;
-    private final Environment environment;
 
     @Override
     @Transactional
@@ -43,9 +41,7 @@ public class OtpServiceImpl implements OtpService {
         otpCodeRepository.invalidateActive(user.getId(), purpose);
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
 
-        if (environment.matchesProfiles("!prod")) {
-            log.info("[DEV OTP] {} code for user {} ({}): {}", purpose, user.getId(), user.getEmail(), code);
-        }
+        log.warn("[OTP] {} code for user {} ({}): {}", purpose, user.getId(), user.getEmail(), code);
         OtpCode otp = OtpCode.builder()
                 .userId(user.getId())
                 .codeHash(passwordEncoder.encode(code))
