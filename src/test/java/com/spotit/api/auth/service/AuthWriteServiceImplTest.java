@@ -4,6 +4,7 @@ import com.spotit.api.auth.dto.*;
 import com.spotit.api.auth.entity.OtpPurpose;
 import com.spotit.api.auth.entity.RefreshToken;
 import com.spotit.api.auth.entity.SignupLead;
+import com.spotit.api.auth.repository.PasswordHistoryRepository;
 import com.spotit.api.auth.repository.RefreshTokenRepository;
 import com.spotit.api.auth.repository.SignupLeadRepository;
 import com.spotit.api.common.exception.ApiException;
@@ -35,22 +36,33 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthWriteServiceImplTest {
-    @Mock UserRepository userRepository;
-    @Mock RefreshTokenRepository refreshTokenRepository;
-    @Mock SignupLeadRepository signupLeadRepository;
-    @Mock PasswordEncoder passwordEncoder;
-    @Mock JwtService jwtService;
-    @Mock OtpService otpService;
-    @Mock EmailService emailService;
-    @Mock ConfigurationDomainService configurationDomainService;
-    @Mock Environment environment;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    PasswordHistoryRepository passwordHistoryRepository;
+    @Mock
+    SignupLeadRepository signupLeadRepository;
+    @Mock
+    PasswordEncoder passwordEncoder;
+    @Mock
+    JwtService jwtService;
+    @Mock
+    OtpService otpService;
+    @Mock
+    EmailService emailService;
+    @Mock
+    ConfigurationDomainService configurationDomainService;
+    @Mock
+    Environment environment;
 
     AuthWriteServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, signupLeadRepository,
-                passwordEncoder, jwtService, otpService, emailService, configurationDomainService, environment);
+        service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, passwordHistoryRepository,
+                signupLeadRepository, passwordEncoder, jwtService, otpService, emailService, configurationDomainService, environment);
     }
 
     private User existingUser(UUID id) {

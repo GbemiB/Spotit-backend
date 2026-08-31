@@ -158,6 +158,8 @@ public class AuthWriteServiceImpl implements AuthWriteService {
             OtpCode otp = otpService.issue(user, OtpPurpose.signup);
             throw new ApiException(ErrorCode.EMAIL_NOT_VERIFIED, ErrorMessage.EMAIL_NOT_VERIFIED, otp.getId(), otpService.ttlSeconds());
         }
+
+        refreshTokenRepository.deleteByUserId(user.getId());
         return issueTokens(user);
     }
 
