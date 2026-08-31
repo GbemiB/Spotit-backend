@@ -97,11 +97,11 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .firstName(lead.getFirstName())
                 .lastName(lead.getLastName())
                 .email(lead.getEmail())
-                .passwordHash(passwordEncoder.encode(request.password()))
+                .passwordHash(passwordEncoder.encode(request.password().strip()))
                 .emailVerified(true)
                 .cycleLength(configurationDomainService.getCycleDefaultLength())
                 .periodLength(configurationDomainService.getCycleDefaultPeriodLength())
-                .themePref(ThemePref.system)
+                .themePref(ThemePref.dark)
                 .onboarded(false)
                 .notifPeriod(true)
                 .notifOvulation(true)
@@ -146,7 +146,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.password().strip(), user.getPasswordHash())) {
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
         }
 
@@ -205,8 +205,8 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
         otpService.verifyLatest(user.getId(), request.code(), OtpPurpose.password_reset);
-        enforcePasswordHistory(user.getId(), request.newPassword());
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        enforcePasswordHistory(user.getId(), request.newPassword().strip());
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword().strip()));
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(user.getId());
         recordPasswordHistory(user.getId(), user.getPasswordHash());

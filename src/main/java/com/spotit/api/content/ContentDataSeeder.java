@@ -21,7 +21,12 @@ public class ContentDataSeeder {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void seed() {
-        if (contentItemRepository.count() > 0) return;
+        if (contentItemRepository.count() > 0) {
+            boolean bodyMissing = contentItemRepository.findAll()
+                    .stream().anyMatch(i -> i.getBody() == null || i.getBody().isBlank());
+            if (!bodyMissing) return;
+            contentItemRepository.deleteAll();
+        }
 
         List<ContentItem> items = List.of(
 
