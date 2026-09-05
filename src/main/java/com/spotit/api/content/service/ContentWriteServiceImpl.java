@@ -31,6 +31,7 @@ public class ContentWriteServiceImpl implements ContentWriteService {
                 .sponsored(request.sponsored())
                 .advertiser(request.advertiser())
                 .sortOrder(request.sortOrder())
+                .active(request.active() == null ? true : request.active())
                 .build();
         contentItemRepository.save(item);
         return toAdminResponse(item);
@@ -49,6 +50,7 @@ public class ContentWriteServiceImpl implements ContentWriteService {
         if (request.sponsored() != null) item.setSponsored(request.sponsored());
         if (request.advertiser() != null) item.setAdvertiser(request.advertiser());
         if (request.sortOrder() != null) item.setSortOrder(request.sortOrder());
+        if (request.active() != null) item.setActive(request.active());
         contentItemRepository.save(item);
         return toAdminResponse(item);
     }
@@ -64,6 +66,6 @@ public class ContentWriteServiceImpl implements ContentWriteService {
 
     private ContentItemAdminResponse toAdminResponse(ContentItem i) {
         return new ContentItemAdminResponse(i.getId(), i.getTag(), i.getTitle(), i.getBody(), i.getImageUrl(), i.getImageKey(), i.isSponsored(),
-                i.getAdvertiser(), i.getSortOrder());
+                i.getAdvertiser(), i.getSortOrder(), i.isActive());
     }
 }

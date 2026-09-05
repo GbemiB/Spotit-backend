@@ -10,6 +10,7 @@ public record CreateContentItemRequest(
         String imageKey,
         boolean sponsored,
         String advertiser,
-        int sortOrder
+        int sortOrder,
+        Boolean active
 ) {
 }

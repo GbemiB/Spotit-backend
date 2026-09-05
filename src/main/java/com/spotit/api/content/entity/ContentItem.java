@@ -47,6 +47,10 @@ public class ContentItem {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean active = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

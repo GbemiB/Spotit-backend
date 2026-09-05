@@ -27,7 +27,7 @@ public class ContentReadServiceImpl implements ContentReadService {
     @Transactional(readOnly = true)
     public ContentFeedResponse getFeed(Integer limit) {
         int pageSize = limit == null ? configurationDomainService.getContentFeedDefaultLimit() : limit;
-        var items = contentItemRepository.findAllByOrderBySortOrderAsc(PageRequest.of(0, pageSize)).stream()
+        var items = contentItemRepository.findByActiveTrueOrderBySortOrderAsc(PageRequest.of(0, pageSize)).stream()
                 .map(i -> new ContentItemResponse(i.getId().toString(), i.getTag(), i.getTitle(), i.getBody(), i.getImageKey(), i.isSponsored(), i.getAdvertiser()))
                 .toList();
         return new ContentFeedResponse(items);
@@ -49,6 +49,6 @@ public class ContentReadServiceImpl implements ContentReadService {
 
     private ContentItemAdminResponse toAdminResponse(ContentItem i) {
         return new ContentItemAdminResponse(i.getId(), i.getTag(), i.getTitle(), i.getBody(), i.getImageUrl(), i.getImageKey(), i.isSponsored(),
-                i.getAdvertiser(), i.getSortOrder());
+                i.getAdvertiser(), i.getSortOrder(), i.isActive());
     }
 }

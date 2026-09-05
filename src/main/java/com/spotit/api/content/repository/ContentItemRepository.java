@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface ContentItemRepository extends JpaRepository<ContentItem, java.util.UUID> {
     List<ContentItem> findAllByOrderBySortOrderAsc(Pageable pageable);
+
+    List<ContentItem> findByActiveTrueOrderBySortOrderAsc(Pageable pageable);
 }
