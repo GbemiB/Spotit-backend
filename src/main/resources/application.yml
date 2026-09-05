@@ -30,6 +30,17 @@ springdoc:
   swagger-ui:
     path: /api/v1/swagger-ui.html
 
+# Placeholder SMTP relay seeded into global_configuration on a fresh DB (ConfigurationDomainServiceImpl.seedSmtpDefault).
+# Override any of these via env vars in real environments; rotate SMTP_PASSWORD once a real mail provider is set up.
+spotit:
+  smtp:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:oluwagbemisolabello@gmail.com}
+    password: ${SMTP_PASSWORD:jetpffwfyqaupfbg}
+    from-address: ${SMTP_FROM_ADDRESS:oluwagbemisolabello@gmail.com}
+    use-tls: ${SMTP_USE_TLS:true}
+
 logging:
   level:
     com.spotit.api: INFO

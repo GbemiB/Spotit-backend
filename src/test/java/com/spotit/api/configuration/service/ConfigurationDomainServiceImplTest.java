@@ -4,6 +4,7 @@ import com.spotit.api.common.crypto.EncryptionService;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.configuration.PropertyNames;
+import com.spotit.api.configuration.SmtpSeedProperties;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
 import com.spotit.api.configuration.entity.GlobalConfiguration;
@@ -31,7 +32,8 @@ class ConfigurationDomainServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ConfigurationDomainServiceImpl(repository, encryptionService);
+        service = new ConfigurationDomainServiceImpl(repository, encryptionService,
+                new SmtpSeedProperties("smtp.gmail.com", 587, "seed@example.com", "seed-password", "seed@example.com", true));
     }
 
     @Test

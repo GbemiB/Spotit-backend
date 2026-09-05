@@ -3,6 +3,8 @@ package com.spotit.api.user.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.mail.EmailService;
+import com.spotit.api.common.mail.ExportReadyEmailTemplate;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.rewards.repository.UserBadgeRepository;
@@ -16,6 +18,8 @@ import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.ExportJobRepository;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserWriteServiceImpl implements UserWriteService {
     private final UserRepository userRepository;
@@ -32,6 +37,8 @@ public class UserWriteServiceImpl implements UserWriteService {
     private final UserBadgeRepository userBadgeRepository;
     private final UserChallengeProgressRepository userChallengeProgressRepository;
     private final ConfigurationDomainService configurationDomainService;
+    private final UserReadService userReadService;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -109,9 +116,25 @@ public class UserWriteServiceImpl implements UserWriteService {
     @Override
     @Transactional
     public ExportJobResponse requestExport(UUID userId) {
-        requireUser(userId);
+        User user = requireUser(userId);
         ExportJob job = ExportJob.builder().userId(userId).status(ExportJob.ExportJobStatus.ready).build();
         job = exportJobRepository.save(job);
+
+        var data = userReadService.getExportData(userId, job.getId());
+        byte[] csv = ExportCsvBuilder.build(data);
+        String greeting = user.getFirstName() == null || user.getFirstName().isBlank() ? "there" : user.getFirstName();
+        try {
+            emailService.sendWithAttachment(
+                    user.getEmail(),
+                    "Your Spot it data export is ready",
+                    ExportReadyEmailTemplate.html(greeting, data.logs().size(), data.pointsHistory().size()),
+                    ExportReadyEmailTemplate.text(greeting, data.logs().size(), data.pointsHistory().size()),
+                    "spotit-export.csv", csv, "text/csv");
+            log.info("Data export email sent to user {}", userId);
+        } catch (MailException e) {
+            log.error("Failed to send data export email to user {}", userId, e);
+        }
+
         return new ExportJobResponse(job.getId(), job.getStatus().name());
     }
 

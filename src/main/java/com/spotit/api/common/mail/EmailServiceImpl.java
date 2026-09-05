@@ -6,6 +6,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -29,18 +30,34 @@ public class EmailServiceImpl implements EmailService {
         ResolvedSmtpSettings settings = configurationDomainService.getSmtpSettings()
                 .orElseThrow(() -> new MailPreparationException(
                         "No SMTP settings configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail."));
-        sendVia(settings, to, subject, htmlBody, textBody);
+        sendVia(settings, to, subject, htmlBody, textBody, null, null, null);
     }
 
-    private void sendVia(ResolvedSmtpSettings settings, String to, String subject, String htmlBody, String textBody) {
+    @Override
+    public void sendWithAttachment(String to, String subject, String htmlBody, String textBody,
+                                    String attachmentFilename, byte[] attachmentBytes, String attachmentMimeType) {
+        ResolvedSmtpSettings settings = configurationDomainService.getSmtpSettings()
+                .orElseThrow(() -> new MailPreparationException(
+                        "No SMTP settings configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail."));
+        sendVia(settings, to, subject, htmlBody, textBody, attachmentFilename, attachmentBytes, attachmentMimeType);
+    }
+
+    private void sendVia(ResolvedSmtpSettings settings, String to, String subject, String htmlBody, String textBody,
+                          String attachmentFilename, byte[] attachmentBytes, String attachmentMimeType) {
         JavaMailSender mailSender = buildMailSender(settings);
+        boolean hasAttachment = attachmentFilename != null && attachmentBytes != null;
         MimeMessage message = mailSender.createMimeMessage();
         try {
+            // Always multipart: setText(text, html) writes alternative bodies, which needs multipart
+            // mode even when there's no attachment.
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(settings.fromAddress(), SENDER_DISPLAY_NAME);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(textBody, htmlBody);
+            if (hasAttachment) {
+                helper.addAttachment(attachmentFilename, new ByteArrayResource(attachmentBytes), attachmentMimeType);
+            }
         } catch (MessagingException | UnsupportedEncodingException e) {
             throw new MailParseException(e);
         }

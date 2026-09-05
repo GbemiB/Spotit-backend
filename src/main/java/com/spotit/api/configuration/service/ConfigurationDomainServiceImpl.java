@@ -4,6 +4,7 @@ import com.spotit.api.common.crypto.EncryptionService;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.configuration.PropertyNames;
+import com.spotit.api.configuration.SmtpSeedProperties;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
 import com.spotit.api.configuration.entity.GlobalConfiguration;
@@ -39,6 +40,7 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     private final GlobalConfigurationRepository repository;
     private final EncryptionService encryptionService;
+    private final SmtpSeedProperties smtpSeedProperties;
 
     @PostConstruct
     void seedDefaults() {
@@ -63,6 +65,25 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         seedIfAbsent(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS, PropertyNames.GROUP_LOGS, 14L, null, "Max days a single period log entry may span");
         seedIfAbsent(PropertyNames.REWARDS_HISTORY_PAGE_SIZE, PropertyNames.GROUP_REWARDS, 20L, null, "Default page size for points history");
         seedIfAbsent(PropertyNames.CONTENT_FEED_DEFAULT_LIMIT, PropertyNames.GROUP_CONTENT, 10L, null, "Default number of items returned by the content feed");
+        seedSmtpDefault();
+    }
+
+    // SMTP settings normally require an authenticated admin call to PUT /api/v1/config/smtp, but that
+    // endpoint itself requires a logged-in user — unreachable on a fresh deploy where signup/OTP mail
+    // is blocked until SMTP exists. Seeded once here from the spotit.smtp.* properties so mail works
+    // out of the box; no-op once the DB already has a host configured (e.g. after an admin edits it
+    // via the API), so this only ever fires on a truly fresh database.
+    // The values live in application.yml (env-overridable) rather than in source — point spotit.smtp.*
+    // at a real transactional-mail provider (and rotate SMTP_PASSWORD) once one is set up.
+    private void seedSmtpDefault() {
+        // FORCE_SMTP_RESEED=true temporarily bypasses the "already configured" guard for a one-off
+        // update to already-seeded environments; unset it once done so this stays a fresh-DB-only seed.
+        if (repository.findByName(PropertyNames.SMTP_HOST).isPresent() && !"true".equals(System.getenv("FORCE_SMTP_RESEED"))) {
+            return;
+        }
+        saveSmtpSettings(smtpSeedProperties.host(), smtpSeedProperties.port(), smtpSeedProperties.username(),
+                smtpSeedProperties.password(), smtpSeedProperties.fromAddress(), smtpSeedProperties.useTls());
+        log.info("Seeded placeholder SMTP settings from spotit.smtp.* — replace via PUT /api/v1/config/smtp when a real mail provider is set up.");
     }
 
     private void seedIfAbsent(String name, String groupName, Long value, String stringValue, String description) {

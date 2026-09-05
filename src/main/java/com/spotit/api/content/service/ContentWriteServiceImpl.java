@@ -43,7 +43,7 @@ public class ContentWriteServiceImpl implements ContentWriteService {
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CONTENT_ITEM_NOT_FOUND));
         if (request.tag() != null) item.setTag(request.tag());
         if (request.title() != null) item.setTitle(request.title());
-        if (request.body() != null) item.setBody(request.body());
+        if (request.body() != null && !request.body().isBlank()) item.setBody(request.body());
         if (request.imageUrl() != null) item.setImageUrl(request.imageUrl());
         if (request.imageKey() != null) item.setImageKey(request.imageKey());
         if (request.sponsored() != null) item.setSponsored(request.sponsored());

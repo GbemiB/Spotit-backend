@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 public record CreateContentItemRequest(
         @NotBlank String tag,
         @NotBlank String title,
-        String body,
+        @NotBlank String body,
         String imageUrl,
         String imageKey,
         boolean sponsored,
