@@ -1,7 +1,5 @@
 package com.spotit.api.config;
 
-import com.spotit.api.content.entity.ContentItem;
-import com.spotit.api.content.repository.ContentItemRepository;
 import com.spotit.api.rewards.entity.BadgeDefinition;
 import com.spotit.api.rewards.entity.ChallengeDefinition;
 import com.spotit.api.rewards.entity.ChallengeType;
@@ -25,7 +23,6 @@ public class ReferenceDataSeeder implements ApplicationRunner {
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final ChallengeDefinitionRepository challengeDefinitionRepository;
     private final ProductRepository productRepository;
-    private final ContentItemRepository contentItemRepository;
     private final LevelDefinitionRepository levelDefinitionRepository;
 
     @Override
@@ -34,7 +31,6 @@ public class ReferenceDataSeeder implements ApplicationRunner {
         seedBadges();
         seedChallenges();
         seedProducts();
-        seedContent();
         seedLevels();
     }
 
@@ -66,44 +62,6 @@ public class ReferenceDataSeeder implements ApplicationRunner {
                 Product.builder().id("vitc_serum").name("Vitamin C Serum").cost(5000).minLevel("Rosé").premiumOnly(false).icon("💧").active(true).build(),
                 Product.builder().id("sheet_mask_set").name("Hydrating Sheet Mask Set").cost(7500).minLevel("Bloom").premiumOnly(true).icon("🧖‍♀️").active(true).build(),
                 Product.builder().id("skincare_bundle").name("Luxury Skincare Bundle").cost(20000).minLevel("Wildflower").premiumOnly(true).icon("🎁").active(true).build()
-        ));
-    }
-
-    private void seedContent() {
-        if (contentItemRepository.count() > 0) return;
-        contentItemRepository.saveAll(List.of(
-                ContentItem.builder().tag("Education").title("Understanding your fertile window").imageKey("lifestyle").sponsored(false).sortOrder(1)
-                        .body("""
-                                Your fertile window is the stretch of each cycle when pregnancy is possible — typically the 5 days before ovulation through the day of ovulation itself.
-
-                                Why that range? Sperm can survive in the body for up to 5 days, while an egg lives for only about 24 hours after release. So the "window" is really sperm waiting for an egg, not the other way around.
-
-                                Spot it estimates your window from your average cycle length. You can narrow it down further by tracking signs your body already gives you:
-
-                                • Cervical mucus that turns clear and stretchy, like raw egg white
-                                • A slight rise in resting body temperature after ovulation
-                                • Mild one-sided pelvic twinges ("mittelschmerz")
-
-                                Cycles vary month to month, so treat this as a well-informed estimate, not a guarantee — and check in with a doctor if you're planning or avoiding pregnancy and want more precision.""")
-                        .build(),
-                ContentItem.builder().tag("Nutrition").title("5 foods that support ovulation").imageKey("food").sponsored(false).sortOrder(2)
-                        .body("""
-                                Diet alone won't control ovulation, but certain nutrients give your hormones the raw materials they need to function well:
-
-                                • Leafy greens (spinach, kale) — folate, which supports healthy ovulation and early fetal development
-                                • Berries — antioxidants that help protect egg cells from oxidative stress
-                                • Fatty fish (salmon, sardines) — omega-3s linked to more regular cycles
-                                • Whole grains (oats, quinoa) — steadier blood sugar, which helps keep reproductive hormones balanced
-                                • Nuts and seeds — vitamin E and zinc, both tied to hormone production
-
-                                None of these guarantee ovulation or a pregnancy outcome on their own — think of them as one supporting factor alongside sleep, stress, and overall health. A doctor or registered dietitian can tailor this to your specific needs.""")
-                        .build(),
-                ContentItem.builder().tag("Sponsored").title("Nourish prenatal multivitamins").imageKey("product").sponsored(true).advertiser("Nourish").sortOrder(3)
-                        .body("""
-                                A prenatal multivitamin formulated to help meet essential nutrient needs before and during pregnancy, including folate, iron, and vitamin D.
-
-                                As with any supplement, check with your doctor before starting — especially if you take other medications, are breastfeeding, or manage an existing medical condition.""")
-                        .build()
         ));
     }
 

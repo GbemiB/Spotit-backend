@@ -22,9 +22,10 @@ public class ContentDataSeeder {
     @Transactional
     public void seed() {
         if (contentItemRepository.count() > 0) {
-            boolean bodyMissing = contentItemRepository.findAll()
-                    .stream().anyMatch(i -> i.getBody() == null || i.getBody().isBlank());
-            if (!bodyMissing) return;
+            boolean incomplete = contentItemRepository.findAll().stream()
+                    .anyMatch(i -> i.getBody() == null || i.getBody().isBlank()
+                            || i.getImageKey() == null || i.getImageKey().isBlank());
+            if (!incomplete) return;
             contentItemRepository.deleteAll();
         }
 
@@ -32,6 +33,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Health")
+                        .imageKey("lifestyle")
                         .title("Understanding Your Menstrual Cycle")
                         .body("""
                                 Your menstrual cycle is far more than just your period. It is a monthly rhythm that touches every part of your physiology — your energy levels, skin, digestion, immune function, and even how you process emotions. Understanding it gives you a powerful lens for reading your body.
@@ -61,6 +63,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Nutrition")
+                        .imageKey("food")
                         .title("Foods That Ease Period Cramps")
                         .body("""
                                 Dysmenorrhoea — the clinical term for painful periods — affects up to 80% of people who menstruate at some point in their lives. For many, it is the single most disruptive symptom each cycle. While over-the-counter pain relief helps in acute moments, what you eat in the days leading up to and during your period can meaningfully reduce the intensity of cramping.
@@ -96,6 +99,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Fitness")
+                        .imageKey("product")
                         .title("How to Exercise Through Your Entire Cycle")
                         .body("""
                                 The idea that you should rest completely during your period, or push equally hard every day of the month, are both outdated. Your hormones create a changing internal environment that makes different types of movement feel better — and perform better — at different points in your cycle. Working with this rhythm rather than against it is one of the most practical applications of cycle awareness.
@@ -135,6 +139,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Wellness")
+                        .imageKey("lifestyle")
                         .title("Managing Period Cramps Naturally")
                         .body("""
                                 For many people, period cramps are the most physically challenging aspect of their cycle. The good news is that a range of well-evidenced, non-pharmaceutical approaches can significantly reduce their severity — and in some cases, work as effectively as over-the-counter medication.
@@ -176,6 +181,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Mindfulness")
+                        .imageKey("food")
                         .title("Your Mood and Your Menstrual Cycle")
                         .body("""
                                 The connection between hormones and mental wellbeing is real, complex, and deeply individual. For many people who menstruate, mood does not stay constant across the month — it shifts in ways that, once recognised, can be anticipated, understood, and supported rather than experienced as mysterious or overwhelming.
@@ -216,6 +222,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Health")
+                        .imageKey("product")
                         .title("Signs of a Healthy Menstrual Cycle")
                         .body("""
                                 There is a great deal of variation in what a normal cycle looks like — and a great deal of misinformation about what should be considered standard. Understanding what genuinely healthy menstruation looks like helps you recognise when something deserves attention and when it falls within the wide range of normal.
@@ -259,6 +266,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Tips")
+                        .imageKey("lifestyle")
                         .title("Why Tracking Your Symptoms Changes Everything")
                         .body("""
                                 Symptom tracking is one of the most underrated health practices available. When done consistently, it transforms vague feelings into clear patterns, converts frustrating surprises into predictable events, and gives both you and your healthcare providers data that would otherwise take years of guesswork to accumulate.
@@ -299,6 +307,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Wellness")
+                        .imageKey("food")
                         .title("Sleep and Your Menstrual Cycle")
                         .body("""
                                 Sleep and the menstrual cycle are locked in a bidirectional relationship: hormonal changes across your cycle affect sleep quality, and poor sleep in turn disrupts hormonal balance, worsens PMS, and can even alter cycle length. Understanding this relationship helps you protect your sleep in the phases when it is most vulnerable.
@@ -336,6 +345,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Health")
+                        .imageKey("product")
                         .title("What Is Ovulation and How to Recognise It")
                         .body("""
                                 Ovulation is the central event of the menstrual cycle. Everything before it — the follicular phase — builds toward it, and everything after it — the luteal phase — is a response to it. Yet despite its importance, most people receive very little education about what ovulation actually is, when it happens, or how to recognise it. Understanding ovulation gives you detailed knowledge of your fertility, your hormones, and your health.
@@ -375,6 +385,7 @@ public class ContentDataSeeder {
 
                 ContentItem.builder()
                         .tag("Nutrition")
+                        .imageKey("lifestyle")
                         .title("Iron-Rich Eating During and After Your Period")
                         .body("""
                                 Iron deficiency is the most common nutritional deficiency worldwide, and people who menstruate are at significantly higher risk than the general population. Each period results in blood loss, and with that blood goes iron — a mineral essential for producing haemoglobin, the protein that carries oxygen in red blood cells. When iron stores are depleted, the result is fatigue, poor concentration, breathlessness, and a general feeling of depletion that can persist well beyond your period itself.
