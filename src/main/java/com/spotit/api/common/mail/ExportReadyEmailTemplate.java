@@ -1,7 +1,6 @@
 package com.spotit.api.common.mail;
 
-public final class ExportReadyEmailTemplate {
-    private static final String ACCENT = "#C04E68";
+public class ExportReadyEmailTemplate {
     private static final String ACCENT_SOFT = "#DC5A74";
     private static final String INK = "#2E2429";
     private static final String MUTED = "#8A7377";
