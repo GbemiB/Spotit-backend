@@ -1,11 +1,11 @@
 package com.spotit.api.common.crypto;
 
-import com.spotit.api.configuration.PropertyNames;
-import com.spotit.api.configuration.entity.GlobalConfiguration;
-import com.spotit.api.configuration.repository.GlobalConfigurationRepository;
+import com.spotit.api.configuration.entity.SecurityConfig;
+import com.spotit.api.configuration.repository.SecurityConfigRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -16,8 +16,13 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
+// @DependsOn: ConfigStoreMigration copies any pre-existing global_configuration.crypto-aes-key
+// into security_config.crypto_aes_key before this bean initialises — without it, an
+// already-deployed database would look keyless here and we'd generate a fresh key, stranding
+// every secret already encrypted with the old one.
 @Service
 @Slf4j
+@DependsOn("configStoreMigration")
 @RequiredArgsConstructor
 public class AesGcmEncryptionService implements EncryptionService {
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
@@ -26,36 +31,32 @@ public class AesGcmEncryptionService implements EncryptionService {
 
     private static final int KEY_BYTES = 32;
 
-    private final GlobalConfigurationRepository repository;
+    private final SecurityConfigRepository securityConfigRepository;
     private SecretKeySpec key;
 
     @PostConstruct
     void init() {
-        GlobalConfiguration row = repository.findByName(PropertyNames.CRYPTO_AES_KEY).orElseGet(this::seedKey);
-        String base64Key = row.getStringValue();
+        SecurityConfig row = securityConfigRepository.findById(SecurityConfig.SINGLETON_ID)
+                .orElseGet(() -> SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).build());
+        String base64Key = row.getCryptoAesKey();
+        if (base64Key == null || base64Key.isBlank()) {
+            base64Key = generateKey();
+            row.setCryptoAesKey(base64Key);
+            securityConfigRepository.save(row);
+            log.info("Seeded security_config.crypto_aes_key with a freshly generated AES-256 key.");
+        }
         byte[] decoded = Base64.getDecoder().decode(base64Key);
         if (decoded.length != KEY_BYTES) {
             throw new IllegalStateException(
-                    "global_configuration.crypto-aes-key must decode to exactly 32 bytes (AES-256), got " + decoded.length);
+                    "security_config.crypto_aes_key must decode to exactly 32 bytes (AES-256), got " + decoded.length);
         }
         key = new SecretKeySpec(decoded, "AES");
     }
 
-    private GlobalConfiguration seedKey() {
+    private String generateKey() {
         byte[] keyBytes = new byte[KEY_BYTES];
         new SecureRandom().nextBytes(keyBytes);
-        String base64Key = Base64.getEncoder().encodeToString(keyBytes);
-        log.info("Seeded global_configuration.{} with a freshly generated AES-256 key.", PropertyNames.CRYPTO_AES_KEY);
-        GlobalConfiguration row = GlobalConfiguration.builder()
-                .name(PropertyNames.CRYPTO_AES_KEY)
-                .groupName(PropertyNames.GROUP_SECURITY)
-                .enabled(true)
-                .stringValue(base64Key)
-                .description("Root AES-256 key that encrypts every other secret in this table (jwt-secret, smtp-*-password). "
-                        + "Plaintext by necessity — a key can't be encrypted with itself. Never change via the API: rotating it "
-                        + "strands every secret already encrypted with the old value.")
-                .build();
-        return repository.save(row);
+        return Base64.getEncoder().encodeToString(keyBytes);
     }
 
     @Override

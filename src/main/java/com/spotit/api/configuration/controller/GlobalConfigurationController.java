@@ -12,26 +12,26 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Global Config (Admin)", description = "Admin surface for the single global_configuration table backing all app settings, thresholds, and secrets.")
+@Tag(name = "Global Config (Admin)", description = "Admin surface for all app settings, thresholds, and secrets — stored as typed columns across security_config, smtp_config, and global_config, exposed here under their flat property names.")
 @RestController
 @RequestMapping("/api/v1/config/global")
 @RequiredArgsConstructor
 public class GlobalConfigurationController {
     private final ConfigurationDomainService configurationDomainService;
 
-    @Operation(summary = "List all properties", description = "Every row in global_configuration, ordered by name. Secret values are redacted.")
+    @Operation(summary = "List all properties", description = "Every configuration property, ordered by name. Secret values are redacted.")
     @GetMapping
     public List<GlobalConfigurationResponse> list() {
         return configurationDomainService.listAll();
     }
 
-    @Operation(summary = "List all group names", description = "Every distinct group_name in global_configuration (e.g. security, points, badges, smtp) — every row belongs to exactly one.")
+    @Operation(summary = "List all group names", description = "Every distinct group a property belongs to (e.g. security, points, badges, smtp).")
     @GetMapping("/groups")
     public List<String> listGroups() {
         return configurationDomainService.listGroupNames();
     }
 
-    @Operation(summary = "List properties in a group", description = "Every row whose group_name matches, ordered by name. Secret values are redacted.")
+    @Operation(summary = "List properties in a group", description = "Every property whose group matches, ordered by name. Secret values are redacted.")
     @GetMapping("/group/{groupName}")
     public List<GlobalConfigurationResponse> listByGroup(@Parameter(description = "Group name", example = "badges") @PathVariable String groupName) {
         return configurationDomainService.listByGroup(groupName);

@@ -1,8 +1,7 @@
 package com.spotit.api.common.crypto;
 
-import com.spotit.api.configuration.PropertyNames;
-import com.spotit.api.configuration.entity.GlobalConfiguration;
-import com.spotit.api.configuration.repository.GlobalConfigurationRepository;
+import com.spotit.api.configuration.entity.SecurityConfig;
+import com.spotit.api.configuration.repository.SecurityConfigRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -19,7 +18,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AesGcmEncryptionServiceTest {
-    @Mock GlobalConfigurationRepository repository;
+    @Mock SecurityConfigRepository repository;
 
     private AesGcmEncryptionService service() {
         return new AesGcmEncryptionService(repository);
@@ -27,17 +26,17 @@ class AesGcmEncryptionServiceTest {
 
     @Test
     void initSelfSeedsAFreshKeyWhenNoneExistsAndCanRoundTrip() {
-        when(repository.findByName(PropertyNames.CRYPTO_AES_KEY)).thenReturn(Optional.empty());
-        when(repository.save(any(GlobalConfiguration.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.empty());
+        when(repository.save(any(SecurityConfig.class))).thenAnswer(inv -> inv.getArgument(0));
         AesGcmEncryptionService service = service();
 
         service.init();
 
-        ArgumentCaptor<GlobalConfiguration> captor = ArgumentCaptor.forClass(GlobalConfiguration.class);
+        ArgumentCaptor<SecurityConfig> captor = ArgumentCaptor.forClass(SecurityConfig.class);
         verify(repository).save(captor.capture());
-        GlobalConfiguration saved = captor.getValue();
-        assertThat(saved.getName()).isEqualTo(PropertyNames.CRYPTO_AES_KEY);
-        assertThat(Base64.getDecoder().decode(saved.getStringValue())).hasSize(32);
+        SecurityConfig saved = captor.getValue();
+        assertThat(saved.getId()).isEqualTo(SecurityConfig.SINGLETON_ID);
+        assertThat(Base64.getDecoder().decode(saved.getCryptoAesKey())).hasSize(32);
 
         String ciphertext = service.encrypt("hello world");
         assertThat(ciphertext).isNotEqualTo("hello world");
@@ -47,8 +46,8 @@ class AesGcmEncryptionServiceTest {
     @Test
     void initReusesAnExistingKeyWithoutOverwritingIt() {
         String existingKey = Base64.getEncoder().encodeToString(new byte[32]);
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.CRYPTO_AES_KEY).stringValue(existingKey).build();
-        when(repository.findByName(PropertyNames.CRYPTO_AES_KEY)).thenReturn(Optional.of(row));
+        SecurityConfig row = SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).cryptoAesKey(existingKey).build();
+        when(repository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.of(row));
         AesGcmEncryptionService service = service();
 
         service.init();
@@ -61,8 +60,8 @@ class AesGcmEncryptionServiceTest {
     @Test
     void initRejectsAStoredKeyThatIsNotThirtyTwoBytes() {
         String badKey = Base64.getEncoder().encodeToString(new byte[16]);
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.CRYPTO_AES_KEY).stringValue(badKey).build();
-        when(repository.findByName(PropertyNames.CRYPTO_AES_KEY)).thenReturn(Optional.of(row));
+        SecurityConfig row = SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).cryptoAesKey(badKey).build();
+        when(repository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.of(row));
         AesGcmEncryptionService service = service();
 
         assertThatThrownBy(service::init).isInstanceOf(IllegalStateException.class);
@@ -70,8 +69,8 @@ class AesGcmEncryptionServiceTest {
 
     @Test
     void encryptingTheSamePlaintextTwiceProducesDifferentCiphertext() {
-        when(repository.findByName(PropertyNames.CRYPTO_AES_KEY)).thenReturn(Optional.empty());
-        when(repository.save(any(GlobalConfiguration.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.empty());
+        when(repository.save(any(SecurityConfig.class))).thenAnswer(inv -> inv.getArgument(0));
         AesGcmEncryptionService service = service();
         service.init();
 

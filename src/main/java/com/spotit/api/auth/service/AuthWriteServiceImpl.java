@@ -227,6 +227,13 @@ public class AuthWriteServiceImpl implements AuthWriteService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, ErrorMessage.INVALID_REFRESH_TOKEN));
+
+        // Sliding session: every refresh pushes the stored token's expiry out by another full TTL,
+        // so a login that keeps getting used never lapses. Utility app — a session should last
+        // until the user explicitly signs out, not until a fixed timeout.
+        stored.setExpiresAt(Instant.now().plusSeconds(jwtService.refreshTokenTtlSeconds()));
+        refreshTokenRepository.save(stored);
+
         String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail(), user.isPremium());
         return new AccessTokenResponse(accessToken, jwtService.accessTokenTtlSeconds());
     }

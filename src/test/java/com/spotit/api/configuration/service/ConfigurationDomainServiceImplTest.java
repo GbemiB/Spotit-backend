@@ -3,18 +3,24 @@ package com.spotit.api.configuration.service;
 import com.spotit.api.common.crypto.EncryptionService;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.ConfigPropertyCatalog;
 import com.spotit.api.configuration.PropertyNames;
 import com.spotit.api.configuration.SmtpSeedProperties;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
-import com.spotit.api.configuration.entity.GlobalConfiguration;
-import com.spotit.api.configuration.repository.GlobalConfigurationRepository;
+import com.spotit.api.configuration.entity.GlobalConfig;
+import com.spotit.api.configuration.entity.SecurityConfig;
+import com.spotit.api.configuration.entity.SmtpConfig;
+import com.spotit.api.configuration.repository.GlobalConfigRepository;
+import com.spotit.api.configuration.repository.SecurityConfigRepository;
+import com.spotit.api.configuration.repository.SmtpConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,44 +31,53 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ConfigurationDomainServiceImplTest {
-    @Mock GlobalConfigurationRepository repository;
+    @Mock SecurityConfigRepository securityConfigRepository;
+    @Mock SmtpConfigRepository smtpConfigRepository;
+    @Mock GlobalConfigRepository globalConfigRepository;
     @Mock EncryptionService encryptionService;
 
     ConfigurationDomainServiceImpl service;
 
+    private static UpdateGlobalConfigurationRequest request(String groupName, Long value, Boolean enabled, String stringValue, String description) {
+        return new UpdateGlobalConfigurationRequest(groupName, enabled, value, null, stringValue, description);
+    }
+
     @BeforeEach
     void setUp() {
-        service = new ConfigurationDomainServiceImpl(repository, encryptionService,
-                new SmtpSeedProperties("smtp.gmail.com", 587, "seed@example.com", "seed-password", "seed@example.com", true));
+        service = new ConfigurationDomainServiceImpl(securityConfigRepository, smtpConfigRepository, globalConfigRepository,
+                encryptionService,
+                new SmtpSeedProperties("smtp.gmail.com", 587, "seed@example.com", "seed-password", "seed@example.com", true),
+                new ConfigPropertyCatalog());
     }
 
     @Test
     void updateRejectsAnyChangeToTheEncryptionKeysStringValue() {
-        UpdateGlobalConfigurationRequest request = new UpdateGlobalConfigurationRequest(null, null, null, null, "attacker-supplied-key", null);
+        UpdateGlobalConfigurationRequest req = request(null, null, null, "attacker-supplied-key", null);
 
-        assertThatThrownBy(() -> service.update(PropertyNames.CRYPTO_AES_KEY, request))
+        assertThatThrownBy(() -> service.update(PropertyNames.CRYPTO_AES_KEY, req))
                 .isInstanceOf(ApiException.class)
                 .extracting(e -> ((ApiException) e).getErrorCode())
                 .isEqualTo(ErrorCode.VALIDATION_ERROR);
-        verify(repository, never()).save(any());
+        verify(securityConfigRepository, never()).save(any());
     }
 
     @Test
-    void updateAllowsNonStringValueChangesToTheEncryptionKeyRow() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.CRYPTO_AES_KEY).description("old").build();
-        when(repository.findByName(PropertyNames.CRYPTO_AES_KEY)).thenReturn(Optional.of(row));
-        when(repository.save(any(GlobalConfiguration.class))).thenAnswer(inv -> inv.getArgument(0));
-        UpdateGlobalConfigurationRequest request = new UpdateGlobalConfigurationRequest(null, null, null, null, null, "new description");
+    void updateOnTheEncryptionKeyRowWithNoStringValueChangeIsAllowed() {
+        SecurityConfig row = SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).cryptoAesKey("real-key").build();
+        when(securityConfigRepository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.of(row));
+        when(securityConfigRepository.save(any(SecurityConfig.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        GlobalConfigurationResponse response = service.update(PropertyNames.CRYPTO_AES_KEY, request);
+        GlobalConfigurationResponse response = service.update(PropertyNames.CRYPTO_AES_KEY, request(null, null, null, null, "new description"));
 
-        assertThat(response.description()).isEqualTo("new description");
+        assertThat(response.name()).isEqualTo(PropertyNames.CRYPTO_AES_KEY);
+        assertThat(response.groupName()).isEqualTo(PropertyNames.GROUP_SECURITY);
+        assertThat(response.stringValue()).isNull();
     }
 
     @Test
     void getByNameRedactsTheEncryptionKeysStringValue() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.CRYPTO_AES_KEY).stringValue("real-key-material").build();
-        when(repository.findByName(PropertyNames.CRYPTO_AES_KEY)).thenReturn(Optional.of(row));
+        when(securityConfigRepository.findById(SecurityConfig.SINGLETON_ID))
+                .thenReturn(Optional.of(SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).cryptoAesKey("real-key-material").build()));
 
         GlobalConfigurationResponse response = service.getByName(PropertyNames.CRYPTO_AES_KEY);
 
@@ -71,8 +86,8 @@ class ConfigurationDomainServiceImplTest {
 
     @Test
     void getByNameRedactsAnEncryptedSecretsStringValue() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.JWT_SECRET).stringValue("ciphertext").build();
-        when(repository.findByName(PropertyNames.JWT_SECRET)).thenReturn(Optional.of(row));
+        when(securityConfigRepository.findById(SecurityConfig.SINGLETON_ID))
+                .thenReturn(Optional.of(SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).jwtSecret("ciphertext").build()));
 
         GlobalConfigurationResponse response = service.getByName(PropertyNames.JWT_SECRET);
 
@@ -81,8 +96,8 @@ class ConfigurationDomainServiceImplTest {
 
     @Test
     void getByNameDoesNotRedactAnOrdinaryProperty() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.SMTP_HOST).stringValue("smtp.example.com").build();
-        when(repository.findByName(PropertyNames.SMTP_HOST)).thenReturn(Optional.of(row));
+        when(smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID))
+                .thenReturn(Optional.of(SmtpConfig.builder().id(SmtpConfig.SINGLETON_ID).host("smtp.example.com").build()));
 
         GlobalConfigurationResponse response = service.getByName(PropertyNames.SMTP_HOST);
 
@@ -91,45 +106,56 @@ class ConfigurationDomainServiceImplTest {
 
     @Test
     void updateOnAnEncryptedSecretEncryptsTheNewValueBeforeStorage() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.JWT_SECRET).build();
-        when(repository.findByName(PropertyNames.JWT_SECRET)).thenReturn(Optional.of(row));
+        SecurityConfig row = SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).build();
+        when(securityConfigRepository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.of(row));
         when(encryptionService.encrypt("new-secret")).thenReturn("encrypted-new-secret");
-        when(repository.save(any(GlobalConfiguration.class))).thenAnswer(inv -> inv.getArgument(0));
-        UpdateGlobalConfigurationRequest request = new UpdateGlobalConfigurationRequest(null, null, null, null, "new-secret", null);
+        when(securityConfigRepository.save(any(SecurityConfig.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.update(PropertyNames.JWT_SECRET, request);
+        service.update(PropertyNames.JWT_SECRET, request(null, null, null, "new-secret", null));
 
-        assertThat(row.getStringValue()).isEqualTo("encrypted-new-secret");
+        assertThat(row.getJwtSecret()).isEqualTo("encrypted-new-secret");
     }
 
     @Test
-    void updateAllowsReassigningTheGroup() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.POINTS_DAILY_CLAIM).groupName("points").build();
-        when(repository.findByName(PropertyNames.POINTS_DAILY_CLAIM)).thenReturn(Optional.of(row));
-        when(repository.save(any(GlobalConfiguration.class))).thenAnswer(inv -> inv.getArgument(0));
-        UpdateGlobalConfigurationRequest request = new UpdateGlobalConfigurationRequest("rewards", null, null, null, null, null);
+    void updateIgnoresAttemptsToReassignAPropertysGroup() {
+        when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID))
+                .thenReturn(Optional.of(GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).pointsDailyClaim(50).build()));
+        when(globalConfigRepository.save(any(GlobalConfig.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        GlobalConfigurationResponse response = service.update(PropertyNames.POINTS_DAILY_CLAIM, request);
+        GlobalConfigurationResponse response = service.update(PropertyNames.POINTS_DAILY_CLAIM, request("rewards", null, null, null, null));
 
-        assertThat(response.groupName()).isEqualTo("rewards");
+        assertThat(response.groupName()).isEqualTo(PropertyNames.GROUP_POINTS);
     }
 
     @Test
-    void listAllOrdersByNameAndMapsEachRow() {
-        GlobalConfiguration row = GlobalConfiguration.builder().name(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS).groupName("logs").value(14L).build();
-        when(repository.findAllByOrderByNameAsc()).thenReturn(List.of(row));
+    void updateChangesALongValuedProperty() {
+        GlobalConfig row = GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).contentFeedDefaultLimit(10).build();
+        when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(row));
+        when(globalConfigRepository.save(any(GlobalConfig.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        GlobalConfigurationResponse response = service.update(PropertyNames.CONTENT_FEED_DEFAULT_LIMIT, request(null, 25L, null, null, null));
+
+        assertThat(row.getContentFeedDefaultLimit()).isEqualTo(25L);
+        assertThat(response.value()).isEqualTo(25L);
+    }
+
+    @Test
+    void listAllIsOrderedByNameAndMapsEachProperty() {
+        when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID))
+                .thenReturn(Optional.of(GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).logMaxPeriodRangeDays(14).build()));
 
         List<GlobalConfigurationResponse> all = service.listAll();
 
-        assertThat(all).hasSize(1);
-        assertThat(all.get(0).groupName()).isEqualTo("logs");
-        assertThat(all.get(0).value()).isEqualTo(14L);
+        assertThat(all).isSortedAccordingTo(Comparator.comparing(GlobalConfigurationResponse::name));
+        GlobalConfigurationResponse logs = all.stream()
+                .filter(r -> r.name().equals(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS))
+                .findFirst().orElseThrow();
+        assertThat(logs.groupName()).isEqualTo(PropertyNames.GROUP_LOGS);
+        assertThat(logs.value()).isEqualTo(14L);
     }
 
     @Test
     void getByNameThrowsNotFoundForAnUnknownProperty() {
-        when(repository.findByName("no-such-property")).thenReturn(Optional.empty());
-
         assertThatThrownBy(() -> service.getByName("no-such-property"))
                 .isInstanceOf(ApiException.class)
                 .extracting(e -> ((ApiException) e).getErrorCode())

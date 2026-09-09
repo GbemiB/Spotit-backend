@@ -51,29 +51,29 @@ public class ReferenceDataSeeder implements ApplicationRunner {
         challengeDefinitionRepository.saveAll(List.of(
                 ChallengeDefinition.builder().id("log_week").title("Log your mood every day").reward(5).total(7).type(ChallengeType.WEEKLY_LOG).build(),
                 ChallengeDefinition.builder().id("read_3").title("Read 3 nutrition articles").reward(5).total(3).type(ChallengeType.STATIC).build(),
-                ChallengeDefinition.builder().id("daily_log").title("Log today").reward(10).total(1).type(ChallengeType.STATIC).build()
+                ChallengeDefinition.builder().id("daily_log").title("Log today").reward(5).total(1).type(ChallengeType.STATIC).build()
         ));
     }
 
     private void seedProducts() {
         if (productRepository.count() > 0) return;
         productRepository.saveAll(List.of(
-                Product.builder().id("rosewater_mist").name("Rosewater Face Mist").cost(5000).minLevel("Petal").premiumOnly(false).icon("🌹").active(true).build(),
-                Product.builder().id("vitc_serum").name("Vitamin C Serum").cost(5000).minLevel("Rosé").premiumOnly(false).icon("💧").active(true).build(),
-                Product.builder().id("sheet_mask_set").name("Hydrating Sheet Mask Set").cost(7500).minLevel("Bloom").premiumOnly(true).icon("🧖‍♀️").active(true).build(),
-                Product.builder().id("skincare_bundle").name("Luxury Skincare Bundle").cost(20000).minLevel("Wildflower").premiumOnly(true).icon("🎁").active(true).build()
+                Product.builder().id("rosewater_mist").name("Rosewater Face Mist").cost(50000).minLevel("Petal").premiumOnly(false).icon("🌹").active(true).build(),
+                Product.builder().id("vitc_serum").name("Vitamin C Serum").cost(75000).minLevel("Rosé").premiumOnly(false).icon("💧").active(true).build(),
+                Product.builder().id("sheet_mask_set").name("Hydrating Sheet Mask Set").cost(100000).minLevel("Bloom").premiumOnly(true).icon("🧖‍♀️").active(true).build(),
+                Product.builder().id("skincare_bundle").name("Luxury Skincare Bundle").cost(150000).minLevel("Wildflower").premiumOnly(true).icon("🎁").active(true).build()
         ));
     }
 
     private void seedLevels() {
         if (levelDefinitionRepository.count() > 0) return;
         levelDefinitionRepository.saveAll(List.of(
-                LevelDefinition.builder().id("blush").name("Blush").pointsLow(0).pointsHigh(500).sortOrder(1).build(),
-                LevelDefinition.builder().id("petal").name("Petal").pointsLow(500).pointsHigh(2000).sortOrder(2).build(),
-                LevelDefinition.builder().id("rose").name("Rosé").pointsLow(2000).pointsHigh(5000).sortOrder(3).build(),
-                LevelDefinition.builder().id("bloom").name("Bloom").pointsLow(5000).pointsHigh(10000).sortOrder(4).build(),
-                LevelDefinition.builder().id("wildflower").name("Wildflower").pointsLow(10000).pointsHigh(25000).sortOrder(5).build(),
-                LevelDefinition.builder().id("moonflower").name("Moonflower").pointsLow(25000).pointsHigh(50000).sortOrder(6).build()
+                LevelDefinition.builder().id("blush").name("Blush").pointsLow(0).pointsHigh(10000).sortOrder(1).build(),
+                LevelDefinition.builder().id("petal").name("Petal").pointsLow(10001).pointsHigh(20000).sortOrder(2).build(),
+                LevelDefinition.builder().id("rose").name("Rosé").pointsLow(20001).pointsHigh(40000).sortOrder(3).build(),
+                LevelDefinition.builder().id("bloom").name("Bloom").pointsLow(40001).pointsHigh(60000).sortOrder(4).build(),
+                LevelDefinition.builder().id("wildflower").name("Wildflower").pointsLow(60001).pointsHigh(100000).sortOrder(5).build(),
+                LevelDefinition.builder().id("moonflower").name("Moonflower").pointsLow(100001).pointsHigh(500000).sortOrder(6).build()
         ));
     }
 }

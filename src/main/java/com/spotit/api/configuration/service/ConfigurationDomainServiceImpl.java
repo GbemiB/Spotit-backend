@@ -3,68 +3,92 @@ package com.spotit.api.configuration.service;
 import com.spotit.api.common.crypto.EncryptionService;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.ConfigDefaults;
+import com.spotit.api.configuration.ConfigPropertyCatalog;
+import com.spotit.api.configuration.ConfigPropertyCatalog.Context;
+import com.spotit.api.configuration.ConfigPropertyCatalog.Property;
 import com.spotit.api.configuration.PropertyNames;
 import com.spotit.api.configuration.SmtpSeedProperties;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
-import com.spotit.api.configuration.entity.GlobalConfiguration;
-import com.spotit.api.configuration.repository.GlobalConfigurationRepository;
+import com.spotit.api.configuration.entity.GlobalConfig;
+import com.spotit.api.configuration.entity.SecurityConfig;
+import com.spotit.api.configuration.entity.SmtpConfig;
+import com.spotit.api.configuration.repository.GlobalConfigRepository;
+import com.spotit.api.configuration.repository.SecurityConfigRepository;
+import com.spotit.api.configuration.repository.SmtpConfigRepository;
 import com.spotit.api.smtp.service.ResolvedSmtpSettings;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.UUID;
 
+// @DependsOn: ConfigStoreMigration must finish copying any already-deployed global_configuration
+// rows into security_config/smtp_config/global_config before this bean's @PostConstruct seeder
+// runs, otherwise the seeder would write fresh defaults on top of a database that already had
+// real, admin-tuned values.
 @Service
 @Slf4j
+@DependsOn("configStoreMigration")
 @RequiredArgsConstructor
 public class ConfigurationDomainServiceImpl implements ConfigurationDomainService {
     private static final int GENERATED_JWT_SECRET_BYTES = 48;
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final int DEFAULT_SMTP_PORT = 587;
 
-    private static final Set<String> ENCRYPTED_SECRET_NAMES = Set.of(
-            PropertyNames.JWT_SECRET,
-            PropertyNames.SMTP_PASSWORD);
-
-    private static final Set<String> REDACTED_NAMES = Set.of(
-            PropertyNames.JWT_SECRET,
-            PropertyNames.SMTP_PASSWORD,
-            PropertyNames.CRYPTO_AES_KEY);
-
-    private final GlobalConfigurationRepository repository;
+    private final SecurityConfigRepository securityConfigRepository;
+    private final SmtpConfigRepository smtpConfigRepository;
+    private final GlobalConfigRepository globalConfigRepository;
     private final EncryptionService encryptionService;
     private final SmtpSeedProperties smtpSeedProperties;
+    private final ConfigPropertyCatalog catalog;
 
     @PostConstruct
     void seedDefaults() {
-        seedIfAbsent(PropertyNames.JWT_SECRET, PropertyNames.GROUP_SECURITY, null, generateEncryptedJwtSecret(), "Encrypted JWT signing secret");
-        seedIfAbsent(PropertyNames.JWT_ACCESS_TOKEN_TTL_SECONDS, PropertyNames.GROUP_SECURITY, 3600L, null, "JWT access token time-to-live, in seconds");
-        seedIfAbsent(PropertyNames.JWT_REFRESH_TOKEN_TTL_SECONDS, PropertyNames.GROUP_SECURITY, 2_592_000L, null, "JWT refresh token time-to-live, in seconds");
-        seedIfAbsent(PropertyNames.OTP_TTL_SECONDS, PropertyNames.GROUP_SECURITY, 600L, null, "OTP code time-to-live, in seconds");
-        seedIfAbsent(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS, 5L, null, "Max rewarded ad views per user per day");
-        seedIfAbsent(PropertyNames.CYCLE_DEFAULT_LENGTH, PropertyNames.GROUP_CYCLE, 28L, null, "Default cycle length assumed until a user has logged enough data");
-        seedIfAbsent(PropertyNames.CYCLE_DEFAULT_PERIOD_LENGTH, PropertyNames.GROUP_CYCLE, 5L, null, "Default period length assumed until a user has logged enough data");
-        seedIfAbsent(PropertyNames.POINTS_DAILY_CLAIM, PropertyNames.GROUP_POINTS, 50L, null, "Points awarded for the daily claim");
-        seedIfAbsent(PropertyNames.POINTS_WATCH_AD, PropertyNames.GROUP_POINTS, 100L, null, "Points awarded for watching a rewarded ad");
-        seedIfAbsent(PropertyNames.ACCOUNT_PURGE_GRACE_DAYS, PropertyNames.GROUP_ACCOUNT, 30L, null, "Days after a deletion request before an account is purged");
-        seedIfAbsent(PropertyNames.BADGE_KNOW_YOUR_BODY_THRESHOLD, PropertyNames.GROUP_BADGES, 10L, null, "Logs required to earn the Know Your Body badge");
-        seedIfAbsent(PropertyNames.BADGE_CYCLE_VETERAN_THRESHOLD, PropertyNames.GROUP_BADGES, 28L, null, "Cycles required to earn the Cycle Veteran badge");
-        seedIfAbsent(PropertyNames.BADGE_WEEK_WARRIOR_STREAK_THRESHOLD, PropertyNames.GROUP_BADGES, 7L, null, "Day streak required to earn the Week Warrior badge");
-        seedIfAbsent(PropertyNames.CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD, PropertyNames.GROUP_CYCLE, 3L, null, "Logs needed before a cycle's confidence is reported as high");
-        seedIfAbsent(PropertyNames.INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS, PropertyNames.GROUP_INSIGHT, 4L, null, "Cycle-length variation, in days, flagged as irregular");
-        seedIfAbsent(PropertyNames.INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS, PropertyNames.GROUP_INSIGHT, 3L, null, "Period-length delta, in days, flagged as unusual");
-        seedIfAbsent(PropertyNames.INSIGHT_DEFAULT_CYCLES, PropertyNames.GROUP_INSIGHT, 6L, null, "Cycles of history used to compute trends/regularity by default");
-        seedIfAbsent(PropertyNames.SUBSCRIPTION_PERIOD_DAYS, PropertyNames.GROUP_BILLING, 30L, null, "Length of one billing period, in days");
-        seedIfAbsent(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS, PropertyNames.GROUP_LOGS, 14L, null, "Max days a single period log entry may span");
-        seedIfAbsent(PropertyNames.REWARDS_HISTORY_PAGE_SIZE, PropertyNames.GROUP_REWARDS, 20L, null, "Default page size for points history");
-        seedIfAbsent(PropertyNames.CONTENT_FEED_DEFAULT_LIMIT, PropertyNames.GROUP_CONTENT, 10L, null, "Default number of items returned by the content feed");
+        SecurityConfig security = loadSecurity();
+        if (security.getJwtSecret() == null) {
+            security.setJwtSecret(generateEncryptedJwtSecret());
+        }
+        if (security.getJwtAccessTokenTtlSeconds() == 0) {
+            security.setJwtAccessTokenTtlSeconds(ConfigDefaults.JWT_ACCESS_TOKEN_TTL_SECONDS);
+        }
+        if (security.getJwtRefreshTokenTtlSeconds() == 0) {
+            security.setJwtRefreshTokenTtlSeconds(ConfigDefaults.JWT_REFRESH_TOKEN_TTL_SECONDS);
+        }
+        if (security.getOtpTtlSeconds() == 0) {
+            security.setOtpTtlSeconds(ConfigDefaults.OTP_TTL_SECONDS);
+        }
+        securityConfigRepository.save(security);
+
+        GlobalConfig global = loadGlobal();
+        if (global.getAdsDailyLimit() == 0) global.setAdsDailyLimit(ConfigDefaults.ADS_DAILY_LIMIT);
+        if (global.getCycleDefaultLength() == 0) global.setCycleDefaultLength(ConfigDefaults.CYCLE_DEFAULT_LENGTH);
+        if (global.getCycleDefaultPeriodLength() == 0) global.setCycleDefaultPeriodLength(ConfigDefaults.CYCLE_DEFAULT_PERIOD_LENGTH);
+        if (global.getPointsDailyClaim() == 0) global.setPointsDailyClaim(ConfigDefaults.POINTS_DAILY_CLAIM);
+        if (global.getPointsWatchAd() == 0) global.setPointsWatchAd(ConfigDefaults.POINTS_WATCH_AD);
+        if (global.getAccountPurgeGraceDays() == 0) global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
+        if (global.getBadgeKnowYourBodyThreshold() == 0) global.setBadgeKnowYourBodyThreshold(ConfigDefaults.BADGE_KNOW_YOUR_BODY_THRESHOLD);
+        if (global.getBadgeCycleVeteranThreshold() == 0) global.setBadgeCycleVeteranThreshold(ConfigDefaults.BADGE_CYCLE_VETERAN_THRESHOLD);
+        if (global.getBadgeWeekWarriorStreakThreshold() == 0) global.setBadgeWeekWarriorStreakThreshold(ConfigDefaults.BADGE_WEEK_WARRIOR_STREAK_THRESHOLD);
+        if (global.getCycleHighConfidenceLogThreshold() == 0) global.setCycleHighConfidenceLogThreshold(ConfigDefaults.CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD);
+        if (global.getInsightIrregularVariationThresholdDays() == 0) global.setInsightIrregularVariationThresholdDays(ConfigDefaults.INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS);
+        if (global.getInsightUnusualPeriodLengthDeltaDays() == 0) global.setInsightUnusualPeriodLengthDeltaDays(ConfigDefaults.INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS);
+        if (global.getInsightDefaultCycles() == 0) global.setInsightDefaultCycles(ConfigDefaults.INSIGHT_DEFAULT_CYCLES);
+        if (global.getSubscriptionPeriodDays() == 0) global.setSubscriptionPeriodDays(ConfigDefaults.SUBSCRIPTION_PERIOD_DAYS);
+        if (global.getLogMaxPeriodRangeDays() == 0) global.setLogMaxPeriodRangeDays(ConfigDefaults.LOG_MAX_PERIOD_RANGE_DAYS);
+        if (global.getRewardsHistoryPageSize() == 0) global.setRewardsHistoryPageSize(ConfigDefaults.REWARDS_HISTORY_PAGE_SIZE);
+        if (global.getContentFeedDefaultLimit() == 0) global.setContentFeedDefaultLimit(ConfigDefaults.CONTENT_FEED_DEFAULT_LIMIT);
+        globalConfigRepository.save(global);
+
         seedSmtpDefault();
     }
 
@@ -78,7 +102,9 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     private void seedSmtpDefault() {
         // FORCE_SMTP_RESEED=true temporarily bypasses the "already configured" guard for a one-off
         // update to already-seeded environments; unset it once done so this stays a fresh-DB-only seed.
-        if (repository.findByName(PropertyNames.SMTP_HOST).isPresent() && !"true".equals(System.getenv("FORCE_SMTP_RESEED"))) {
+        SmtpConfig existing = smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID).orElse(null);
+        boolean configured = existing != null && existing.getHost() != null && !existing.getHost().isBlank();
+        if (configured && !"true".equals(System.getenv("FORCE_SMTP_RESEED"))) {
             return;
         }
         saveSmtpSettings(smtpSeedProperties.host(), smtpSeedProperties.port(), smtpSeedProperties.username(),
@@ -86,236 +112,218 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         log.info("Seeded placeholder SMTP settings from spotit.smtp.* — replace via PUT /api/v1/config/smtp when a real mail provider is set up.");
     }
 
-    private void seedIfAbsent(String name, String groupName, Long value, String stringValue, String description) {
-        if (repository.findByName(name).isPresent()) {
-            return;
-        }
-        GlobalConfiguration config = GlobalConfiguration.builder()
-                .name(name)
-                .groupName(groupName)
-                .enabled(true)
-                .value(value)
-                .stringValue(stringValue)
-                .description(description)
-                .build();
-        repository.save(config);
-    }
-
     private String generateEncryptedJwtSecret() {
         byte[] secretBytes = new byte[GENERATED_JWT_SECRET_BYTES];
         RANDOM.nextBytes(secretBytes);
         String jwtSecret = Base64.getEncoder().encodeToString(secretBytes);
-        log.info("Seeded global_configuration.{} with a freshly generated JWT secret — edit the row to change it.", PropertyNames.JWT_SECRET);
+        log.info("Seeded security_config.jwt_secret with a freshly generated JWT secret — edit it via PATCH /api/v1/config/global/jwt-secret to change it.");
         return encryptionService.encrypt(jwtSecret);
+    }
+
+    private SecurityConfig loadSecurity() {
+        return securityConfigRepository.findById(SecurityConfig.SINGLETON_ID)
+                .orElseGet(() -> SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).build());
+    }
+
+    private SmtpConfig loadSmtp() {
+        return smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID)
+                .orElseGet(() -> SmtpConfig.builder().id(SmtpConfig.SINGLETON_ID).build());
+    }
+
+    private GlobalConfig loadGlobal() {
+        return globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)
+                .orElseGet(() -> GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).build());
+    }
+
+    private Context loadContext() {
+        return new Context(loadSecurity(), loadSmtp(), loadGlobal());
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getJwtSecret() {
-        return encryptionService.decrypt(require(PropertyNames.JWT_SECRET).getStringValue());
+        return encryptionService.decrypt(loadSecurity().getJwtSecret());
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getJwtAccessTokenTtlSeconds() {
-        return require(PropertyNames.JWT_ACCESS_TOKEN_TTL_SECONDS).getValue();
+        return loadSecurity().getJwtAccessTokenTtlSeconds();
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getJwtRefreshTokenTtlSeconds() {
-        return require(PropertyNames.JWT_REFRESH_TOKEN_TTL_SECONDS).getValue();
+        return loadSecurity().getJwtRefreshTokenTtlSeconds();
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getOtpTtlSeconds() {
-        return require(PropertyNames.OTP_TTL_SECONDS).getValue();
+        return loadSecurity().getOtpTtlSeconds();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getAdsDailyLimit() {
-        return require(PropertyNames.ADS_DAILY_LIMIT).getValue().intValue();
+        return (int) loadGlobal().getAdsDailyLimit();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getCycleDefaultLength() {
-        return require(PropertyNames.CYCLE_DEFAULT_LENGTH).getValue().intValue();
+        return (int) loadGlobal().getCycleDefaultLength();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getCycleDefaultPeriodLength() {
-        return require(PropertyNames.CYCLE_DEFAULT_PERIOD_LENGTH).getValue().intValue();
+        return (int) loadGlobal().getCycleDefaultPeriodLength();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getPointsDailyClaim() {
-        return require(PropertyNames.POINTS_DAILY_CLAIM).getValue().intValue();
+        return (int) loadGlobal().getPointsDailyClaim();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getPointsWatchAd() {
-        return require(PropertyNames.POINTS_WATCH_AD).getValue().intValue();
+        return (int) loadGlobal().getPointsWatchAd();
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getAccountPurgeGraceDays() {
-        return require(PropertyNames.ACCOUNT_PURGE_GRACE_DAYS).getValue();
+        return loadGlobal().getAccountPurgeGraceDays();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getBadgeKnowYourBodyThreshold() {
-        return require(PropertyNames.BADGE_KNOW_YOUR_BODY_THRESHOLD).getValue().intValue();
+        return (int) loadGlobal().getBadgeKnowYourBodyThreshold();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getBadgeCycleVeteranThreshold() {
-        return require(PropertyNames.BADGE_CYCLE_VETERAN_THRESHOLD).getValue().intValue();
+        return (int) loadGlobal().getBadgeCycleVeteranThreshold();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getBadgeWeekWarriorStreakThreshold() {
-        return require(PropertyNames.BADGE_WEEK_WARRIOR_STREAK_THRESHOLD).getValue().intValue();
+        return (int) loadGlobal().getBadgeWeekWarriorStreakThreshold();
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getCycleHighConfidenceLogThreshold() {
-        return require(PropertyNames.CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD).getValue();
+        return loadGlobal().getCycleHighConfidenceLogThreshold();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getInsightIrregularVariationThresholdDays() {
-        return require(PropertyNames.INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS).getValue().intValue();
+        return (int) loadGlobal().getInsightIrregularVariationThresholdDays();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getInsightUnusualPeriodLengthDeltaDays() {
-        return require(PropertyNames.INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS).getValue().intValue();
+        return (int) loadGlobal().getInsightUnusualPeriodLengthDeltaDays();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getInsightDefaultCycles() {
-        return require(PropertyNames.INSIGHT_DEFAULT_CYCLES).getValue().intValue();
+        return (int) loadGlobal().getInsightDefaultCycles();
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getSubscriptionPeriodDays() {
-        return require(PropertyNames.SUBSCRIPTION_PERIOD_DAYS).getValue();
+        return loadGlobal().getSubscriptionPeriodDays();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getLogMaxPeriodRangeDays() {
-        return require(PropertyNames.LOG_MAX_PERIOD_RANGE_DAYS).getValue().intValue();
+        return (int) loadGlobal().getLogMaxPeriodRangeDays();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getRewardsHistoryPageSize() {
-        return require(PropertyNames.REWARDS_HISTORY_PAGE_SIZE).getValue().intValue();
+        return (int) loadGlobal().getRewardsHistoryPageSize();
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getContentFeedDefaultLimit() {
-        return require(PropertyNames.CONTENT_FEED_DEFAULT_LIMIT).getValue().intValue();
+        return (int) loadGlobal().getContentFeedDefaultLimit();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<ResolvedSmtpSettings> getSmtpSettings() {
-        var host = repository.findByName(PropertyNames.SMTP_HOST);
-        if (host.isEmpty() || host.get().getStringValue() == null || host.get().getStringValue().isBlank()) {
+        SmtpConfig smtp = smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID).orElse(null);
+        if (smtp == null || smtp.getHost() == null || smtp.getHost().isBlank()) {
             return Optional.empty();
         }
-        String username = stringValueOrNull(PropertyNames.SMTP_USERNAME);
-        String encryptedPassword = stringValueOrNull(PropertyNames.SMTP_PASSWORD);
-        String fromAddress = stringValueOrNull(PropertyNames.SMTP_FROM_ADDRESS);
-        Long port = valueOrNull(PropertyNames.SMTP_PORT);
-        boolean useTls = repository.findByName(PropertyNames.SMTP_USE_TLS).map(GlobalConfiguration::isEnabled).orElse(true);
-
-        return Optional.of(new ResolvedSmtpSettings(host.get().getStringValue(),
-                port == null ? 587 : port.intValue(), username, encryptedPassword == null ? null : encryptionService.decrypt(encryptedPassword),
-                fromAddress, useTls));
+        String encryptedPassword = smtp.getPassword();
+        return Optional.of(new ResolvedSmtpSettings(
+                smtp.getHost(),
+                smtp.getPort() == 0 ? DEFAULT_SMTP_PORT : smtp.getPort(),
+                smtp.getUsername(),
+                encryptedPassword == null ? null : encryptionService.decrypt(encryptedPassword),
+                smtp.getFromAddress(),
+                smtp.isUseTls()));
     }
 
     @Override
     @Transactional
     public void saveSmtpSettings(String host, int port, String username, String password, String fromAddress, boolean useTls) {
-        upsert(PropertyNames.SMTP_HOST, null, host, "SMTP host used to send all transactional mail");
-        upsert(PropertyNames.SMTP_PORT, (long) port, null, "SMTP port");
-        upsert(PropertyNames.SMTP_USERNAME, null, username, "SMTP username");
-        upsert(PropertyNames.SMTP_FROM_ADDRESS, null, fromAddress, "From address for outgoing mail");
-        upsertEnabled(PropertyNames.SMTP_USE_TLS, useTls, "Whether the SMTP relay uses TLS");
+        SmtpConfig smtp = loadSmtp();
+        smtp.setHost(host);
+        smtp.setPort(port);
+        smtp.setUsername(username);
+        smtp.setFromAddress(fromAddress);
+        smtp.setUseTls(useTls);
 
         if (password != null && !password.isBlank()) {
-            upsert(PropertyNames.SMTP_PASSWORD, null, encryptionService.encrypt(password), "Encrypted SMTP password");
-        } else if (repository.findByName(PropertyNames.SMTP_PASSWORD).isEmpty()) {
+            smtp.setPassword(encryptionService.encrypt(password));
+        } else if (smtp.getPassword() == null) {
             throw new IllegalArgumentException("password is required when creating SMTP settings for the first time");
         }
-    }
-
-    private void upsert(String name, Long value, String stringValue, String description) {
-        GlobalConfiguration config = repository.findByName(name)
-                .orElseGet(() -> GlobalConfiguration.builder().name(name).groupName(PropertyNames.GROUP_SMTP).enabled(true).build());
-        config.setValue(value);
-        config.setStringValue(stringValue);
-        config.setDescription(description);
-        repository.save(config);
-    }
-
-    private void upsertEnabled(String name, boolean enabled, String description) {
-        GlobalConfiguration config = repository.findByName(name)
-                .orElseGet(() -> GlobalConfiguration.builder().name(name).groupName(PropertyNames.GROUP_SMTP).build());
-        config.setEnabled(enabled);
-        config.setDescription(description);
-        repository.save(config);
-    }
-
-    private String stringValueOrNull(String name) {
-        return repository.findByName(name).map(GlobalConfiguration::getStringValue).orElse(null);
-    }
-
-    private Long valueOrNull(String name) {
-        return repository.findByName(name).map(GlobalConfiguration::getValue).orElse(null);
+        smtpConfigRepository.save(smtp);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<GlobalConfigurationResponse> listAll() {
-        return repository.findAllByOrderByNameAsc().stream().map(this::toResponse).toList();
+        Context context = loadContext();
+        return catalog.all().stream().map(property -> toResponse(property, context)).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<String> listGroupNames() {
-        return repository.findDistinctGroupNames();
+        return catalog.groups();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<GlobalConfigurationResponse> listByGroup(String groupName) {
-        return repository.findByGroupNameOrderByNameAsc(groupName).stream().map(this::toResponse).toList();
+        Context context = loadContext();
+        return catalog.inGroup(groupName).stream().map(property -> toResponse(property, context)).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public GlobalConfigurationResponse getByName(String name) {
-        return toResponse(require(name));
+        return toResponse(requireProperty(name), loadContext());
     }
 
     @Override
@@ -325,42 +333,57 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
             throw new ApiException(ErrorCode.VALIDATION_ERROR,
                     "crypto-aes-key can't be changed via this endpoint — rotating it would strand every secret already encrypted with the old key.");
         }
-        GlobalConfiguration config = require(name);
-        if (request.groupName() != null) {
-            config.setGroupName(request.groupName());
+        Property property = requireProperty(name);
+        Context context = loadContext();
+
+        switch (property.kind()) {
+            case LONG -> {
+                if (request.value() != null) {
+                    property.write(context, request.value());
+                }
+            }
+            case BOOL -> {
+                if (request.enabled() != null) {
+                    property.write(context, request.enabled());
+                }
+            }
+            case STRING -> {
+                if (request.stringValue() != null) {
+                    property.write(context, property.encrypted()
+                            ? encryptionService.encrypt(request.stringValue())
+                            : request.stringValue());
+                }
+            }
         }
-        if (request.enabled() != null) {
-            config.setEnabled(request.enabled());
-        }
-        if (request.value() != null) {
-            config.setValue(request.value());
-        }
-        if (request.dateValue() != null) {
-            config.setDateValue(request.dateValue());
-        }
-        if (request.stringValue() != null) {
-            config.setStringValue(isEncryptedSecret(name) ? encryptionService.encrypt(request.stringValue()) : request.stringValue());
-        }
-        if (request.description() != null) {
-            config.setDescription(request.description());
-        }
-        return toResponse(repository.save(config));
+        persist(context, property.section());
+        return toResponse(property, context);
     }
 
-    private GlobalConfiguration require(String name) {
-        return repository.findByName(name).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "No such configuration property: " + name));
+    private void persist(Context context, ConfigPropertyCatalog.Section section) {
+        switch (section) {
+            case SECURITY -> securityConfigRepository.save(context.security());
+            case SMTP -> smtpConfigRepository.save(context.smtp());
+            case GLOBAL -> globalConfigRepository.save(context.global());
+        }
     }
 
-    private static boolean isEncryptedSecret(String name) {
-        return ENCRYPTED_SECRET_NAMES.contains(name);
+    private Property requireProperty(String name) {
+        return catalog.find(name)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "No such configuration property: " + name));
     }
 
-    private static boolean isRedacted(String name) {
-        return REDACTED_NAMES.contains(name);
+    private GlobalConfigurationResponse toResponse(Property property, Context context) {
+        Object raw = property.read(context);
+        Long value = property.kind() == ConfigPropertyCatalog.Kind.LONG && raw != null ? ((Number) raw).longValue() : null;
+        boolean enabled = property.kind() != ConfigPropertyCatalog.Kind.BOOL || Boolean.TRUE.equals(raw);
+        String stringValue = property.kind() == ConfigPropertyCatalog.Kind.STRING && !property.redacted() ? (String) raw : null;
+        return new GlobalConfigurationResponse(synthId(property.name()), property.name(), property.group(), enabled,
+                value, null, stringValue, property.description());
     }
 
-    private GlobalConfigurationResponse toResponse(GlobalConfiguration config) {
-        return new GlobalConfigurationResponse(config.getId(), config.getName(), config.getGroupName(), config.isEnabled(), config.getValue(),
-                config.getDateValue(), isRedacted(config.getName()) ? null : config.getStringValue(), config.getDescription());
+    // There is no longer one DB row (hence one UUID) per property. The admin API still exposes an
+    // `id`, so derive a stable one from the property name — same name always yields the same UUID.
+    private static UUID synthId(String name) {
+        return UUID.nameUUIDFromBytes(("global-config:" + name).getBytes(StandardCharsets.UTF_8));
     }
 }

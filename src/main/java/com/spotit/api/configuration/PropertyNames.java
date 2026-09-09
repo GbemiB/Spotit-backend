@@ -39,8 +39,6 @@ public final class PropertyNames {
     public static final String GROUP_REWARDS = "rewards";
     public static final String GROUP_CONTENT = "content";
     public static final String GROUP_SMTP = "smtp";
-    public static final String GROUP_CHALLENGES = "challenges";
-    public static final String GROUP_LEVELS = "levels";
 
     public static final String SMTP_HOST = "smtp-host";
     public static final String SMTP_PORT = "smtp-port";
@@ -49,22 +47,11 @@ public final class PropertyNames {
     public static final String SMTP_FROM_ADDRESS = "smtp-from-address";
     public static final String SMTP_USE_TLS = "smtp-use-tls";
 
-    // Badge/challenge definitions are structured records, not scalars — each one is stored as a
-    // single row (name-prefixed by id) whose stringValue holds its full JSON encoding, rather
-    // than one row per field. See BadgeDefinitionRepository/ChallengeDefinitionRepository.
+    // Legacy row-name prefixes: badge/challenge/level definitions were briefly stored as JSON rows
+    // in global_configuration ("badge-definition-{id}", etc.). They now live in their own typed
+    // tables (badge_config/challenge_config/level_config); these constants survive only so
+    // ConfigStoreMigration can find and copy any such rows off an already-deployed database.
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";
     public static final String LEVEL_DEFINITION_PREFIX = "level-definition-";
-
-    public static String badgeDefinitionName(String id) {
-        return BADGE_DEFINITION_PREFIX + id;
-    }
-
-    public static String challengeDefinitionName(String id) {
-        return CHALLENGE_DEFINITION_PREFIX + id;
-    }
-
-    public static String levelDefinitionName(String id) {
-        return LEVEL_DEFINITION_PREFIX + id;
-    }
 }
