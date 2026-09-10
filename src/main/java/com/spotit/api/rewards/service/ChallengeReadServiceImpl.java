@@ -41,7 +41,7 @@ public class ChallengeReadServiceImpl implements ChallengeReadService {
     public int getDailyLogReward() {
         return challengeDefinitionRepository.findById(DAILY_LOG_DEFINITION_ID)
                 .map(ChallengeDefinition::getReward)
-                .orElse(80);
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CHALLENGE_DEFINITION_NOT_FOUND));
     }
 
     private ChallengeResponse toResponse(UUID userId, ChallengeDefinition def, LocalDate weekStart) {

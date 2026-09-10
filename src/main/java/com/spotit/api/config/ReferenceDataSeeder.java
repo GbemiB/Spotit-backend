@@ -7,6 +7,7 @@ import com.spotit.api.rewards.entity.LevelDefinition;
 import com.spotit.api.rewards.repository.BadgeDefinitionRepository;
 import com.spotit.api.rewards.repository.ChallengeDefinitionRepository;
 import com.spotit.api.rewards.repository.LevelDefinitionRepository;
+import com.spotit.api.rewards.repository.UserChallengeProgressRepository;
 import com.spotit.api.shop.entity.Product;
 import com.spotit.api.shop.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class ReferenceDataSeeder implements ApplicationRunner {
+
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final ChallengeDefinitionRepository challengeDefinitionRepository;
     private final ProductRepository productRepository;
@@ -49,8 +51,6 @@ public class ReferenceDataSeeder implements ApplicationRunner {
     private void seedChallenges() {
         if (challengeDefinitionRepository.count() > 0) return;
         challengeDefinitionRepository.saveAll(List.of(
-                ChallengeDefinition.builder().id("log_week").title("Log your mood every day").reward(5).total(7).type(ChallengeType.WEEKLY_LOG).build(),
-                ChallengeDefinition.builder().id("read_3").title("Read 3 nutrition articles").reward(5).total(3).type(ChallengeType.STATIC).build(),
                 ChallengeDefinition.builder().id("daily_log").title("Log today").reward(5).total(1).type(ChallengeType.STATIC).build()
         ));
     }

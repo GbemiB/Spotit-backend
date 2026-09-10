@@ -11,4 +11,6 @@ public interface UserChallengeProgressRepository extends JpaRepository<UserChall
     Optional<UserChallengeProgress> findByUserIdAndChallengeIdAndWeekStartDate(UUID userId, String challengeId, LocalDate weekStartDate);
 
     void deleteByUserId(UUID userId);
+
+    void deleteByChallengeId(String challengeId);
 }

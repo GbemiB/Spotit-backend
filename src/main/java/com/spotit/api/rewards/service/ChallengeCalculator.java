@@ -13,8 +13,6 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 class ChallengeCalculator {
-    private static final int READ_3_STUB_DONE = 1;
-
     private final CycleLogRepository cycleLogRepository;
 
     int computeDone(UUID userId, ChallengeDefinition def) {
@@ -22,7 +20,7 @@ class ChallengeCalculator {
             LocalDate today = LocalDate.now();
             return cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, currentWeekStart(), today).size();
         }
-        return READ_3_STUB_DONE;
+        return 0;
     }
 
     LocalDate currentWeekStart() {
