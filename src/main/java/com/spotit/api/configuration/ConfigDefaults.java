@@ -21,8 +21,8 @@ public final class ConfigDefaults {
     public static final long ADS_DAILY_LIMIT = 5L;
     public static final long CYCLE_DEFAULT_LENGTH = 28L;
     public static final long CYCLE_DEFAULT_PERIOD_LENGTH = 5L;
-    public static final long POINTS_DAILY_CLAIM = 50L;
-    public static final long POINTS_WATCH_AD = 100L;
+    public static final long POINTS_DAILY_CLAIM = 5L;
+    public static final long POINTS_WATCH_AD = 10L;
     public static final long ACCOUNT_PURGE_GRACE_DAYS = 30L;
     public static final long BADGE_KNOW_YOUR_BODY_THRESHOLD = 10L;
     public static final long BADGE_CYCLE_VETERAN_THRESHOLD = 28L;
