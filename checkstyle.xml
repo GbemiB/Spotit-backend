@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  Spot it backend style rules.
+
+  This codifies conventions already established in the codebase rather than importing an
+  external style wholesale (e.g. Sun/Google checks), so it doesn't fight patterns that are
+  already consistent here — most notably, entities and controllers deliberately use a single
+  wildcard import (jakarta.persistence.*, org.springframework.web.bind.annotation.*) instead
+  of a long explicit list, so AvoidStarImport is intentionally not enabled.
+
+  Run: mvn checkstyle:check   (report only)
+       mvn verify             (fails the build on violations — bound in pom.xml)
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+
+    <!-- Files -->
+    <module name="NewlineAtEndOfFile"/>
+    <module name="FileTabCharacter"/>
+    <module name="LineLength">
+        <property name="max" value="180"/>
+        <!-- Long fully-qualified Swagger @SecurityRequirement annotations are the norm here. -->
+        <property name="ignorePattern" value="^import |@io\.swagger"/>
+    </module>
+
+    <module name="TreeWalker">
+
+        <!-- Imports: catch dead weight and duplication; wildcard imports are allowed (see above).
+             No import-order rule — the codebase has no established grouping convention, and
+             adding one now would rewrite import blocks across most files for no functional gain. -->
+        <module name="UnusedImports"/>
+        <module name="RedundantImport"/>
+
+        <!-- Naming conventions -->
+        <module name="TypeName"/>
+        <module name="MethodName"/>
+        <module name="MemberName"/>
+        <module name="ParameterName"/>
+        <module name="LocalVariableName"/>
+        <module name="LocalFinalVariableName"/>
+        <module name="StaticVariableName"/>
+        <module name="ConstantName"/>
+        <module name="PackageName"/>
+
+        <!-- Braces & blocks -->
+        <module name="NeedBraces"/>
+        <module name="LeftCurly"/>
+        <module name="RightCurly"/>
+        <module name="EmptyBlock">
+            <property name="option" value="text"/>
+        </module>
+
+        <!-- Whitespace -->
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLambdas" value="true"/>
+        </module>
+        <module name="WhitespaceAfter"/>
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceBefore"/>
+
+        <!-- Coding problems worth failing the build over -->
+        <module name="EqualsHashCode"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+        <module name="EmptyStatement"/>
+        <module name="EqualsAvoidNull"/>
+        <module name="StringLiteralEquality"/>
+        <module name="OneStatementPerLine"/>
+        <module name="MultipleVariableDeclarations"/>
+
+        <!-- Class design -->
+        <module name="HideUtilityClassConstructor"/>
+        <module name="InterfaceIsType"/>
+
+        <!-- Maintainability: keep methods and files from growing unreviewably large -->
+        <module name="MethodLength">
+            <property name="max" value="120"/>
+        </module>
+        <module name="ParameterNumber">
+            <property name="max" value="8"/>
+        </module>
+    </module>
+</module>

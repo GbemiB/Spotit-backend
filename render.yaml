@@ -1,0 +1,85 @@
+services:
+  - type: web
+    name: spotit-backend-dev
+    runtime: docker
+    region: oregon
+    plan: starter
+    branch: dev
+    # Deploy only after the GitHub Actions CI job (tests, checkstyle, coverage) passes on this branch.
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: dev
+      - key: DB_HOST
+        fromDatabase:
+          name: spotit-db-dev
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: spotit-db-dev
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: spotit-db-dev
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: spotit-db-dev
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: spotit-db-dev
+          property: password
+      - key: DB_SSLMODE
+        value: prefer
+
+  - type: web
+    name: spotit-backend-prod
+    runtime: docker
+    region: oregon
+    plan: starter
+    branch: main
+    # Deploy only after the GitHub Actions CI job (tests, checkstyle, coverage) passes on this branch.
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        fromDatabase:
+          name: spotit-db-prod
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: spotit-db-prod
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: spotit-db-prod
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: spotit-db-prod
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: spotit-db-prod
+          property: password
+      - key: DB_SSLMODE
+        value: prefer
+
+databases:
+  - name: spotit-db-dev
+    databaseName: spotitdb
+    user: spotituser
+    plan: free
+    region: oregon
+
+  - name: spotit-db-prod
+    databaseName: spotitdb
+    user: spotituser
+    plan: basic-256mb
+    region: oregon
