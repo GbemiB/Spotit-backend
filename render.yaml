@@ -1,12 +1,12 @@
 services:
   - type: web
     name: spotit-backend-dev
-    runtime: java
+    runtime: docker
     plan: starter
     branch: dev
     autoDeploy: true
-    buildCommand: ./mvnw -B clean package -DskipTests
-    startCommand: java -jar target/spotit-backend.jar
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: dev
@@ -25,12 +25,12 @@ services:
 
   - type: web
     name: spotit-backend-prod
-    runtime: java
+    runtime: docker
     plan: starter
     branch: main
     autoDeploy: true
-    buildCommand: ./mvnw -B clean package -DskipTests
-    startCommand: java -jar target/spotit-backend.jar
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
