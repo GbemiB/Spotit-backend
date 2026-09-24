@@ -93,7 +93,9 @@ class AuthWriteServiceImplTest {
         when(passwordEncoder.encode(any())).thenReturn("hashed-code");
         when(signupLeadRepository.save(any(SignupLead.class))).thenAnswer(inv -> {
             SignupLead l = inv.getArgument(0);
-            if (l.getId() == null) l.setId(UUID.randomUUID());
+            if (l.getId() == null) {
+                l.setId(UUID.randomUUID());
+            }
             return l;
         });
 

@@ -12,13 +12,15 @@ final class ShopControllerSwagger {
               "message": "OK",
               "data": [
                 { "id": "theme_dark_rose", "name": "Dark Rose Theme", "cost": 300, "minLevel": "bronze", "premiumOnly": false, "locked": false, "lockReason": null },
-                { "id": "profile_frame_gold", "name": "Gold Profile Frame", "cost": 1000, "minLevel": "gold", "premiumOnly": true, "locked": true, "lockReason": "premium_required" }
+                { "id": "profile_frame_gold", "name": "Gold Profile Frame", "cost": 1000, "minLevel": "gold", "premiumOnly": true, "locked": true, "lockReason": \
+            "premium_required" }
               ]
             }
             """;
 
     static final String REDEEM_SUMMARY = "Redeem a product";
-    static final String REDEEM_DESCRIPTION = "Spends SpotPoints to redeem a product, creating an order. Fails if the product doesn't exist/is inactive, the user's level is too low, Premium is required, or the balance is insufficient.";
+    static final String REDEEM_DESCRIPTION = "Spends SpotPoints to redeem a product, creating an order. Fails if the product doesn't exist/is " +
+            "inactive, the user's level is too low, Premium is required, or the balance is insufficient.";
     static final String REDEEM_REQUEST_EXAMPLE = """
             {
               "productId": "theme_dark_rose"

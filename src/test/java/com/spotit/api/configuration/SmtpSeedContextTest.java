@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Boots the full application context against in-memory H2 and asserts that the @PostConstruct
  * seeder wrote the smtp-* rows into global_configuration from the spotit.smtp.* properties
- * (application.yml) — i.e. the SMTP details land in the DB with no source-hardcoded values.
+ * (application.yml, overridden by application-test.yml) — i.e. the SMTP details land in the DB with no source-hardcoded values.
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -30,9 +30,9 @@ class SmtpSeedContextTest {
         assertThat(settings).isPresent();
         assertThat(settings.get().host()).isEqualTo("smtp.gmail.com");
         assertThat(settings.get().port()).isEqualTo(587);
-        assertThat(settings.get().username()).isEqualTo("oluwagbemisolabello@gmail.com");
-        assertThat(settings.get().fromAddress()).isEqualTo("oluwagbemisolabello@gmail.com");
+        assertThat(settings.get().username()).isEqualTo("test@example.com");
+        assertThat(settings.get().fromAddress()).isEqualTo("test@example.com");
         assertThat(settings.get().useTls()).isTrue();
-        assertThat(settings.get().password()).isEqualTo("jetpffwfyqaupfbg");
+        assertThat(settings.get().password()).isEqualTo("test-password");
     }
 }

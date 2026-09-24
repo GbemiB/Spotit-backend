@@ -23,7 +23,8 @@ final class OnboardingControllerSwagger {
             """;
 
     static final String COMPLETE_SUMMARY = "Complete onboarding";
-    static final String COMPLETE_DESCRIPTION = "Records date of birth, last period date, tracking goal, and optional cycle/period length overrides, and marks the user as onboarded.";
+    static final String COMPLETE_DESCRIPTION = "Records date of birth, last period date, tracking goal, and optional cycle/period length overrides, " +
+            "and marks the user as onboarded.";
     static final String COMPLETE_REQUEST_EXAMPLE = """
             {
               "dob": "1998-04-12",

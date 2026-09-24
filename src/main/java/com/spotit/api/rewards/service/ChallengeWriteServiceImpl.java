@@ -78,9 +78,15 @@ public class ChallengeWriteServiceImpl implements ChallengeWriteService {
     public ChallengeDefinitionAdminResponse updateDefinition(String id, UpdateChallengeDefinitionRequest request) {
         ChallengeDefinition def = challengeDefinitionRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CHALLENGE_DEFINITION_NOT_FOUND));
-        if (request.title() != null) def.setTitle(request.title());
-        if (request.reward() != null) def.setReward(request.reward());
-        if (request.total() != null) def.setTotal(request.total());
+        if (request.title() != null) {
+            def.setTitle(request.title());
+        }
+        if (request.reward() != null) {
+            def.setReward(request.reward());
+        }
+        if (request.total() != null) {
+            def.setTotal(request.total());
+        }
         challengeDefinitionRepository.save(def);
         return toAdminResponse(def);
     }

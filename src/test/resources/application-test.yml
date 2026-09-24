@@ -13,3 +13,11 @@ spring:
   devtools:
     restart:
       enabled: false
+
+# Dummy relay so the SMTP seeder has something to write on the fresh H2 database. SignupMailDropIT
+# needs real credentials: export SMTP_USERNAME / SMTP_PASSWORD / SMTP_FROM_ADDRESS before running it.
+spotit:
+  smtp:
+    username: ${SMTP_USERNAME:test@example.com}
+    password: ${SMTP_PASSWORD:test-password}
+    from-address: ${SMTP_FROM_ADDRESS:test@example.com}

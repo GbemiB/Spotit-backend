@@ -36,7 +36,8 @@ public class InsightController {
                     examples = @ExampleObject(value = InsightControllerSwagger.TRENDS_200_EXAMPLE)))
     })
     @GetMapping("/trends")
-    public CycleTrendsResponse trends(@CurrentUserId UUID userId, @Parameter(description = "Number of recent cycles to include; defaults to 6.", example = "6") @RequestParam(required = false) Integer cycles) {
+    public CycleTrendsResponse trends(@CurrentUserId UUID userId,
+            @Parameter(description = "Number of recent cycles to include; defaults to 6.", example = "6") @RequestParam(required = false) Integer cycles) {
         return insightReadService.getTrends(userId, cycles);
     }
 

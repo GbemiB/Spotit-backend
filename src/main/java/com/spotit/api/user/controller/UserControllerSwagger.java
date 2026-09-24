@@ -28,7 +28,8 @@ final class UserControllerSwagger {
             """;
 
     static final String UPDATE_PROFILE_SUMMARY = "Update profile";
-    static final String UPDATE_PROFILE_DESCRIPTION = "Partially updates the current user's profile; only non-null fields are applied. cycleLength must be 21-45 and periodLength must be 2-10.";
+    static final String UPDATE_PROFILE_DESCRIPTION = "Partially updates the current user's profile; only non-null fields are applied. cycleLength " +
+            "must be 21-45 and periodLength must be 2-10.";
     static final String UPDATE_PROFILE_REQUEST_EXAMPLE = """
             {
               "firstName": "Amara",
@@ -105,7 +106,8 @@ final class UserControllerSwagger {
             """;
 
     static final String EXPORT_SUMMARY = "Request a data export";
-    static final String EXPORT_DESCRIPTION = "Creates an export job for the current user's data. Export data is synchronously ready and can be downloaded immediately via the returned jobId.";
+    static final String EXPORT_DESCRIPTION = "Creates an export job for the current user's data. Export data is synchronously ready and can be " +
+            "downloaded immediately via the returned jobId.";
     static final String EXPORT_200_EXAMPLE = """
             {
               "code": 200,
@@ -156,7 +158,8 @@ final class UserControllerSwagger {
             """;
 
     static final String RESET_SUMMARY = "Reset all data";
-    static final String RESET_DESCRIPTION = "Deletes the current user's logs, points history, badges, and challenge progress, and resets profile settings to defaults. Does not delete the account itself.";
+    static final String RESET_DESCRIPTION = "Deletes the current user's logs, points history, badges, and challenge progress, and resets profile " +
+            "settings to defaults. Does not delete the account itself.";
     static final String RESET_200_EXAMPLE = """
             {
               "code": 200,

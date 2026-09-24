@@ -83,10 +83,18 @@ public class LevelDefinitionServiceImpl implements LevelDefinitionService {
     public LevelDefinitionAdminResponse updateDefinition(String id, UpdateLevelDefinitionRequest request) {
         LevelDefinition def = levelDefinitionRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.LEVEL_NOT_FOUND));
-        if (request.name() != null) def.setName(request.name());
-        if (request.pointsLow() != null) def.setPointsLow(request.pointsLow());
-        if (request.pointsHigh() != null) def.setPointsHigh(request.pointsHigh());
-        if (request.sortOrder() != null) def.setSortOrder(request.sortOrder());
+        if (request.name() != null) {
+            def.setName(request.name());
+        }
+        if (request.pointsLow() != null) {
+            def.setPointsLow(request.pointsLow());
+        }
+        if (request.pointsHigh() != null) {
+            def.setPointsHigh(request.pointsHigh());
+        }
+        if (request.sortOrder() != null) {
+            def.setSortOrder(request.sortOrder());
+        }
         levelDefinitionRepository.save(def);
         return toAdminResponse(def);
     }

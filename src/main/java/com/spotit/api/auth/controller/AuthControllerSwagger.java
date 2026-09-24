@@ -148,7 +148,8 @@ final class AuthControllerSwagger {
             + "down (see the 403 email_not_verified response there). Unlike /signup/complete, issues tokens directly — this account already has a password.";
 
     static final String FORGOT_PASSWORD_SUMMARY = "Request a password reset";
-    static final String FORGOT_PASSWORD_DESCRIPTION = "Issues a one-time code to reset the password. Always returns the same message, whether or not the email is registered, to avoid account enumeration.";
+    static final String FORGOT_PASSWORD_DESCRIPTION = "Issues a one-time code to reset the password. Always returns the same message, whether or not " +
+            "the email is registered, to avoid account enumeration.";
     static final String FORGOT_PASSWORD_REQUEST_EXAMPLE = """
             {
               "email": "amara@example.com"
@@ -167,7 +168,8 @@ final class AuthControllerSwagger {
             """;
 
     static final String VERIFY_RESET_OTP_SUMMARY = "Verify a password-reset code";
-    static final String VERIFY_RESET_OTP_DESCRIPTION = "Confirms the code sent to the given email is correct and unexpired, without consuming it or changing the password — lets the client gate the new-password form on a valid code before asking for it.";
+    static final String VERIFY_RESET_OTP_DESCRIPTION = "Confirms the code sent to the given email is correct and unexpired, without consuming it or " +
+            "changing the password — lets the client gate the new-password form on a valid code before asking for it.";
     static final String VERIFY_RESET_OTP_REQUEST_EXAMPLE = """
             {
               "email": "amara@example.com",

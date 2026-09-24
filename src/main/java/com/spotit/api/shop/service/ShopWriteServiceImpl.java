@@ -87,12 +87,24 @@ public class ShopWriteServiceImpl implements ShopWriteService {
     public ProductAdminResponse updateProduct(String productId, UpdateProductRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
-        if (request.name() != null) product.setName(request.name());
-        if (request.cost() != null) product.setCost(request.cost());
-        if (request.minLevel() != null) product.setMinLevel(request.minLevel());
-        if (request.premiumOnly() != null) product.setPremiumOnly(request.premiumOnly());
-        if (request.icon() != null) product.setIcon(request.icon());
-        if (request.active() != null) product.setActive(request.active());
+        if (request.name() != null) {
+            product.setName(request.name());
+        }
+        if (request.cost() != null) {
+            product.setCost(request.cost());
+        }
+        if (request.minLevel() != null) {
+            product.setMinLevel(request.minLevel());
+        }
+        if (request.premiumOnly() != null) {
+            product.setPremiumOnly(request.premiumOnly());
+        }
+        if (request.icon() != null) {
+            product.setIcon(request.icon());
+        }
+        if (request.active() != null) {
+            product.setActive(request.active());
+        }
         productRepository.save(product);
         return toAdminResponse(product);
     }

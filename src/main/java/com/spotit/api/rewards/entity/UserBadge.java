@@ -33,7 +33,9 @@ public class UserBadge {
 
     @PrePersist
     void onCreate() {
-        if (earnedAt == null) earnedAt = Instant.now();
+        if (earnedAt == null) {
+            earnedAt = Instant.now();
+        }
     }
 
     public record Key(UUID userId, String badgeId) implements Serializable {

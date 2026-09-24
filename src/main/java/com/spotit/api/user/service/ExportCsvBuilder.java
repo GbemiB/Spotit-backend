@@ -63,14 +63,18 @@ public final class ExportCsvBuilder {
 
     private static void row(StringBuilder sb, String... cells) {
         for (int i = 0; i < cells.length; i++) {
-            if (i > 0) sb.append(',');
+            if (i > 0) {
+                sb.append(',');
+            }
             sb.append(escape(cells[i]));
         }
         sb.append('\n');
     }
 
     private static String escape(String cell) {
-        if (cell == null) return "";
+        if (cell == null) {
+            return "";
+        }
         if (cell.contains(",") || cell.contains("\"") || cell.contains("\n")) {
             return "\"" + cell.replace("\"", "\"\"") + "\"";
         }

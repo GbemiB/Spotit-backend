@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Global Config (Admin)", description = "Admin surface for all app settings, thresholds, and secrets — stored as typed columns across security_config, smtp_config, and global_config, exposed here under their flat property names.")
+@Tag(name = "Global Config (Admin)", description = "Admin surface for all app settings, thresholds, and secrets — stored as typed columns across " +
+        "security_config, smtp_config, and global_config, exposed here under their flat property names.")
 @RestController
 @RequestMapping("/api/v1/config/global")
 @RequiredArgsConstructor
@@ -43,7 +44,8 @@ public class GlobalConfigurationController {
         return configurationDomainService.getByName(name);
     }
 
-    @Operation(summary = "Update a property", description = "Partial update — only the fields set on the request body are changed. Setting stringValue on a secret-holding property encrypts it before storage.")
+    @Operation(summary = "Update a property", description = "Partial update — only the fields set on the request body are changed. Setting " +
+            "stringValue on a secret-holding property encrypts it before storage.")
     @PatchMapping("/{name}")
     public GlobalConfigurationResponse update(@Parameter(description = "Property name", example = "cycle-default-length") @PathVariable String name,
                                                @Valid @RequestBody UpdateGlobalConfigurationRequest request) {

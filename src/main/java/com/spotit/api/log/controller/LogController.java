@@ -73,7 +73,8 @@ public class LogController {
     })
     @PutMapping("/{date}")
     public SaveLogResponse saveLog(@CurrentUserId UUID userId,
-                                    @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10") @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                    @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10")
+                                    @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                     @Valid @RequestBody SaveLogRequest request) {
         return logWriteService.saveLog(userId, date, request);
     }
@@ -105,7 +106,8 @@ public class LogController {
     })
     @GetMapping("/{date}")
     public LogEntryResponse getLog(@CurrentUserId UUID userId,
-                                    @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10") @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+                                    @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10")
+                                    @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return logReadService.getLog(userId, date);
     }
 
@@ -121,8 +123,10 @@ public class LogController {
     })
     @GetMapping
     public LogsRangeResponse getLogsInRange(@CurrentUserId UUID userId,
-                                             @Parameter(description = "Range start date (inclusive)", example = "2026-07-01") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-                                             @Parameter(description = "Range end date (inclusive)", example = "2026-07-10") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                                             @Parameter(description = "Range start date (inclusive)", example = "2026-07-01")
+                                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                             @Parameter(description = "Range end date (inclusive)", example = "2026-07-10")
+                                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return logReadService.getLogsInRange(userId, from, to);
     }
 
@@ -135,7 +139,8 @@ public class LogController {
     })
     @DeleteMapping("/{date}")
     public MessageResponse deleteLog(@CurrentUserId UUID userId,
-                                      @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10") @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+                                      @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10")
+                                      @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         logWriteService.deleteLog(userId, date);
         return new MessageResponse("Entry deleted.");
     }

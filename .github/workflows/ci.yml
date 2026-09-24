@@ -22,8 +22,16 @@ jobs:
           java-version: '21'
           cache: maven
 
-      # Runs build + unit tests only. `verify` also runs checkstyle-check, but the codebase
-      # currently has ~60 pre-existing checkstyle violations unrelated to deployability — turn
-      # this into `./mvnw -B verify` once those are cleaned up to enforce style in CI too.
-      - name: Build and test
-        run: ./mvnw -B test
+      # `verify` is the full gate: compile, every unit test, checkstyle (0 violations allowed) and the
+      # JaCoCo rule that each controller/service keeps >= 80% line coverage. Render waits for this
+      # job to pass before auto-deploying dev or main (autoDeployTrigger: checksPass in render.yaml).
+      - name: Build, test, checkstyle and coverage
+        run: ./mvnw -B verify
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/
+          if-no-files-found: ignore

@@ -62,7 +62,9 @@ public class RewardsReadServiceImpl implements RewardsReadService {
     }
 
     private int decodeCursor(String cursor) {
-        if (cursor == null || cursor.isBlank()) return 0;
+        if (cursor == null || cursor.isBlank()) {
+            return 0;
+        }
         try {
             return Integer.parseInt(new String(Base64.getDecoder().decode(cursor)));
         } catch (Exception e) {

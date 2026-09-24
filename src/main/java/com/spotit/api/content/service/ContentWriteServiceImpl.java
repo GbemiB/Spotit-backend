@@ -42,15 +42,33 @@ public class ContentWriteServiceImpl implements ContentWriteService {
     public ContentItemAdminResponse update(UUID id, UpdateContentItemRequest request) {
         ContentItem item = contentItemRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CONTENT_ITEM_NOT_FOUND));
-        if (request.tag() != null) item.setTag(request.tag());
-        if (request.title() != null) item.setTitle(request.title());
-        if (request.body() != null && !request.body().isBlank()) item.setBody(request.body());
-        if (request.imageUrl() != null) item.setImageUrl(request.imageUrl());
-        if (request.imageKey() != null) item.setImageKey(request.imageKey());
-        if (request.sponsored() != null) item.setSponsored(request.sponsored());
-        if (request.advertiser() != null) item.setAdvertiser(request.advertiser());
-        if (request.sortOrder() != null) item.setSortOrder(request.sortOrder());
-        if (request.active() != null) item.setActive(request.active());
+        if (request.tag() != null) {
+            item.setTag(request.tag());
+        }
+        if (request.title() != null) {
+            item.setTitle(request.title());
+        }
+        if (request.body() != null && !request.body().isBlank()) {
+            item.setBody(request.body());
+        }
+        if (request.imageUrl() != null) {
+            item.setImageUrl(request.imageUrl());
+        }
+        if (request.imageKey() != null) {
+            item.setImageKey(request.imageKey());
+        }
+        if (request.sponsored() != null) {
+            item.setSponsored(request.sponsored());
+        }
+        if (request.advertiser() != null) {
+            item.setAdvertiser(request.advertiser());
+        }
+        if (request.sortOrder() != null) {
+            item.setSortOrder(request.sortOrder());
+        }
+        if (request.active() != null) {
+            item.setActive(request.active());
+        }
         contentItemRepository.save(item);
         return toAdminResponse(item);
     }

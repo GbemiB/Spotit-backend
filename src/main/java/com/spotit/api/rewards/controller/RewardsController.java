@@ -99,7 +99,8 @@ public class RewardsController {
     @GetMapping("/history")
     public PointsHistoryPageResponse history(@CurrentUserId UUID userId,
                                               @Parameter(description = "Page size; defaults to 20.", example = "20") @RequestParam(required = false) Integer limit,
-                                              @Parameter(description = "Opaque pagination cursor from a previous page's nextCursor.", example = "MjA=") @RequestParam(required = false) String cursor) {
+                                              @Parameter(description = "Opaque pagination cursor from a previous page's nextCursor.", example = "MjA=")
+                                              @RequestParam(required = false) String cursor) {
         return rewardsReadService.getHistory(userId, limit, cursor);
     }
 
@@ -141,7 +142,8 @@ public class RewardsController {
                     examples = @ExampleObject(value = RewardsControllerSwagger.CLAIM_CHALLENGE_409_EXAMPLE)))
     })
     @PostMapping("/challenges/{id}/claim")
-    public ChallengeClaimResponse claimChallenge(@CurrentUserId UUID userId, @Parameter(description = "Challenge definition id", example = "streak_7") @PathVariable("id") String challengeId) {
+    public ChallengeClaimResponse claimChallenge(@CurrentUserId UUID userId,
+            @Parameter(description = "Challenge definition id", example = "streak_7") @PathVariable("id") String challengeId) {
         return challengeWriteService.claim(userId, challengeId);
     }
 }

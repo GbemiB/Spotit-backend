@@ -7,7 +7,6 @@ import com.spotit.api.rewards.entity.LevelDefinition;
 import com.spotit.api.rewards.repository.BadgeDefinitionRepository;
 import com.spotit.api.rewards.repository.ChallengeDefinitionRepository;
 import com.spotit.api.rewards.repository.LevelDefinitionRepository;
-import com.spotit.api.rewards.repository.UserChallengeProgressRepository;
 import com.spotit.api.shop.entity.Product;
 import com.spotit.api.shop.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +36,9 @@ public class ReferenceDataSeeder implements ApplicationRunner {
     }
 
     private void seedBadges() {
-        if (badgeDefinitionRepository.count() > 0) return;
+        if (badgeDefinitionRepository.count() > 0) {
+            return;
+        }
         badgeDefinitionRepository.saveAll(List.of(
                 new BadgeDefinition("first_flow", "First Flow", "Log your first period"),
                 new BadgeDefinition("cycle_veteran", "Cycle Veteran", "Log 28 or more days"),
@@ -49,14 +50,18 @@ public class ReferenceDataSeeder implements ApplicationRunner {
     }
 
     private void seedChallenges() {
-        if (challengeDefinitionRepository.count() > 0) return;
+        if (challengeDefinitionRepository.count() > 0) {
+            return;
+        }
         challengeDefinitionRepository.saveAll(List.of(
                 ChallengeDefinition.builder().id("daily_log").title("Log today").reward(5).total(1).type(ChallengeType.STATIC).build()
         ));
     }
 
     private void seedProducts() {
-        if (productRepository.count() > 0) return;
+        if (productRepository.count() > 0) {
+            return;
+        }
         productRepository.saveAll(List.of(
                 Product.builder().id("rosewater_mist").name("Rosewater Face Mist").cost(50000).minLevel("Petal").premiumOnly(false).icon("🌹").active(true).build(),
                 Product.builder().id("vitc_serum").name("Vitamin C Serum").cost(75000).minLevel("Rosé").premiumOnly(false).icon("💧").active(true).build(),
@@ -66,7 +71,9 @@ public class ReferenceDataSeeder implements ApplicationRunner {
     }
 
     private void seedLevels() {
-        if (levelDefinitionRepository.count() > 0) return;
+        if (levelDefinitionRepository.count() > 0) {
+            return;
+        }
         levelDefinitionRepository.saveAll(List.of(
                 LevelDefinition.builder().id("blush").name("Blush").pointsLow(0).pointsHigh(10000).sortOrder(1).build(),
                 LevelDefinition.builder().id("petal").name("Petal").pointsLow(10001).pointsHigh(20000).sortOrder(2).build(),

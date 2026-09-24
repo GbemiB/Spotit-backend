@@ -166,6 +166,63 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Test coverage: `mvn verify` writes target/site/jacoco/index.html and fails the build if
+                 service/controller coverage drops below the floor in the check rule. DTOs, entities and
+                 the bootstrap class are excluded — they are plain data carriers with no logic to test. -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <configuration>
+                    <excludes>
+                        <exclude>com/spotit/api/**/dto/**</exclude>
+                        <exclude>com/spotit/api/**/entity/**</exclude>
+                        <exclude>com/spotit/api/SpotItApplication.class</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- Every controller and service must keep at least 80% line coverage. -->
+                                <rule>
+                                    <element>CLASS</element>
+                                    <includes>
+                                        <include>com.spotit.api.*.controller.*Controller</include>
+                                        <include>com.spotit.api.*.service.*ServiceImpl</include>
+                                        <include>com.spotit.api.common.mail.EmailServiceImpl</include>
+                                    </includes>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

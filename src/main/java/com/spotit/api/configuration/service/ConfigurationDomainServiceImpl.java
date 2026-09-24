@@ -70,23 +70,57 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         securityConfigRepository.save(security);
 
         GlobalConfig global = loadGlobal();
-        if (global.getAdsDailyLimit() == 0) global.setAdsDailyLimit(ConfigDefaults.ADS_DAILY_LIMIT);
-        if (global.getCycleDefaultLength() == 0) global.setCycleDefaultLength(ConfigDefaults.CYCLE_DEFAULT_LENGTH);
-        if (global.getCycleDefaultPeriodLength() == 0) global.setCycleDefaultPeriodLength(ConfigDefaults.CYCLE_DEFAULT_PERIOD_LENGTH);
-        if (global.getPointsDailyClaim() == 0) global.setPointsDailyClaim(ConfigDefaults.POINTS_DAILY_CLAIM);
-        if (global.getPointsWatchAd() == 0) global.setPointsWatchAd(ConfigDefaults.POINTS_WATCH_AD);
-        if (global.getAccountPurgeGraceDays() == 0) global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
-        if (global.getBadgeKnowYourBodyThreshold() == 0) global.setBadgeKnowYourBodyThreshold(ConfigDefaults.BADGE_KNOW_YOUR_BODY_THRESHOLD);
-        if (global.getBadgeCycleVeteranThreshold() == 0) global.setBadgeCycleVeteranThreshold(ConfigDefaults.BADGE_CYCLE_VETERAN_THRESHOLD);
-        if (global.getBadgeWeekWarriorStreakThreshold() == 0) global.setBadgeWeekWarriorStreakThreshold(ConfigDefaults.BADGE_WEEK_WARRIOR_STREAK_THRESHOLD);
-        if (global.getCycleHighConfidenceLogThreshold() == 0) global.setCycleHighConfidenceLogThreshold(ConfigDefaults.CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD);
-        if (global.getInsightIrregularVariationThresholdDays() == 0) global.setInsightIrregularVariationThresholdDays(ConfigDefaults.INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS);
-        if (global.getInsightUnusualPeriodLengthDeltaDays() == 0) global.setInsightUnusualPeriodLengthDeltaDays(ConfigDefaults.INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS);
-        if (global.getInsightDefaultCycles() == 0) global.setInsightDefaultCycles(ConfigDefaults.INSIGHT_DEFAULT_CYCLES);
-        if (global.getSubscriptionPeriodDays() == 0) global.setSubscriptionPeriodDays(ConfigDefaults.SUBSCRIPTION_PERIOD_DAYS);
-        if (global.getLogMaxPeriodRangeDays() == 0) global.setLogMaxPeriodRangeDays(ConfigDefaults.LOG_MAX_PERIOD_RANGE_DAYS);
-        if (global.getRewardsHistoryPageSize() == 0) global.setRewardsHistoryPageSize(ConfigDefaults.REWARDS_HISTORY_PAGE_SIZE);
-        if (global.getContentFeedDefaultLimit() == 0) global.setContentFeedDefaultLimit(ConfigDefaults.CONTENT_FEED_DEFAULT_LIMIT);
+        if (global.getAdsDailyLimit() == 0) {
+            global.setAdsDailyLimit(ConfigDefaults.ADS_DAILY_LIMIT);
+        }
+        if (global.getCycleDefaultLength() == 0) {
+            global.setCycleDefaultLength(ConfigDefaults.CYCLE_DEFAULT_LENGTH);
+        }
+        if (global.getCycleDefaultPeriodLength() == 0) {
+            global.setCycleDefaultPeriodLength(ConfigDefaults.CYCLE_DEFAULT_PERIOD_LENGTH);
+        }
+        if (global.getPointsDailyClaim() == 0) {
+            global.setPointsDailyClaim(ConfigDefaults.POINTS_DAILY_CLAIM);
+        }
+        if (global.getPointsWatchAd() == 0) {
+            global.setPointsWatchAd(ConfigDefaults.POINTS_WATCH_AD);
+        }
+        if (global.getAccountPurgeGraceDays() == 0) {
+            global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
+        }
+        if (global.getBadgeKnowYourBodyThreshold() == 0) {
+            global.setBadgeKnowYourBodyThreshold(ConfigDefaults.BADGE_KNOW_YOUR_BODY_THRESHOLD);
+        }
+        if (global.getBadgeCycleVeteranThreshold() == 0) {
+            global.setBadgeCycleVeteranThreshold(ConfigDefaults.BADGE_CYCLE_VETERAN_THRESHOLD);
+        }
+        if (global.getBadgeWeekWarriorStreakThreshold() == 0) {
+            global.setBadgeWeekWarriorStreakThreshold(ConfigDefaults.BADGE_WEEK_WARRIOR_STREAK_THRESHOLD);
+        }
+        if (global.getCycleHighConfidenceLogThreshold() == 0) {
+            global.setCycleHighConfidenceLogThreshold(ConfigDefaults.CYCLE_HIGH_CONFIDENCE_LOG_THRESHOLD);
+        }
+        if (global.getInsightIrregularVariationThresholdDays() == 0) {
+            global.setInsightIrregularVariationThresholdDays(ConfigDefaults.INSIGHT_IRREGULAR_VARIATION_THRESHOLD_DAYS);
+        }
+        if (global.getInsightUnusualPeriodLengthDeltaDays() == 0) {
+            global.setInsightUnusualPeriodLengthDeltaDays(ConfigDefaults.INSIGHT_UNUSUAL_PERIOD_LENGTH_DELTA_DAYS);
+        }
+        if (global.getInsightDefaultCycles() == 0) {
+            global.setInsightDefaultCycles(ConfigDefaults.INSIGHT_DEFAULT_CYCLES);
+        }
+        if (global.getSubscriptionPeriodDays() == 0) {
+            global.setSubscriptionPeriodDays(ConfigDefaults.SUBSCRIPTION_PERIOD_DAYS);
+        }
+        if (global.getLogMaxPeriodRangeDays() == 0) {
+            global.setLogMaxPeriodRangeDays(ConfigDefaults.LOG_MAX_PERIOD_RANGE_DAYS);
+        }
+        if (global.getRewardsHistoryPageSize() == 0) {
+            global.setRewardsHistoryPageSize(ConfigDefaults.REWARDS_HISTORY_PAGE_SIZE);
+        }
+        if (global.getContentFeedDefaultLimit() == 0) {
+            global.setContentFeedDefaultLimit(ConfigDefaults.CONTENT_FEED_DEFAULT_LIMIT);
+        }
         globalConfigRepository.save(global);
 
         seedSmtpDefault();
@@ -105,6 +139,10 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         SmtpConfig existing = smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID).orElse(null);
         boolean configured = existing != null && existing.getHost() != null && !existing.getHost().isBlank();
         if (configured && !"true".equals(System.getenv("FORCE_SMTP_RESEED"))) {
+            return;
+        }
+        if (smtpSeedProperties.password() == null || smtpSeedProperties.password().isBlank()) {
+            log.warn("SMTP_PASSWORD is not set — skipping SMTP seed; mail stays disabled until it is set or configured via PUT /api/v1/config/smtp.");
             return;
         }
         saveSmtpSettings(smtpSeedProperties.host(), smtpSeedProperties.port(), smtpSeedProperties.username(),

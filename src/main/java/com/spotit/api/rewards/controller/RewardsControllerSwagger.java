@@ -23,7 +23,8 @@ final class RewardsControllerSwagger {
             """;
 
     static final String DAILY_CLAIM_SUMMARY = "Claim daily bonus";
-    static final String DAILY_CLAIM_DESCRIPTION = "Awards the daily check-in bonus if it hasn't already been claimed today; otherwise returns zero points with alreadyClaimedToday=true.";
+    static final String DAILY_CLAIM_DESCRIPTION = "Awards the daily check-in bonus if it hasn't already been claimed today; otherwise returns zero " +
+            "points with alreadyClaimedToday=true.";
     static final String DAILY_CLAIM_200_EXAMPLE = """
             {
               "code": 200,
@@ -106,7 +107,8 @@ final class RewardsControllerSwagger {
             """;
 
     static final String CLAIM_CHALLENGE_SUMMARY = "Claim a challenge reward";
-    static final String CLAIM_CHALLENGE_DESCRIPTION = "Claims the reward for a completed weekly challenge. Fails if the challenge isn't complete yet or was already claimed this week.";
+    static final String CLAIM_CHALLENGE_DESCRIPTION = "Claims the reward for a completed weekly challenge. Fails if the challenge isn't complete yet " +
+            "or was already claimed this week.";
     static final String CLAIM_CHALLENGE_200_EXAMPLE = """
             {
               "code": 200,

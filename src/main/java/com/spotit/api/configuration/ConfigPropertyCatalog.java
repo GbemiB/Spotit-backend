@@ -37,58 +37,9 @@ public class ConfigPropertyCatalog {
     public record Context(SecurityConfig security, SmtpConfig smtp, GlobalConfig global) {
     }
 
-    public static final class Property {
-        private final String name;
-        private final String group;
-        private final String description;
-        private final Kind kind;
-        private final Section section;
-        private final boolean redacted;
-        private final boolean encrypted;
-        private final Function<Context, Object> getter;
-        private final BiConsumer<Context, Object> setter;
-
-        private Property(String name, String group, String description, Kind kind, Section section,
-                         boolean redacted, boolean encrypted,
-                         Function<Context, Object> getter, BiConsumer<Context, Object> setter) {
-            this.name = name;
-            this.group = group;
-            this.description = description;
-            this.kind = kind;
-            this.section = section;
-            this.redacted = redacted;
-            this.encrypted = encrypted;
-            this.getter = getter;
-            this.setter = setter;
-        }
-
-        public String name() {
-            return name;
-        }
-
-        public String group() {
-            return group;
-        }
-
-        public String description() {
-            return description;
-        }
-
-        public Kind kind() {
-            return kind;
-        }
-
-        public Section section() {
-            return section;
-        }
-
-        public boolean redacted() {
-            return redacted;
-        }
-
-        public boolean encrypted() {
-            return encrypted;
-        }
+    public record Property(String name, String group, String description, Kind kind, Section section,
+                           boolean redacted, boolean encrypted,
+                           Function<Context, Object> getter, BiConsumer<Context, Object> setter) {
 
         public Object read(Context context) {
             return getter.apply(context);
@@ -105,6 +56,22 @@ public class ConfigPropertyCatalog {
     public ConfigPropertyCatalog() {
         List<Property> list = new ArrayList<>();
 
+        addSecurityProperties(list);
+        addSmtpProperties(list);
+        addGlobalProperties(list);
+
+        this.ordered = List.copyOf(list);
+
+        Map<String, Property> index = new LinkedHashMap<>();
+        for (Property property : this.ordered) {
+            if (index.put(property.name(), property) != null) {
+                throw new IllegalStateException("Duplicate config property in catalog: " + property.name());
+            }
+        }
+        this.byName = Map.copyOf(index);
+    }
+
+    private static void addSecurityProperties(List<Property> list) {
         // --- security_config -------------------------------------------------------------------
         list.add(new Property(PropertyNames.JWT_SECRET, PropertyNames.GROUP_SECURITY,
                 "Encrypted JWT signing secret", Kind.STRING, Section.SECURITY, true, true,
@@ -130,7 +97,9 @@ public class ConfigPropertyCatalog {
                 Kind.STRING, Section.SECURITY, true, false,
                 c -> c.security().getCryptoAesKey(),
                 (c, v) -> c.security().setCryptoAesKey((String) v)));
+    }
 
+    private static void addSmtpProperties(List<Property> list) {
         // --- smtp_config ---------------------------------------------------------------------
         list.add(new Property(PropertyNames.SMTP_HOST, PropertyNames.GROUP_SMTP,
                 "SMTP host used to send all transactional mail", Kind.STRING, Section.SMTP, false, false,
@@ -156,7 +125,9 @@ public class ConfigPropertyCatalog {
                 "Whether the SMTP relay uses TLS", Kind.BOOL, Section.SMTP, false, false,
                 c -> c.smtp().isUseTls(),
                 (c, v) -> c.smtp().setUseTls((Boolean) v)));
+    }
 
+    private static void addGlobalProperties(List<Property> list) {
         // --- global_config ------------------------------------------------------------------
         list.add(new Property(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS,
                 "Max rewarded ad views per user per day", Kind.LONG, Section.GLOBAL, false, false,
@@ -228,15 +199,6 @@ public class ConfigPropertyCatalog {
                 (c, v) -> c.global().setContentFeedDefaultLimit((Long) v)));
 
         list.sort(Comparator.comparing(Property::name));
-        this.ordered = List.copyOf(list);
-
-        Map<String, Property> index = new LinkedHashMap<>();
-        for (Property property : this.ordered) {
-            if (index.put(property.name(), property) != null) {
-                throw new IllegalStateException("Duplicate config property in catalog: " + property.name());
-            }
-        }
-        this.byName = Map.copyOf(index);
     }
 
     public List<Property> all() {

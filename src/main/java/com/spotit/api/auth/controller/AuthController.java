@@ -114,7 +114,8 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid email or password.", content = @Content(
                     schema = @Schema(implementation = ErrorDetail.class),
                     examples = @ExampleObject(value = AuthControllerSwagger.INVALID_CREDENTIALS_401_EXAMPLE))),
-            @ApiResponse(responseCode = "403", description = "Correct credentials, but this account never finished email verification — a fresh code was just issued; data.otpId is where to verify it.", content = @Content(
+            @ApiResponse(responseCode = "403", description = "Correct credentials, but this account never finished email verification — a fresh code " +
+                    "was just issued; data.otpId is where to verify it.", content = @Content(
                     schema = @Schema(implementation = ErrorDetail.class),
                     examples = @ExampleObject(value = AuthControllerSwagger.EMAIL_NOT_VERIFIED_403_EXAMPLE)))
     })

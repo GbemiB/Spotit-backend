@@ -73,10 +73,18 @@ public class UserWriteServiceImpl implements UserWriteService {
     @Transactional
     public NotificationPrefsResponse updateNotificationPrefs(UUID userId, UpdateNotificationPrefsRequest request) {
         User user = requireUser(userId);
-        if (request.period() != null) user.setNotifPeriod(request.period());
-        if (request.ovulation() != null) user.setNotifOvulation(request.ovulation());
-        if (request.dailyLog() != null) user.setNotifDailyLog(request.dailyLog());
-        if (request.digest() != null) user.setNotifDigest(request.digest());
+        if (request.period() != null) {
+            user.setNotifPeriod(request.period());
+        }
+        if (request.ovulation() != null) {
+            user.setNotifOvulation(request.ovulation());
+        }
+        if (request.dailyLog() != null) {
+            user.setNotifDailyLog(request.dailyLog());
+        }
+        if (request.digest() != null) {
+            user.setNotifDigest(request.digest());
+        }
         userRepository.save(user);
         return new NotificationPrefsResponse(user.isNotifPeriod(), user.isNotifOvulation(), user.isNotifDailyLog(), user.isNotifDigest());
     }

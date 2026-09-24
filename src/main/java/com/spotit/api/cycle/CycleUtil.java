@@ -17,9 +17,15 @@ public final class CycleUtil {
 
     public static Phase phaseFor(int cycleDay, int periodLength, int cycleLength) {
         int ovDay = cycleLength - 14;
-        if (cycleDay <= periodLength) return new Phase(CyclePhase.period, CyclePhase.period.getCode());
-        if (cycleDay == ovDay) return new Phase(CyclePhase.ovulation, CyclePhase.ovulation.getCode());
-        if (cycleDay >= ovDay - 5 && cycleDay < ovDay) return new Phase(CyclePhase.fertile, CyclePhase.fertile.getCode());
+        if (cycleDay <= periodLength) {
+            return new Phase(CyclePhase.period, CyclePhase.period.getCode());
+        }
+        if (cycleDay == ovDay) {
+            return new Phase(CyclePhase.ovulation, CyclePhase.ovulation.getCode());
+        }
+        if (cycleDay >= ovDay - 5 && cycleDay < ovDay) {
+            return new Phase(CyclePhase.fertile, CyclePhase.fertile.getCode());
+        }
         return null;
     }
 

@@ -107,7 +107,8 @@ public class UserController {
                     examples = @ExampleObject(value = UserControllerSwagger.DOWNLOAD_EXPORT_404_EXAMPLE)))
     })
     @GetMapping("/export/{jobId}/download")
-    public ExportDataResponse downloadExport(@CurrentUserId UUID userId, @Parameter(description = "Export job id", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") @PathVariable UUID jobId) {
+    public ExportDataResponse downloadExport(@CurrentUserId UUID userId,
+            @Parameter(description = "Export job id", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6") @PathVariable UUID jobId) {
         return userReadService.getExportData(userId, jobId);
     }
 

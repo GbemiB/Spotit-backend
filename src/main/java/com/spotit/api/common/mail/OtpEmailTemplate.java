@@ -21,7 +21,8 @@ public final class OtpEmailTemplate {
                     <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background:%s;padding:32px 16px;">
                       <tr>
                         <td align="center">
-                          <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#FFFFFF;border-radius:20px;overflow:hidden;border:1px solid #F0E3E3;">
+                          <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" \
+                style="max-width:440px;background:#FFFFFF;border-radius:20px;overflow:hidden;border:1px solid #F0E3E3;">
                             <tr>
                               <td style="padding:28px 32px 0 32px;text-align:center;">
                                 <div style="font-size:20px;font-weight:700;color:%s;letter-spacing:-0.3px;">Spot<span style="color:%s;"> it</span></div>
@@ -51,7 +52,8 @@ public final class OtpEmailTemplate {
                             </tr>
                             <tr>
                               <td style="padding:24px 36px 28px 36px;text-align:center;">
-                                <p style="margin:0;font-size:11px;line-height:17px;color:%s;">If you didn't request this, you can safely ignore this email &mdash; no changes will be made to your account.</p>
+                                <p style="margin:0;font-size:11px;line-height:17px;color:%s;">If you didn't request this, you can safely ignore this email &mdash; no \
+                changes will be made to your account.</p>
                               </td>
                             </tr>
                           </table>

@@ -18,7 +18,8 @@ public class ExportReadyEmailTemplate {
                     <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background:%s;padding:32px 16px;">
                       <tr>
                         <td align="center">
-                          <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="max-width:440px;background:#FFFFFF;border-radius:20px;overflow:hidden;border:1px solid #F0E3E3;">
+                          <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" \
+                style="max-width:440px;background:#FFFFFF;border-radius:20px;overflow:hidden;border:1px solid #F0E3E3;">
                             <tr>
                               <td style="padding:28px 32px 0 32px;text-align:center;">
                                 <div style="font-size:20px;font-weight:700;color:%s;letter-spacing:-0.3px;">Spot<span style="color:%s;"> it</span></div>
@@ -27,7 +28,8 @@ public class ExportReadyEmailTemplate {
                             <tr>
                               <td style="padding:20px 36px 8px 36px;text-align:center;">
                                 <h1 style="margin:0;font-size:21px;line-height:27px;font-weight:600;color:%s;">Your data export is ready</h1>
-                                <p style="margin:10px 0 0 0;font-size:13px;line-height:19px;color:%s;">Hi %s, we've attached a full copy of your Spot it data as a spreadsheet (CSV) — it opens directly in Excel, Numbers or Google Sheets.</p>
+                                <p style="margin:10px 0 0 0;font-size:13px;line-height:19px;color:%s;">Hi %s, we've attached a full copy of your Spot it data as a \
+                spreadsheet (CSV) — it opens directly in Excel, Numbers or Google Sheets.</p>
                               </td>
                             </tr>
                             <tr>
@@ -56,7 +58,8 @@ public class ExportReadyEmailTemplate {
                             </tr>
                             <tr>
                               <td style="padding:24px 36px 28px 36px;text-align:center;">
-                                <p style="margin:0;font-size:11px;line-height:17px;color:%s;">Didn't request this? Someone with access to your account may have requested an export — check your account security if this wasn't you.</p>
+                                <p style="margin:0;font-size:11px;line-height:17px;color:%s;">Didn't request this? Someone with access to your account may have \
+                requested an export — check your account security if this wasn't you.</p>
                               </td>
                             </tr>
                           </table>

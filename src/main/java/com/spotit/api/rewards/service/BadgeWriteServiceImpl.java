@@ -67,8 +67,12 @@ public class BadgeWriteServiceImpl implements BadgeWriteService {
     public BadgeDefinitionAdminResponse updateDefinition(String id, UpdateBadgeDefinitionRequest request) {
         BadgeDefinition def = badgeDefinitionRepository.findById(id)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.BADGE_NOT_FOUND));
-        if (request.name() != null) def.setName(request.name());
-        if (request.description() != null) def.setDescription(request.description());
+        if (request.name() != null) {
+            def.setName(request.name());
+        }
+        if (request.description() != null) {
+            def.setDescription(request.description());
+        }
         badgeDefinitionRepository.save(def);
         return toAdminResponse(def);
     }

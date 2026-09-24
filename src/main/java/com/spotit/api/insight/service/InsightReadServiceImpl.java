@@ -139,7 +139,9 @@ public class InsightReadServiceImpl implements InsightReadService {
     }
 
     private List<Integer> cycleLengthsFrom(List<PeriodEpisode> episodes, int maxCycles) {
-        if (episodes.size() < 2) return List.of();
+        if (episodes.size() < 2) {
+            return List.of();
+        }
         List<Integer> lengths = new ArrayList<>();
         for (int i = 1; i < episodes.size(); i++) {
             lengths.add((int) ChronoUnit.DAYS.between(episodes.get(i - 1).start(), episodes.get(i).start()));
