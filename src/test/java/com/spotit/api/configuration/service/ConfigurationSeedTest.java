@@ -1,12 +1,13 @@
 package com.spotit.api.configuration.service;
 
 import com.spotit.api.common.crypto.EncryptionService;
+import com.spotit.api.configuration.ConfigDefaults;
 import com.spotit.api.configuration.ConfigPropertyCatalog;
-import com.spotit.api.configuration.SmtpSeedProperties;
-import com.spotit.api.configuration.entity.SmtpConfig;
+import com.spotit.api.configuration.entity.GlobalConfig;
+import com.spotit.api.configuration.entity.SecurityConfig;
 import com.spotit.api.configuration.repository.GlobalConfigRepository;
 import com.spotit.api.configuration.repository.SecurityConfigRepository;
-import com.spotit.api.configuration.repository.SmtpConfigRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -16,56 +17,61 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** The fresh-database SMTP seed in {@link ConfigurationDomainServiceImpl#seedDefaults()}. */
+/** The startup seeder in {@link ConfigurationDomainServiceImpl#seedDefaults()}. */
 @ExtendWith(MockitoExtension.class)
 class ConfigurationSeedTest {
     @Mock SecurityConfigRepository securityConfigRepository;
-    @Mock SmtpConfigRepository smtpConfigRepository;
     @Mock GlobalConfigRepository globalConfigRepository;
     @Mock EncryptionService encryptionService;
 
-    private ConfigurationDomainServiceImpl service(String smtpPassword) {
-        return new ConfigurationDomainServiceImpl(securityConfigRepository, smtpConfigRepository, globalConfigRepository, encryptionService,
-                new SmtpSeedProperties("smtp.gmail.com", 587, "mailer@example.com", smtpPassword, "mailer@example.com", true),
-                new ConfigPropertyCatalog());
+    ConfigurationDomainServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        service = new ConfigurationDomainServiceImpl(securityConfigRepository, globalConfigRepository, encryptionService, new ConfigPropertyCatalog());
     }
 
     @Test
-    void aFreshDatabaseIsSeededWithTheConfiguredRelay() {
-        when(smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID)).thenReturn(Optional.empty());
-        // The seeder also encrypts a freshly generated JWT secret, so stub encryption for any input.
-        when(encryptionService.encrypt(any())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
+    void aFreshDatabaseGetsAGeneratedJwtSecretAndEveryDefault() {
+        when(securityConfigRepository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.empty());
+        when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.empty());
+        when(encryptionService.encrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
 
-        service("app-password").seedDefaults();
+        service.seedDefaults();
 
-        ArgumentCaptor<SmtpConfig> saved = ArgumentCaptor.forClass(SmtpConfig.class);
-        verify(smtpConfigRepository).save(saved.capture());
-        assertThat(saved.getValue().getHost()).isEqualTo("smtp.gmail.com");
-        assertThat(saved.getValue().getPassword()).isEqualTo("enc:app-password");
+        ArgumentCaptor<SecurityConfig> security = ArgumentCaptor.forClass(SecurityConfig.class);
+        verify(securityConfigRepository).save(security.capture());
+        assertThat(security.getValue().getJwtSecret()).startsWith("enc:").hasSizeGreaterThan(40);
+        assertThat(security.getValue().getJwtAccessTokenTtlSeconds()).isEqualTo(ConfigDefaults.JWT_ACCESS_TOKEN_TTL_SECONDS);
+        assertThat(security.getValue().getOtpTtlSeconds()).isEqualTo(ConfigDefaults.OTP_TTL_SECONDS);
+
+        ArgumentCaptor<GlobalConfig> global = ArgumentCaptor.forClass(GlobalConfig.class);
+        verify(globalConfigRepository).save(global.capture());
+        assertThat(global.getValue().getAdsDailyLimit()).isEqualTo(ConfigDefaults.ADS_DAILY_LIMIT);
+        assertThat(global.getValue().getCycleDefaultLength()).isEqualTo(ConfigDefaults.CYCLE_DEFAULT_LENGTH);
+        assertThat(global.getValue().getContentFeedDefaultLimit()).isEqualTo(ConfigDefaults.CONTENT_FEED_DEFAULT_LIMIT);
     }
 
     @Test
-    void withoutAnSmtpPasswordTheSeedIsSkippedAndStartupStillSucceeds() {
-        when(smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID)).thenReturn(Optional.empty());
+    void valuesAnAdminAlreadyTunedAreLeftAlone() {
+        SecurityConfig security = SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).jwtSecret("existing")
+                .jwtAccessTokenTtlSeconds(60).jwtRefreshTokenTtlSeconds(120).otpTtlSeconds(30).build();
+        GlobalConfig global = GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).adsDailyLimit(9).cycleDefaultLength(31).build();
+        when(securityConfigRepository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.of(security));
+        when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(global));
 
-        service("").seedDefaults();
+        service.seedDefaults();
 
-        verify(smtpConfigRepository, never()).save(any());
-    }
-
-    @Test
-    void anAlreadyConfiguredRelayIsLeftAlone() {
-        SmtpConfig existing = SmtpConfig.builder().id(SmtpConfig.SINGLETON_ID).host("smtp.example.com").password("enc").build();
-        when(smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID)).thenReturn(Optional.of(existing));
-
-        service("app-password").seedDefaults();
-
-        verify(smtpConfigRepository, never()).save(any());
-        assertThat(existing.getHost()).isEqualTo("smtp.example.com");
+        assertThat(security.getJwtSecret()).isEqualTo("existing");
+        assertThat(security.getJwtAccessTokenTtlSeconds()).isEqualTo(60);
+        assertThat(security.getOtpTtlSeconds()).isEqualTo(30);
+        assertThat(global.getAdsDailyLimit()).isEqualTo(9);
+        assertThat(global.getCycleDefaultLength()).isEqualTo(31);
+        verify(encryptionService, never()).encrypt(anyString());
     }
 }

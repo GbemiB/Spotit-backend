@@ -1,34 +1,28 @@
 package com.spotit.api.smtp.controller;
 
-import com.spotit.api.configuration.service.ConfigurationDomainService;
-import com.spotit.api.smtp.dto.SaveSmtpSettingsRequest;
+import com.spotit.api.smtp.SmtpProperties;
 import com.spotit.api.smtp.dto.SmtpSettingsStatusResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Smtp Config (Admin)", description = "Admin surface for the single SMTP relay used to send all transactional mail.")
+@Tag(name = "Smtp Config (Admin)", description = "Read-only view of the SMTP relay. The relay is set per environment through the "
+        + "SMTP_* environment variables (Render dashboard), not through the API or the database.")
 @RestController
 @RequestMapping("/api/v1/config/smtp")
 @RequiredArgsConstructor
 public class SmtpConfigController {
-    private final ConfigurationDomainService configurationDomainService;
+    private final SmtpProperties smtpProperties;
 
-    @Operation(summary = "Get SMTP status", description = "Returns what's configured (never the password) so an admin can confirm settings without guessing.")
+    @Operation(summary = "Get SMTP status", description = "Shows whether this environment's SMTP_* variables are complete and which relay they point at "
+            + "(never the password), so a deployment can be checked without guessing.")
     @GetMapping
     public SmtpSettingsStatusResponse status() {
-        return configurationDomainService.getSmtpSettings()
-                .map(s -> new SmtpSettingsStatusResponse(true, s.host(), s.port(), s.username(), s.fromAddress(), s.useTls()))
-                .orElseGet(SmtpSettingsStatusResponse::unconfigured);
-    }
-
-    @Operation(summary = "Save SMTP settings", description = "Upserts the smtp-* properties. Omit password to keep the previously stored one.")
-    @PutMapping
-    public SmtpSettingsStatusResponse save(@Valid @RequestBody SaveSmtpSettingsRequest request) {
-        configurationDomainService.saveSmtpSettings(request.host(), request.port(), request.username(), request.password(),
-                request.fromAddress(), request.useTls());
-        return status();
+        if (!smtpProperties.isConfigured()) {
+            return SmtpSettingsStatusResponse.unconfigured();
+        }
+        return new SmtpSettingsStatusResponse(true, smtpProperties.host(), smtpProperties.port(), smtpProperties.username(),
+                smtpProperties.fromAddress(), smtpProperties.useTls());
     }
 }

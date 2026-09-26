@@ -4,10 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotit.api.configuration.PropertyNames;
 import com.spotit.api.configuration.entity.GlobalConfig;
 import com.spotit.api.configuration.entity.SecurityConfig;
-import com.spotit.api.configuration.entity.SmtpConfig;
 import com.spotit.api.configuration.repository.GlobalConfigRepository;
 import com.spotit.api.configuration.repository.SecurityConfigRepository;
-import com.spotit.api.configuration.repository.SmtpConfigRepository;
 import com.spotit.api.rewards.entity.BadgeDefinition;
 import com.spotit.api.rewards.entity.ChallengeDefinition;
 import com.spotit.api.rewards.entity.LevelDefinition;
@@ -30,7 +28,7 @@ import java.util.function.LongConsumer;
  *
  * <p>History: app_settings / smtp_settings and, briefly, badge/challenge/level "definition" rows
  * were all folded into {@code global_configuration}. That table is now split into typed tables —
- * {@link SecurityConfig} ({@code security_config}), {@link SmtpConfig} ({@code smtp_config}),
+ * {@link SecurityConfig} ({@code security_config}),
  * {@link GlobalConfig} ({@code global_config}), and {@code badge_config} / {@code challenge_config}
  * / {@code level_config} for the definitions. Hibernate's {@code ddl-auto: update} creates the new
  * tables but never drops the old one, and never moves data, so this runner does both.
@@ -48,7 +46,6 @@ public class ConfigStoreMigration {
 
     private final JdbcTemplate jdbcTemplate;
     private final SecurityConfigRepository securityConfigRepository;
-    private final SmtpConfigRepository smtpConfigRepository;
     private final GlobalConfigRepository globalConfigRepository;
     private final BadgeDefinitionRepository badgeDefinitionRepository;
     private final ChallengeDefinitionRepository challengeDefinitionRepository;
@@ -62,6 +59,9 @@ public class ConfigStoreMigration {
     void run() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS app_settings");
         jdbcTemplate.execute("DROP TABLE IF EXISTS smtp_settings");
+        // SMTP now comes only from the spotit.smtp.* properties (env vars per environment); the old
+        // DB-stored relay and its encrypted password are dropped rather than left behind as stale secrets.
+        jdbcTemplate.execute("DROP TABLE IF EXISTS smtp_config");
         jdbcTemplate.execute("DROP TABLE IF EXISTS badge_definitions");
         jdbcTemplate.execute("DROP TABLE IF EXISTS challenge_definitions");
         jdbcTemplate.execute("DROP TABLE IF EXISTS level_definitions");
@@ -72,7 +72,6 @@ public class ConfigStoreMigration {
 
         Map<String, LegacyRow> rows = loadLegacyRows();
         migrateSecurity(rows);
-        migrateSmtp(rows);
         migrateGlobal(rows);
         int defs = migrateDefinitions();
 
@@ -105,21 +104,6 @@ public class ConfigStoreMigration {
         applyLong(rows, PropertyNames.OTP_TTL_SECONDS, security::setOtpTtlSeconds);
         applyString(rows, PropertyNames.CRYPTO_AES_KEY, security::setCryptoAesKey);
         securityConfigRepository.save(security);
-    }
-
-    private void migrateSmtp(Map<String, LegacyRow> rows) {
-        SmtpConfig smtp = smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID)
-                .orElseGet(() -> SmtpConfig.builder().id(SmtpConfig.SINGLETON_ID).build());
-        applyString(rows, PropertyNames.SMTP_HOST, smtp::setHost);
-        applyLong(rows, PropertyNames.SMTP_PORT, v -> smtp.setPort((int) v));
-        applyString(rows, PropertyNames.SMTP_USERNAME, smtp::setUsername);
-        applyString(rows, PropertyNames.SMTP_PASSWORD, smtp::setPassword);
-        applyString(rows, PropertyNames.SMTP_FROM_ADDRESS, smtp::setFromAddress);
-        LegacyRow tls = rows.get(PropertyNames.SMTP_USE_TLS);
-        if (tls != null && tls.enabled() != null) {
-            smtp.setUseTls(tls.enabled());
-        }
-        smtpConfigRepository.save(smtp);
     }
 
     private void migrateGlobal(Map<String, LegacyRow> rows) {

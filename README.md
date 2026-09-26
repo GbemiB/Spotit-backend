@@ -139,24 +139,35 @@ mvn spring-boot:run
 `CRYPTO_AES_KEY` explicitly — there are no defaults, so the app refuses to start with anything
 missing.
 
-OTP emails (signup, password reset) are sent over real SMTP in every profile, including `dev` —
-there's no local mail catcher. The SMTP config (host/port/username/password/from-address) comes
-**exclusively** from the `smtp_settings` DB table (`com.spotit.api.smtp`) — there is no env-var or
-`application.yml` fallback of any kind. There's no admin endpoint yet, so seed/update that row
-directly (SQL insert, with the password encrypted via `AesGcmEncryptionService` using the
-`CRYPTO_AES_KEY` in effect), or via a one-off call to `SmtpSettingsService.saveSettings(...)`. If
-the table is empty, sending fails with a `MailPreparationException`, which is caught and logged as
-an error rather than failing the request (signup/OTP issuance still succeeds either way).
+OTP emails (signup, password reset) and data exports are sent over real SMTP in every profile,
+including `dev` — there's no local mail catcher. The SMTP relay comes **only** from environment
+variables, bound through the `spotit.smtp.*` placeholders in `application.yml` (`SmtpProperties`);
+nothing is stored in the database:
+
+| Variable | Required | Default |
+|---|---|---|
+| `SMTP_HOST` | yes | `smtp.gmail.com` |
+| `SMTP_PORT` | yes | `587` (use `465` for implicit SSL) |
+| `SMTP_USERNAME` | yes | — |
+| `SMTP_PASSWORD` | yes | — (for Gmail, an app password) |
+| `SMTP_FROM_ADDRESS` | yes | — |
+| `SMTP_USE_TLS` | no | `true` |
+
+On Render these are declared in `render.yaml` with `sync: false`, so the dashboard asks for them
+when a Blueprint creates a service; for an existing service add them under **Environment**. Until
+username, password and from-address are set, sends fail with a `MailPreparationException`
+("SMTP is not configured"), which is caught and logged rather than failing the request. Check an
+environment with `GET /api/v1/config/smtp` (shows the relay, never the password).
 
 App-wide tunables (JWT TTLs, OTP TTL, ads daily limit, cycle defaults, points economy) live
 **exclusively** in the `app_settings` DB table (`com.spotit.api.settings`) — same story as SMTP,
 no yml/env-var fallback. `AppSettingsService.getActiveSettings()` seeds a default row (and a
 freshly generated random JWT secret) the first time anything asks for it, so a brand-new DB just
 works with no manual step. To change a value, update that row directly (the JWT secret column is
-AES-GCM ciphertext, same as the SMTP password — encrypt with `AesGcmEncryptionService` before
+AES-GCM ciphertext — encrypt with `AesGcmEncryptionService` before
 writing it). `spotit.crypto.aes-key` (`CRYPTO_AES_KEY`) is the one setting that **stays** in
-env-vars/yml on purpose — it's the root key that encrypts both `app_settings.encrypted_jwt_secret`
-and `smtp_settings.encrypted_password`, so it can never live in the same DB it protects.
+env-vars/yml on purpose — it's the root key that encrypts `app_settings.encrypted_jwt_secret`, so
+it can never live in the same DB it protects.
 
 The JWT secret/TTLs are read from `app_settings` once, at `JwtService` construction (i.e. app
 boot) — not per-request — since `JwtAuthenticationFilter` calls into it on every authenticated API

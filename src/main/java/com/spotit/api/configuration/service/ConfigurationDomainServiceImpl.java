@@ -8,16 +8,12 @@ import com.spotit.api.configuration.ConfigPropertyCatalog;
 import com.spotit.api.configuration.ConfigPropertyCatalog.Context;
 import com.spotit.api.configuration.ConfigPropertyCatalog.Property;
 import com.spotit.api.configuration.PropertyNames;
-import com.spotit.api.configuration.SmtpSeedProperties;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
 import com.spotit.api.configuration.entity.GlobalConfig;
 import com.spotit.api.configuration.entity.SecurityConfig;
-import com.spotit.api.configuration.entity.SmtpConfig;
 import com.spotit.api.configuration.repository.GlobalConfigRepository;
 import com.spotit.api.configuration.repository.SecurityConfigRepository;
-import com.spotit.api.configuration.repository.SmtpConfigRepository;
-import com.spotit.api.smtp.service.ResolvedSmtpSettings;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +25,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 // @DependsOn: ConfigStoreMigration must finish copying any already-deployed global_configuration
-// rows into security_config/smtp_config/global_config before this bean's @PostConstruct seeder
+// rows into security_config/global_config before this bean's @PostConstruct seeder
 // runs, otherwise the seeder would write fresh defaults on top of a database that already had
 // real, admin-tuned values.
 @Service
@@ -43,13 +38,10 @@ import java.util.UUID;
 public class ConfigurationDomainServiceImpl implements ConfigurationDomainService {
     private static final int GENERATED_JWT_SECRET_BYTES = 48;
     private static final SecureRandom RANDOM = new SecureRandom();
-    private static final int DEFAULT_SMTP_PORT = 587;
 
     private final SecurityConfigRepository securityConfigRepository;
-    private final SmtpConfigRepository smtpConfigRepository;
     private final GlobalConfigRepository globalConfigRepository;
     private final EncryptionService encryptionService;
-    private final SmtpSeedProperties smtpSeedProperties;
     private final ConfigPropertyCatalog catalog;
 
     @PostConstruct
@@ -122,32 +114,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
             global.setContentFeedDefaultLimit(ConfigDefaults.CONTENT_FEED_DEFAULT_LIMIT);
         }
         globalConfigRepository.save(global);
-
-        seedSmtpDefault();
-    }
-
-    // SMTP settings normally require an authenticated admin call to PUT /api/v1/config/smtp, but that
-    // endpoint itself requires a logged-in user — unreachable on a fresh deploy where signup/OTP mail
-    // is blocked until SMTP exists. Seeded once here from the spotit.smtp.* properties so mail works
-    // out of the box; no-op once the DB already has a host configured (e.g. after an admin edits it
-    // via the API), so this only ever fires on a truly fresh database.
-    // The values live in application.yml (env-overridable) rather than in source — point spotit.smtp.*
-    // at a real transactional-mail provider (and rotate SMTP_PASSWORD) once one is set up.
-    private void seedSmtpDefault() {
-        // FORCE_SMTP_RESEED=true temporarily bypasses the "already configured" guard for a one-off
-        // update to already-seeded environments; unset it once done so this stays a fresh-DB-only seed.
-        SmtpConfig existing = smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID).orElse(null);
-        boolean configured = existing != null && existing.getHost() != null && !existing.getHost().isBlank();
-        if (configured && !"true".equals(System.getenv("FORCE_SMTP_RESEED"))) {
-            return;
-        }
-        if (smtpSeedProperties.password() == null || smtpSeedProperties.password().isBlank()) {
-            log.warn("SMTP_PASSWORD is not set — skipping SMTP seed; mail stays disabled until it is set or configured via PUT /api/v1/config/smtp.");
-            return;
-        }
-        saveSmtpSettings(smtpSeedProperties.host(), smtpSeedProperties.port(), smtpSeedProperties.username(),
-                smtpSeedProperties.password(), smtpSeedProperties.fromAddress(), smtpSeedProperties.useTls());
-        log.info("Seeded placeholder SMTP settings from spotit.smtp.* — replace via PUT /api/v1/config/smtp when a real mail provider is set up.");
     }
 
     private String generateEncryptedJwtSecret() {
@@ -163,18 +129,13 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
                 .orElseGet(() -> SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).build());
     }
 
-    private SmtpConfig loadSmtp() {
-        return smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID)
-                .orElseGet(() -> SmtpConfig.builder().id(SmtpConfig.SINGLETON_ID).build());
-    }
-
     private GlobalConfig loadGlobal() {
         return globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)
                 .orElseGet(() -> GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).build());
     }
 
     private Context loadContext() {
-        return new Context(loadSecurity(), loadSmtp(), loadGlobal());
+        return new Context(loadSecurity(), loadGlobal());
     }
 
     @Override
@@ -305,41 +266,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<ResolvedSmtpSettings> getSmtpSettings() {
-        SmtpConfig smtp = smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID).orElse(null);
-        if (smtp == null || smtp.getHost() == null || smtp.getHost().isBlank()) {
-            return Optional.empty();
-        }
-        String encryptedPassword = smtp.getPassword();
-        return Optional.of(new ResolvedSmtpSettings(
-                smtp.getHost(),
-                smtp.getPort() == 0 ? DEFAULT_SMTP_PORT : smtp.getPort(),
-                smtp.getUsername(),
-                encryptedPassword == null ? null : encryptionService.decrypt(encryptedPassword),
-                smtp.getFromAddress(),
-                smtp.isUseTls()));
-    }
-
-    @Override
-    @Transactional
-    public void saveSmtpSettings(String host, int port, String username, String password, String fromAddress, boolean useTls) {
-        SmtpConfig smtp = loadSmtp();
-        smtp.setHost(host);
-        smtp.setPort(port);
-        smtp.setUsername(username);
-        smtp.setFromAddress(fromAddress);
-        smtp.setUseTls(useTls);
-
-        if (password != null && !password.isBlank()) {
-            smtp.setPassword(encryptionService.encrypt(password));
-        } else if (smtp.getPassword() == null) {
-            throw new IllegalArgumentException("password is required when creating SMTP settings for the first time");
-        }
-        smtpConfigRepository.save(smtp);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<GlobalConfigurationResponse> listAll() {
         Context context = loadContext();
         return catalog.all().stream().map(property -> toResponse(property, context)).toList();
@@ -400,7 +326,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     private void persist(Context context, ConfigPropertyCatalog.Section section) {
         switch (section) {
             case SECURITY -> securityConfigRepository.save(context.security());
-            case SMTP -> smtpConfigRepository.save(context.smtp());
             case GLOBAL -> globalConfigRepository.save(context.global());
         }
     }
