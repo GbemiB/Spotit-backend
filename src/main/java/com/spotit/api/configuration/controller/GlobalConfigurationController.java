@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Tag(name = "Global Config (Admin)", description = "Admin surface for all app settings, thresholds, and secrets — stored as typed columns across " +
-        "security_config, smtp_config, and global_config, exposed here under their flat property names.")
+        "security_config and global_config, exposed here under their flat property names.")
 @RestController
 @RequestMapping("/api/v1/config/global")
 @RequiredArgsConstructor
@@ -26,7 +26,7 @@ public class GlobalConfigurationController {
         return configurationDomainService.listAll();
     }
 
-    @Operation(summary = "List all group names", description = "Every distinct group a property belongs to (e.g. security, points, badges, smtp).")
+    @Operation(summary = "List all group names", description = "Every distinct group a property belongs to (e.g. security, points, badges).")
     @GetMapping("/groups")
     public List<String> listGroups() {
         return configurationDomainService.listGroupNames();
@@ -38,7 +38,7 @@ public class GlobalConfigurationController {
         return configurationDomainService.listByGroup(groupName);
     }
 
-    @Operation(summary = "Get a property", description = "Fetch a single property by its name (e.g. cycle-default-length, smtp-primary-host).")
+    @Operation(summary = "Get a property", description = "Fetch a single property by its name (e.g. cycle-default-length).")
     @GetMapping("/{name}")
     public GlobalConfigurationResponse get(@Parameter(description = "Property name", example = "cycle-default-length") @PathVariable String name) {
         return configurationDomainService.getByName(name);

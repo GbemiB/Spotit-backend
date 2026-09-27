@@ -38,14 +38,6 @@ public final class PropertyNames {
     public static final String GROUP_LOGS = "logs";
     public static final String GROUP_REWARDS = "rewards";
     public static final String GROUP_CONTENT = "content";
-    public static final String GROUP_SMTP = "smtp";
-
-    public static final String SMTP_HOST = "smtp-host";
-    public static final String SMTP_PORT = "smtp-port";
-    public static final String SMTP_USERNAME = "smtp-username";
-    public static final String SMTP_PASSWORD = "smtp-password";
-    public static final String SMTP_FROM_ADDRESS = "smtp-from-address";
-    public static final String SMTP_USE_TLS = "smtp-use-tls";
 
     // Legacy row-name prefixes: badge/challenge/level definitions were briefly stored as JSON rows
     // in global_configuration ("badge-definition-{id}", etc.). They now live in their own typed

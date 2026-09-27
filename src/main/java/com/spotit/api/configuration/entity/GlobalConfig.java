@@ -17,7 +17,7 @@ import java.time.Instant;
 // Single-row table (id is always SINGLETON_ID) holding every remaining app-wide numeric setting
 // and threshold — the ones that used to be individual name/value rows in global_configuration,
 // grouped there as points/cycle/badges/insight/billing/account/logs/rewards/content. Each is now
-// its own typed column. Security and SMTP settings moved to SecurityConfig / SmtpConfig.
+// its own typed column. Security settings moved to SecurityConfig; SMTP comes from the spotit.smtp.* properties.
 @Entity
 @Table(name = "global_config")
 @Getter

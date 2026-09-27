@@ -2,7 +2,6 @@ package com.spotit.api.configuration;
 
 import com.spotit.api.configuration.entity.GlobalConfig;
 import com.spotit.api.configuration.entity.SecurityConfig;
-import com.spotit.api.configuration.entity.SmtpConfig;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ import java.util.function.Function;
 /**
  * The single source of truth that lets the flat, name-keyed admin API
  * ({@code GET/PATCH /api/v1/config/global/**}) keep working now that settings live in typed
- * columns across {@link SecurityConfig}, {@link SmtpConfig}, and {@link GlobalConfig} instead of
+ * columns across {@link SecurityConfig} and {@link GlobalConfig} instead of
  * one row per property in {@code global_configuration}.
  *
  * <p>Every property the old table exposed is listed here once, together with the metadata the API
@@ -31,10 +30,10 @@ public class ConfigPropertyCatalog {
 
     public enum Kind { LONG, STRING, BOOL }
 
-    public enum Section { SECURITY, SMTP, GLOBAL }
+    public enum Section { SECURITY, GLOBAL }
 
     /** Mutable holder for the three singleton config rows a getter reads from / a setter writes to. */
-    public record Context(SecurityConfig security, SmtpConfig smtp, GlobalConfig global) {
+    public record Context(SecurityConfig security, GlobalConfig global) {
     }
 
     public record Property(String name, String group, String description, Kind kind, Section section,
@@ -57,7 +56,6 @@ public class ConfigPropertyCatalog {
         List<Property> list = new ArrayList<>();
 
         addSecurityProperties(list);
-        addSmtpProperties(list);
         addGlobalProperties(list);
 
         this.ordered = List.copyOf(list);
@@ -91,40 +89,12 @@ public class ConfigPropertyCatalog {
                 c -> c.security().getOtpTtlSeconds(),
                 (c, v) -> c.security().setOtpTtlSeconds((Long) v)));
         list.add(new Property(PropertyNames.CRYPTO_AES_KEY, PropertyNames.GROUP_SECURITY,
-                "Root AES-256 key that encrypts every other secret (jwt-secret, smtp-password). Plaintext by "
+                "Root AES-256 key that encrypts every other secret (jwt-secret). Plaintext by "
                         + "necessity — a key can't be encrypted with itself. Never change via the API: rotating it "
                         + "strands every secret already encrypted with the old value.",
                 Kind.STRING, Section.SECURITY, true, false,
                 c -> c.security().getCryptoAesKey(),
                 (c, v) -> c.security().setCryptoAesKey((String) v)));
-    }
-
-    private static void addSmtpProperties(List<Property> list) {
-        // --- smtp_config ---------------------------------------------------------------------
-        list.add(new Property(PropertyNames.SMTP_HOST, PropertyNames.GROUP_SMTP,
-                "SMTP host used to send all transactional mail", Kind.STRING, Section.SMTP, false, false,
-                c -> c.smtp().getHost(),
-                (c, v) -> c.smtp().setHost((String) v)));
-        list.add(new Property(PropertyNames.SMTP_PORT, PropertyNames.GROUP_SMTP,
-                "SMTP port", Kind.LONG, Section.SMTP, false, false,
-                c -> (long) c.smtp().getPort(),
-                (c, v) -> c.smtp().setPort(((Long) v).intValue())));
-        list.add(new Property(PropertyNames.SMTP_USERNAME, PropertyNames.GROUP_SMTP,
-                "SMTP username", Kind.STRING, Section.SMTP, false, false,
-                c -> c.smtp().getUsername(),
-                (c, v) -> c.smtp().setUsername((String) v)));
-        list.add(new Property(PropertyNames.SMTP_PASSWORD, PropertyNames.GROUP_SMTP,
-                "Encrypted SMTP password", Kind.STRING, Section.SMTP, true, true,
-                c -> c.smtp().getPassword(),
-                (c, v) -> c.smtp().setPassword((String) v)));
-        list.add(new Property(PropertyNames.SMTP_FROM_ADDRESS, PropertyNames.GROUP_SMTP,
-                "From address for outgoing mail", Kind.STRING, Section.SMTP, false, false,
-                c -> c.smtp().getFromAddress(),
-                (c, v) -> c.smtp().setFromAddress((String) v)));
-        list.add(new Property(PropertyNames.SMTP_USE_TLS, PropertyNames.GROUP_SMTP,
-                "Whether the SMTP relay uses TLS", Kind.BOOL, Section.SMTP, false, false,
-                c -> c.smtp().isUseTls(),
-                (c, v) -> c.smtp().setUseTls((Boolean) v)));
     }
 
     private static void addGlobalProperties(List<Property> list) {

@@ -1,7 +1,6 @@
 package com.spotit.api.common.mail;
 
-import com.spotit.api.configuration.service.ConfigurationDomainService;
-import com.spotit.api.smtp.service.ResolvedSmtpSettings;
+import com.spotit.api.smtp.SmtpProperties;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -23,26 +22,28 @@ import java.util.Properties;
 public class EmailServiceImpl implements EmailService {
     private static final String SENDER_DISPLAY_NAME = "Spot it";
 
-    private final ConfigurationDomainService configurationDomainService;
+    private final SmtpProperties smtpProperties;
 
     @Override
     public void send(String to, String subject, String htmlBody, String textBody) {
-        ResolvedSmtpSettings settings = configurationDomainService.getSmtpSettings()
-                .orElseThrow(() -> new MailPreparationException(
-                        "No SMTP settings configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail."));
-        sendVia(settings, to, subject, htmlBody, textBody, null, null, null);
+        sendVia(requireSettings(), to, subject, htmlBody, textBody, null, null, null);
     }
 
     @Override
     public void sendWithAttachment(String to, String subject, String htmlBody, String textBody,
                                     String attachmentFilename, byte[] attachmentBytes, String attachmentMimeType) {
-        ResolvedSmtpSettings settings = configurationDomainService.getSmtpSettings()
-                .orElseThrow(() -> new MailPreparationException(
-                        "No SMTP settings configured — seed one via ConfigurationDomainService.saveSmtpSettings(...) before sending mail."));
-        sendVia(settings, to, subject, htmlBody, textBody, attachmentFilename, attachmentBytes, attachmentMimeType);
+        sendVia(requireSettings(), to, subject, htmlBody, textBody, attachmentFilename, attachmentBytes, attachmentMimeType);
     }
 
-    private void sendVia(ResolvedSmtpSettings settings, String to, String subject, String htmlBody, String textBody,
+    private SmtpProperties requireSettings() {
+        if (!smtpProperties.isConfigured()) {
+            throw new MailPreparationException(
+                    "SMTP is not configured — set SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and SMTP_FROM_ADDRESS for this environment.");
+        }
+        return smtpProperties;
+    }
+
+    private void sendVia(SmtpProperties settings, String to, String subject, String htmlBody, String textBody,
                           String attachmentFilename, byte[] attachmentBytes, String attachmentMimeType) {
         JavaMailSender mailSender = buildMailSender(settings);
         boolean hasAttachment = attachmentFilename != null && attachmentBytes != null;
@@ -64,7 +65,7 @@ public class EmailServiceImpl implements EmailService {
         mailSender.send(message);
     }
 
-    private JavaMailSender buildMailSender(ResolvedSmtpSettings settings) {
+    private JavaMailSender buildMailSender(SmtpProperties settings) {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost(settings.host());
         mailSender.setPort(settings.port());

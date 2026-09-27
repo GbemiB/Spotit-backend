@@ -34,6 +34,20 @@ services:
           property: password
       - key: DB_SSLMODE
         value: prefer
+      # SMTP relay (spotit.smtp.* in application.yml). sync: false = Render asks for the value when the
+      # Blueprint creates this service; enter it per environment. Never stored in the repo or the DB.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_ADDRESS
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
 
   - type: web
     name: spotit-backend-prod
@@ -70,6 +84,20 @@ services:
           property: password
       - key: DB_SSLMODE
         value: prefer
+      # SMTP relay (spotit.smtp.* in application.yml). sync: false = Render asks for the value when the
+      # Blueprint creates this service; enter it per environment. Never stored in the repo or the DB.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_ADDRESS
+        sync: false
+      - key: SMTP_USE_TLS
+        value: "true"
 
 databases:
   - name: spotit-db-dev

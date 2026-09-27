@@ -5,15 +5,12 @@ import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.configuration.ConfigPropertyCatalog;
 import com.spotit.api.configuration.PropertyNames;
-import com.spotit.api.configuration.SmtpSeedProperties;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
 import com.spotit.api.configuration.entity.GlobalConfig;
 import com.spotit.api.configuration.entity.SecurityConfig;
-import com.spotit.api.configuration.entity.SmtpConfig;
 import com.spotit.api.configuration.repository.GlobalConfigRepository;
 import com.spotit.api.configuration.repository.SecurityConfigRepository;
-import com.spotit.api.configuration.repository.SmtpConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +29,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ConfigurationDomainServiceImplTest {
     @Mock SecurityConfigRepository securityConfigRepository;
-    @Mock SmtpConfigRepository smtpConfigRepository;
     @Mock GlobalConfigRepository globalConfigRepository;
     @Mock EncryptionService encryptionService;
 
@@ -44,9 +40,7 @@ class ConfigurationDomainServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ConfigurationDomainServiceImpl(securityConfigRepository, smtpConfigRepository, globalConfigRepository,
-                encryptionService,
-                new SmtpSeedProperties("smtp.gmail.com", 587, "seed@example.com", "seed-password", "seed@example.com", true),
+        service = new ConfigurationDomainServiceImpl(securityConfigRepository, globalConfigRepository, encryptionService,
                 new ConfigPropertyCatalog());
     }
 
@@ -96,12 +90,21 @@ class ConfigurationDomainServiceImplTest {
 
     @Test
     void getByNameDoesNotRedactAnOrdinaryProperty() {
-        when(smtpConfigRepository.findById(SmtpConfig.SINGLETON_ID))
-                .thenReturn(Optional.of(SmtpConfig.builder().id(SmtpConfig.SINGLETON_ID).host("smtp.example.com").build()));
+        when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID))
+                .thenReturn(Optional.of(GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).cycleDefaultLength(29).build()));
 
-        GlobalConfigurationResponse response = service.getByName(PropertyNames.SMTP_HOST);
+        GlobalConfigurationResponse response = service.getByName(PropertyNames.CYCLE_DEFAULT_LENGTH);
 
-        assertThat(response.stringValue()).isEqualTo("smtp.example.com");
+        assertThat(response.value()).isEqualTo(29L);
+    }
+
+    @Test
+    void smtpIsNoLongerAConfigurationProperty() {
+        assertThat(service.listGroupNames()).doesNotContain("smtp");
+        assertThatThrownBy(() -> service.getByName("smtp-host"))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.NOT_FOUND);
     }
 
     @Test
