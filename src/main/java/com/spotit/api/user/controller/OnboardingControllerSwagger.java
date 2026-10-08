@@ -14,8 +14,8 @@ final class OnboardingControllerSwagger {
               "data": {
                 "goals": [
                   { "id": "track", "label": "Track my cycle", "description": "Understand your body and patterns" },
-                  { "id": "conceive", "label": "Try to conceive", "description": "Identify your fertile window" },
-                  { "id": "avoid", "label": "Avoid pregnancy", "description": "Natural family planning support" },
+                  { "id": "conceive", "label": "Know my fertile days", "description": "See your predicted fertile window" },
+                  { "id": "avoid", "label": "Planning ahead", "description": "Keep an eye on your cycle timing" },
                   { "id": "curious", "label": "Just curious", "description": "Explore what Spot it offers" }
                 ]
               }
