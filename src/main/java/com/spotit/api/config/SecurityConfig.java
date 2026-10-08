@@ -33,6 +33,10 @@ public class SecurityConfig {
             "/api/v1/api-docs/**",
             "/api/v1/swagger-ui/**",
             "/api/v1/swagger-ui.html",
+            // Public legal pages (src/main/resources/static) linked from the app store listings.
+            "/privacy.html",
+            "/terms.html",
+            "/delete-account.html",
             "/actuator/health"
     };
 
