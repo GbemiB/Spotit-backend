@@ -83,34 +83,6 @@ public class GlobalConfig {
     @Column(name = "content_feed_default_limit", nullable = false)
     private long contentFeedDefaultLimit;
 
-    // Reminder settings. Added after launch, so every column is nullable: the seeder fills them on the next start.
-    @Column(name = "reminders_enabled")
-    private Boolean remindersEnabled;
-
-    @Column(name = "reminder_morning_time", length = 5)
-    private String reminderMorningTime;
-
-    @Column(name = "reminder_evening_time", length = 5)
-    private String reminderEveningTime;
-
-    @Column(name = "reminder_digest_time", length = 5)
-    private String reminderDigestTime;
-
-    @Column(name = "reminder_digest_day")
-    private Long reminderDigestDay;
-
-    @Column(name = "reminder_period_days_before", length = 40)
-    private String reminderPeriodDaysBefore;
-
-    @Column(name = "reminder_ovulation_days_before", length = 40)
-    private String reminderOvulationDaysBefore;
-
-    @Column(name = "reminder_max_days_before")
-    private Long reminderMaxDaysBefore;
-
-    @Column(name = "reminder_catch_up_minutes")
-    private Long reminderCatchUpMinutes;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

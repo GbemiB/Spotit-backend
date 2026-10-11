@@ -1,6 +1,5 @@
 package com.spotit.api.configuration.service;
 
-import com.spotit.api.configuration.ReminderSettings;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
 
@@ -48,8 +47,6 @@ public interface ConfigurationDomainService {
     int getRewardsHistoryPageSize();
 
     int getContentFeedDefaultLimit();
-
-    ReminderSettings getReminderSettings();
 
     List<GlobalConfigurationResponse> listAll();
 

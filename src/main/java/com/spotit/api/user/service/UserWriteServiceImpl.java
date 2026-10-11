@@ -45,6 +45,7 @@ public class UserWriteServiceImpl implements UserWriteService {
     private final UserChallengeProgressRepository userChallengeProgressRepository;
     private final ReminderDeliveryRepository reminderDeliveryRepository;
     private final ConfigurationDomainService configurationDomainService;
+    private final ReminderSettings reminderSettings;
     private final UserReadService userReadService;
     private final EmailService emailService;
 
@@ -93,7 +94,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         if (request.digest() != null) {
             user.setNotifDigest(request.digest());
         }
-        ReminderSettings settings = configurationDomainService.getReminderSettings();
+        ReminderSettings settings = reminderSettings;
         if (request.morningTime() != null) {
             user.setReminderMorningTime(request.morningTime());
         }

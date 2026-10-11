@@ -167,50 +167,7 @@ public class ConfigPropertyCatalog {
                 "Default number of items returned by the content feed", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getContentFeedDefaultLimit(),
                 (c, v) -> c.global().setContentFeedDefaultLimit((Long) v)));
-        addReminderProperties(list);
-
         list.sort(Comparator.comparing(Property::name));
-    }
-
-    private static void addReminderProperties(List<Property> list) {
-        list.add(new Property(PropertyNames.REMINDERS_ENABLED, PropertyNames.GROUP_REMINDERS,
-                "Stops all reminder sending when disabled (for incidents; users never see this)", Kind.BOOL, Section.GLOBAL, false, false,
-                c -> c.global().getRemindersEnabled(),
-                (c, v) -> c.global().setRemindersEnabled((Boolean) v)));
-        list.add(new Property(PropertyNames.REMINDER_MORNING_TIME, PropertyNames.GROUP_REMINDERS,
-                "Default local time (HH:mm) for period and ovulation reminders", Kind.STRING, Section.GLOBAL, false, false,
-                c -> c.global().getReminderMorningTime(),
-                (c, v) -> c.global().setReminderMorningTime((String) v)));
-        list.add(new Property(PropertyNames.REMINDER_EVENING_TIME, PropertyNames.GROUP_REMINDERS,
-                "Default local time (HH:mm) for the daily log nudge", Kind.STRING, Section.GLOBAL, false, false,
-                c -> c.global().getReminderEveningTime(),
-                (c, v) -> c.global().setReminderEveningTime((String) v)));
-        list.add(new Property(PropertyNames.REMINDER_DIGEST_TIME, PropertyNames.GROUP_REMINDERS,
-                "Local time (HH:mm) for the weekly digest", Kind.STRING, Section.GLOBAL, false, false,
-                c -> c.global().getReminderDigestTime(),
-                (c, v) -> c.global().setReminderDigestTime((String) v)));
-        list.add(new Property(PropertyNames.REMINDER_DIGEST_DAY, PropertyNames.GROUP_REMINDERS,
-                "Day of the week for the weekly digest (1 = Monday ... 7 = Sunday)", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getReminderDigestDay(),
-                (c, v) -> c.global().setReminderDigestDay((Long) v)));
-        list.add(new Property(PropertyNames.REMINDER_PERIOD_DAYS_BEFORE, PropertyNames.GROUP_REMINDERS,
-                "Default period countdown for users who have not chosen their own: comma-separated days before, 0 = on the day",
-                Kind.STRING, Section.GLOBAL, false, false,
-                c -> c.global().getReminderPeriodDaysBefore(),
-                (c, v) -> c.global().setReminderPeriodDaysBefore((String) v)));
-        list.add(new Property(PropertyNames.REMINDER_OVULATION_DAYS_BEFORE, PropertyNames.GROUP_REMINDERS,
-                "Default ovulation countdown for users who have not chosen their own: comma-separated days before, 0 = on the day",
-                Kind.STRING, Section.GLOBAL, false, false,
-                c -> c.global().getReminderOvulationDaysBefore(),
-                (c, v) -> c.global().setReminderOvulationDaysBefore((String) v)));
-        list.add(new Property(PropertyNames.REMINDER_MAX_DAYS_BEFORE, PropertyNames.GROUP_REMINDERS,
-                "Largest days-before value a countdown may use", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getReminderMaxDaysBefore(),
-                (c, v) -> c.global().setReminderMaxDaysBefore((Long) v)));
-        list.add(new Property(PropertyNames.REMINDER_CATCH_UP_MINUTES, PropertyNames.GROUP_REMINDERS,
-                "How long after its time a missed reminder is still sent, in minutes", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getReminderCatchUpMinutes(),
-                (c, v) -> c.global().setReminderCatchUpMinutes((Long) v)));
     }
 
     public List<Property> all() {

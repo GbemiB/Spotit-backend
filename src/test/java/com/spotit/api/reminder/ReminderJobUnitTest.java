@@ -1,8 +1,7 @@
 package com.spotit.api.reminder;
 
 import com.spotit.api.configuration.ReminderSettings;
-import com.spotit.api.configuration.entity.GlobalConfig;
-import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
 import com.spotit.api.reminder.entity.PushTicket;
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -51,22 +49,20 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 class ReminderJobUnitTest {
-    static final Instant NOW = Instant.parse("2026-10-30T08:00:00Z");
+    static final Instant NOW = Instant.parse("2026-10-30T05:00:00Z");
     static final Planned THREE_DAYS = new Planned(ReminderType.period_upcoming, "Your period is predicted to start in 3 days.");
 
-    @Mock ConfigurationDomainService configurationDomainService;
     @Mock UserRepository userRepository;
     @Mock DeviceRepository deviceRepository;
     @Mock ReminderPlanner reminderPlanner;
     @Mock ReminderWriteService reminderWriteService;
     @Mock PushSender pushSender;
-    @InjectMocks ReminderJob job;
-
-    ReminderSettings settings = ReminderSettings.from(new GlobalConfig());
+    ReminderSettings settings = ReminderSettingsFixture.defaults();
+    ReminderJob job;
 
     @BeforeEach
     void setUp() {
-        lenient().when(configurationDomainService.getReminderSettings()).thenReturn(settings);
+        job = new ReminderJob(settings, userRepository, deviceRepository, reminderPlanner, reminderWriteService, pushSender);
         lenient().when(reminderWriteService.ticketsDue(any())).thenReturn(List.of());
         lenient().when(reminderWriteService.record(any(), any(), any(), any(), any())).thenAnswer(inv -> Optional.of(delivery(
                 inv.getArgument(0), inv.getArgument(1), inv.getArgument(2), inv.getArgument(3))));
@@ -106,9 +102,8 @@ class ReminderJobUnitTest {
 
     @Test
     void nothingRunsWhenTheOperatorHasSwitchedRemindersOff() {
-        GlobalConfig off = new GlobalConfig();
-        off.setRemindersEnabled(false);
-        when(configurationDomainService.getReminderSettings()).thenReturn(ReminderSettings.from(off));
+        job = new ReminderJob(ReminderSettingsFixture.disabled(), userRepository, deviceRepository, reminderPlanner,
+                reminderWriteService, pushSender);
 
         job.run(NOW);
 
@@ -122,7 +117,7 @@ class ReminderJobUnitTest {
 
         job.run(NOW);
 
-        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 9, 0));
+        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 6, 0));
     }
 
     @Test
@@ -132,7 +127,7 @@ class ReminderJobUnitTest {
 
         job.run(NOW);
 
-        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 4, 0));
+        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 1, 0));
     }
 
     @Test
@@ -142,7 +137,7 @@ class ReminderJobUnitTest {
 
         job.run(NOW);
 
-        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 8, 0));
+        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 5, 0));
     }
 
     @Test
@@ -152,7 +147,7 @@ class ReminderJobUnitTest {
 
         job.run(NOW);
 
-        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 8, 0));
+        assertThat(localTimePlannedFor(user)).isEqualTo(LocalDateTime.of(2026, 10, 30, 5, 0));
     }
 
     @Test

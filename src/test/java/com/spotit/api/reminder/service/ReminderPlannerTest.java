@@ -1,7 +1,7 @@
 package com.spotit.api.reminder.service;
 
 import com.spotit.api.configuration.ReminderSettings;
-import com.spotit.api.configuration.entity.GlobalConfig;
+import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.log.entity.CycleLog;
 import com.spotit.api.log.entity.FlowIntensity;
 import com.spotit.api.log.entity.MoodType;
@@ -38,13 +38,13 @@ class ReminderPlannerTest {
     static final LocalDate LAST_PERIOD = LocalDate.of(2026, 10, 5);
     static final LocalDate OVULATION = LocalDate.of(2026, 10, 18);
     static final LocalDate NEXT_PERIOD = LocalDate.of(2026, 11, 2);
-    static final LocalTime MORNING = LocalTime.of(9, 5);
+    static final LocalTime MORNING = LocalTime.of(6, 5);
     static final LocalTime EVENING = LocalTime.of(20, 5);
 
     @Mock CycleLogRepository cycleLogRepository;
     @InjectMocks ReminderPlanner planner;
 
-    ReminderSettings settings = ReminderSettings.from(new GlobalConfig());
+    ReminderSettings settings = ReminderSettingsFixture.defaults();
     User user;
 
     @BeforeEach
@@ -132,7 +132,7 @@ class ReminderPlannerTest {
 
     @Test
     void theServerDefaultCountdownAppliesToUsersWhoHaveNotChosen() {
-        settings = ReminderSettings.from(GlobalConfig.builder().reminderPeriodDaysBefore("2").build());
+        settings = ReminderSettingsFixture.withPeriodDays(List.of(2));
 
         assertThat(plan(NEXT_PERIOD.minusDays(3), MORNING)).isEmpty();
         assertThat(plan(NEXT_PERIOD.minusDays(2), MORNING)).hasSize(1);
@@ -165,20 +165,20 @@ class ReminderPlannerTest {
     void remindersAreDueFromTheirTimeUntilTheCatchUpWindowCloses() {
         LocalDate day = NEXT_PERIOD.minusDays(3);
 
-        assertThat(plan(day, LocalTime.of(8, 59))).isEmpty();
-        assertThat(plan(day, LocalTime.of(9, 0))).hasSize(1);
-        assertThat(plan(day, LocalTime.of(10, 59))).hasSize(1);
-        assertThat(plan(day, LocalTime.of(11, 0))).isEmpty();
+        assertThat(plan(day, LocalTime.of(5, 59))).isEmpty();
+        assertThat(plan(day, LocalTime.of(6, 0))).hasSize(1);
+        assertThat(plan(day, LocalTime.of(7, 59))).hasSize(1);
+        assertThat(plan(day, LocalTime.of(8, 0))).isEmpty();
     }
 
     @Test
     void herOwnMorningTimeReplacesTheDefault() {
-        user.setReminderMorningTime("06:30");
+        user.setReminderMorningTime("08:30");
         LocalDate day = NEXT_PERIOD.minusDays(3);
 
-        assertThat(plan(day, LocalTime.of(6, 29))).isEmpty();
-        assertThat(plan(day, LocalTime.of(6, 30))).hasSize(1);
-        assertThat(plan(day, LocalTime.of(9, 0))).isEmpty();
+        assertThat(plan(day, LocalTime.of(6, 0))).isEmpty();
+        assertThat(plan(day, LocalTime.of(8, 29))).isEmpty();
+        assertThat(plan(day, LocalTime.of(8, 30))).hasSize(1);
     }
 
     @Test
@@ -232,7 +232,7 @@ class ReminderPlannerTest {
                         CycleLog.builder().mood(MoodType.calm).build(),
                         CycleLog.builder().build()));
 
-        assertThat(plan(sunday, LocalTime.of(18, 0))).contains(
+        assertThat(plan(sunday, LocalTime.of(19, 0))).contains(
                 new Planned(ReminderType.weekly_digest, "You logged 4 of 7 days this week. Your most frequent mood was calm."));
     }
 
@@ -242,7 +242,7 @@ class ReminderPlannerTest {
         when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(any(), any(), any()))
                 .thenReturn(List.of(CycleLog.builder().build()));
 
-        assertThat(plan(sunday, LocalTime.of(18, 0)))
+        assertThat(plan(sunday, LocalTime.of(19, 0)))
                 .containsExactly(new Planned(ReminderType.weekly_digest, "You logged 1 of 7 days this week."));
     }
 
@@ -251,15 +251,15 @@ class ReminderPlannerTest {
         LocalDate sunday = LocalDate.of(2026, 10, 25);
 
         // Nothing logged: no digest.
-        assertThat(plan(sunday, LocalTime.of(18, 0))).isEmpty();
+        assertThat(plan(sunday, LocalTime.of(19, 0))).isEmpty();
 
         lenient().when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(any(), any(), any()))
                 .thenReturn(List.of(CycleLog.builder().build()));
-        assertThat(plan(sunday.minusDays(1), LocalTime.of(18, 0))).isEmpty();
-        assertThat(plan(sunday, LocalTime.of(17, 59))).isEmpty();
+        assertThat(plan(sunday.minusDays(1), LocalTime.of(19, 0))).isEmpty();
+        assertThat(plan(sunday, LocalTime.of(18, 59))).isEmpty();
 
         user.setNotifDigest(false);
-        assertThat(plan(sunday, LocalTime.of(18, 0))).isEmpty();
+        assertThat(plan(sunday, LocalTime.of(19, 0))).isEmpty();
     }
 
     @Test
@@ -347,7 +347,7 @@ class ReminderPlannerTest {
                 CycleLog.builder().mood(MoodType.happy).build(),
                 CycleLog.builder().mood(MoodType.sad).build()));
 
-        assertThat(plan(sunday, LocalTime.of(18, 0))).containsExactly(
+        assertThat(plan(sunday, LocalTime.of(19, 0))).containsExactly(
                 new Planned(ReminderType.weekly_digest, "You logged 2 of 7 days this week. Your most frequent mood was sad."));
     }
 
@@ -358,6 +358,6 @@ class ReminderPlannerTest {
         when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(any(), any(), any()))
                 .thenReturn(List.of(CycleLog.builder().build()));
 
-        assertThat(plan(sunday, LocalTime.of(18, 0))).extracting(Planned::type).containsExactly(ReminderType.weekly_digest);
+        assertThat(plan(sunday, LocalTime.of(19, 0))).extracting(Planned::type).containsExactly(ReminderType.weekly_digest);
     }
 }

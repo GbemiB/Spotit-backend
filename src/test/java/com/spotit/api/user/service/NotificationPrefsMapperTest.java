@@ -1,7 +1,7 @@
 package com.spotit.api.user.service;
 
 import com.spotit.api.configuration.ReminderSettings;
-import com.spotit.api.configuration.entity.GlobalConfig;
+import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.user.dto.NotificationPrefsResponse;
 import com.spotit.api.user.entity.User;
 import org.junit.jupiter.api.Test;
@@ -12,13 +12,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NotificationPrefsMapperTest {
-    ReminderSettings settings = ReminderSettings.from(new GlobalConfig());
+    ReminderSettings settings = ReminderSettingsFixture.defaults();
 
     @Test
     void aUserWhoHasNotChosenGetsTheServerDefaults() {
         User user = User.builder().build();
 
-        assertThat(NotificationPrefsMapper.morningTime(user, settings)).isEqualTo(LocalTime.of(9, 0));
+        assertThat(NotificationPrefsMapper.morningTime(user, settings)).isEqualTo(LocalTime.of(6, 0));
         assertThat(NotificationPrefsMapper.eveningTime(user, settings)).isEqualTo(LocalTime.of(20, 0));
         assertThat(NotificationPrefsMapper.periodDaysBefore(user, settings)).containsExactly(3, 2, 1, 0);
         assertThat(NotificationPrefsMapper.ovulationDaysBefore(user, settings)).containsExactly(3, 2, 1, 0);
@@ -36,7 +36,7 @@ class NotificationPrefsMapperTest {
     void unreadableStoredChoicesFallBackToTheServerDefaults() {
         User user = User.builder().reminderMorningTime("9am").reminderEveningTime("").periodDaysBefore("x").ovulationDaysBefore("9").build();
 
-        assertThat(NotificationPrefsMapper.morningTime(user, settings)).isEqualTo(LocalTime.of(9, 0));
+        assertThat(NotificationPrefsMapper.morningTime(user, settings)).isEqualTo(LocalTime.of(6, 0));
         assertThat(NotificationPrefsMapper.eveningTime(user, settings)).isEqualTo(LocalTime.of(20, 0));
         assertThat(NotificationPrefsMapper.periodDaysBefore(user, settings)).containsExactly(3, 2, 1, 0);
         // 9 is beyond the allowed maximum of 3, so nothing usable is left.

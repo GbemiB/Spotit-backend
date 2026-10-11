@@ -1,8 +1,7 @@
 package com.spotit.api.user.service;
 
 import com.spotit.api.reminder.repository.ReminderDeliveryRepository;
-import com.spotit.api.configuration.entity.GlobalConfig;
-import com.spotit.api.configuration.ReminderSettings;
+import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
@@ -73,13 +72,13 @@ class UserWriteServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new UserWriteServiceImpl(userRepository, exportJobRepository, cycleLogRepository, pointsHistoryRepository,
-                userBadgeRepository, userChallengeProgressRepository, reminderDeliveryRepository, configurationDomainService, userReadService, emailService);
+                userBadgeRepository, userChallengeProgressRepository, reminderDeliveryRepository, configurationDomainService,
+                ReminderSettingsFixture.defaults(), userReadService, emailService);
         user = User.builder().id(userId).firstName("Jane").lastName("Doe").email("jane@example.com").goal(Goal.track)
                 .cycleLength(28).periodLength(5).themePref(ThemePref.system).onboarded(true).points(620).streak(4).longestStreak(9)
                 .notifPeriod(true).notifOvulation(true).notifDailyLog(true).notifDigest(false).build();
         lenient().when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         lenient().when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-        lenient().when(configurationDomainService.getReminderSettings()).thenReturn(ReminderSettings.from(new GlobalConfig()));
     }
 
     @Test
@@ -130,14 +129,14 @@ class UserWriteServiceImplTest {
     void updateNotificationPrefsAppliesOnlyTheSentFlags() {
         NotificationPrefsResponse response = service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, true, null, null, null, null));
 
-        assertThat(response).isEqualTo(new NotificationPrefsResponse(false, true, true, true, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+        assertThat(response).isEqualTo(new NotificationPrefsResponse(false, true, true, true, "06:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
         verify(userRepository).save(user);
     }
 
     @Test
     void updateNotificationPrefsCanChangeEveryFlag() {
         assertThat(service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, false, false, false, null, null, null, null)))
-                .isEqualTo(new NotificationPrefsResponse(false, false, false, false, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+                .isEqualTo(new NotificationPrefsResponse(false, false, false, false, "06:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
     }
 
     @Test

@@ -1,7 +1,6 @@
 package com.spotit.api.reminder;
 
 import com.spotit.api.configuration.ReminderSettings;
-import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
 import com.spotit.api.reminder.entity.PushTicket;
@@ -40,7 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class ReminderJob {
-    private final ConfigurationDomainService configurationDomainService;
+    private final ReminderSettings settings;
     private final UserRepository userRepository;
     private final DeviceRepository deviceRepository;
     private final ReminderPlanner reminderPlanner;
@@ -48,7 +47,6 @@ public class ReminderJob {
     private final PushSender pushSender;
 
     public void run(Instant now) {
-        ReminderSettings settings = configurationDomainService.getReminderSettings();
         if (!settings.enabled()) {
             return;
         }

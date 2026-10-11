@@ -7,7 +7,7 @@ import com.spotit.api.log.entity.SymptomType;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.user.dto.ExportDataResponse;
-import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.configuration.ReminderSettings;
 import com.spotit.api.user.dto.NotificationPrefsResponse;
 import com.spotit.api.user.dto.UserResponse;
 import com.spotit.api.user.entity.User;
@@ -29,7 +29,7 @@ public class UserReadServiceImpl implements UserReadService {
     private final ExportJobRepository exportJobRepository;
     private final CycleLogRepository cycleLogRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
-    private final ConfigurationDomainService configurationDomainService;
+    private final ReminderSettings reminderSettings;
 
     @Override
     @Transactional(readOnly = true)
@@ -41,7 +41,7 @@ public class UserReadServiceImpl implements UserReadService {
     @Transactional(readOnly = true)
     public NotificationPrefsResponse getNotificationPrefs(UUID userId) {
         User user = requireUser(userId);
-        return NotificationPrefsMapper.toResponse(user, configurationDomainService.getReminderSettings());
+        return NotificationPrefsMapper.toResponse(user, reminderSettings);
     }
 
     @Override

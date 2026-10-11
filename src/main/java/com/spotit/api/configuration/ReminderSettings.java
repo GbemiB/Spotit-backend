@@ -1,6 +1,7 @@
 package com.spotit.api.configuration;
 
-import com.spotit.api.configuration.entity.GlobalConfig;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -10,27 +11,41 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * The reminder settings held in {@code global_config}, parsed and ready to use. The admin API stores them as
- * free text with no validation, so anything missing or unreadable falls back to {@link ConfigDefaults}
- * rather than stopping the reminder job.
+ * The reminder settings from the properties file ({@code spotit.reminders.*} in application.yml, each overridable
+ * by an environment variable). They are checked when the server starts: a value that cannot be used stops the
+ * start-up with a message naming it, rather than reminders quietly going out at the wrong time.
+ *
+ * <p>Times are local to each user. Day lists count down to the day itself (0) and are stored largest first.
  */
-public record ReminderSettings(boolean enabled, LocalTime morningTime, LocalTime eveningTime, LocalTime digestTime,
+@ConfigurationProperties(prefix = "spotit.reminders")
+public record ReminderSettings(boolean enabled,
+                               @DateTimeFormat(pattern = "HH:mm") LocalTime morningTime,
+                               @DateTimeFormat(pattern = "HH:mm") LocalTime eveningTime,
+                               @DateTimeFormat(pattern = "HH:mm") LocalTime digestTime,
                                DayOfWeek digestDay, List<Integer> periodDaysBefore, List<Integer> ovulationDaysBefore,
                                int maxDaysBefore, int catchUpMinutes) {
 
-    public static ReminderSettings from(GlobalConfig global) {
-        int maxDays = positive(global.getReminderMaxDaysBefore(), ConfigDefaults.REMINDER_MAX_DAYS_BEFORE);
-        List<Integer> fallbackDays = parseDays(ConfigDefaults.REMINDER_DAYS_BEFORE, maxDays, List.of(0));
-        return new ReminderSettings(
-                !Boolean.FALSE.equals(global.getRemindersEnabled()),
-                parseTime(global.getReminderMorningTime(), ConfigDefaults.REMINDER_MORNING_TIME),
-                parseTime(global.getReminderEveningTime(), ConfigDefaults.REMINDER_EVENING_TIME),
-                parseTime(global.getReminderDigestTime(), ConfigDefaults.REMINDER_DIGEST_TIME),
-                parseDay(global.getReminderDigestDay()),
-                parseDays(global.getReminderPeriodDaysBefore(), maxDays, fallbackDays),
-                parseDays(global.getReminderOvulationDaysBefore(), maxDays, fallbackDays),
-                maxDays,
-                positive(global.getReminderCatchUpMinutes(), ConfigDefaults.REMINDER_CATCH_UP_MINUTES));
+    public ReminderSettings {
+        require(morningTime != null, "morning-time");
+        require(eveningTime != null, "evening-time");
+        require(digestTime != null, "digest-time");
+        require(digestDay != null, "digest-day");
+        require(maxDaysBefore >= 0, "max-days-before");
+        require(catchUpMinutes > 0, "catch-up-minutes");
+        periodDaysBefore = checkedDays(periodDaysBefore, maxDaysBefore, "period-days-before");
+        ovulationDaysBefore = checkedDays(ovulationDaysBefore, maxDaysBefore, "ovulation-days-before");
+    }
+
+    private static void require(boolean ok, String property) {
+        if (!ok) {
+            throw new IllegalArgumentException("spotit.reminders." + property + " is missing or invalid");
+        }
+    }
+
+    private static List<Integer> checkedDays(List<Integer> days, int maxDays, String property) {
+        require(days != null && !days.isEmpty() && days.stream().allMatch(day -> day != null && day >= 0 && day <= maxDays),
+                property + " (each day must be between 0 and max-days-before)");
+        return days.stream().distinct().sorted(Comparator.reverseOrder()).toList();
     }
 
     /** Parses "HH:mm"; returns the fallback (also "HH:mm") when the value is missing or unreadable. */
@@ -64,14 +79,5 @@ public record ReminderSettings(boolean enabled, LocalTime morningTime, LocalTime
 
     public static String formatDays(List<Integer> days) {
         return String.join(",", days.stream().distinct().sorted(Comparator.reverseOrder()).map(String::valueOf).toList());
-    }
-
-    private static DayOfWeek parseDay(Long value) {
-        long day = value == null || value < 1 || value > 7 ? ConfigDefaults.REMINDER_DIGEST_DAY : value;
-        return DayOfWeek.of((int) day);
-    }
-
-    private static int positive(Long value, long fallback) {
-        return (int) (value == null || value <= 0 ? fallback : value);
     }
 }

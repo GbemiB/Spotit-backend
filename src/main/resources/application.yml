@@ -49,6 +49,28 @@ spotit:
   push:
     base-url: ${EXPO_PUSH_BASE_URL:https://exp.host/--/api/v2/push}
     expo-access-token: ${EXPO_ACCESS_TOKEN:}
+  # Reminder schedule (ReminderSettings). Checked at start-up: an unusable value stops the server with a message.
+  # Times are HH:mm in each user's own time zone. A user's own choice in the app wins over morning/evening time.
+  # Change one on Render by setting the env var and restarting; no code change or app release needed.
+  reminders:
+    # false stops all reminder sending (for incidents; users never see it)
+    enabled: ${REMINDERS_ENABLED:true}
+    # How often the job runs. Its accuracy: a 06:00 reminder arrives between 06:00 and 06:15.
+    cron: ${REMINDERS_CRON:0 */15 * * * *}
+    # Period and ovulation reminders, for users who have not chosen their own time
+    morning-time: ${REMINDER_MORNING_TIME:06:00}
+    # Daily log nudge, for users who have not chosen their own time
+    evening-time: ${REMINDER_EVENING_TIME:20:00}
+    # Weekly digest (not user-adjustable). Day is MONDAY ... SUNDAY.
+    digest-time: ${REMINDER_DIGEST_TIME:19:00}
+    digest-day: ${REMINDER_DIGEST_DAY:SUNDAY}
+    # Default countdown for users who have not chosen their own: days before, 0 = on the day
+    period-days-before: ${REMINDER_PERIOD_DAYS_BEFORE:3,2,1,0}
+    ovulation-days-before: ${REMINDER_OVULATION_DAYS_BEFORE:3,2,1,0}
+    # Largest days-before value anyone may choose (the app shows this many tick boxes plus "On the day")
+    max-days-before: ${REMINDER_MAX_DAYS_BEFORE:3}
+    # How late a missed reminder (e.g. during a restart) may still go out, in minutes
+    catch-up-minutes: ${REMINDER_CATCH_UP_MINUTES:120}
 
 logging:
   level:

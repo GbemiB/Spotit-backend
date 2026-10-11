@@ -77,8 +77,13 @@ the log nudge, the weekly digest); a row in `reminder_deliveries` — unique on 
 written first, and only then is the message sent through Expo's push service (`reminder/push/ExpoPushSender`).
 The same rows back the in-app inbox (`GET /api/v1/notifications`).
 
-- Defaults (times, countdown days, catch-up window) and an all-sending stop switch (`reminders-enabled`) live in
-  the `reminders` group of `/api/v1/config/global`; a user's own choices override the defaults.
+- The schedule lives in `application.yml` under `spotit.reminders` (`ReminderSettings`), each value overridable by an
+  env var: `REMINDER_MORNING_TIME` (period and ovulation, default `06:00`), `REMINDER_EVENING_TIME` (log nudge,
+  `20:00`), `REMINDER_DIGEST_DAY` / `REMINDER_DIGEST_TIME` (weekly digest, `SUNDAY` `19:00`),
+  `REMINDER_PERIOD_DAYS_BEFORE` / `REMINDER_OVULATION_DAYS_BEFORE` (`3,2,1,0`), `REMINDER_MAX_DAYS_BEFORE` (`3`),
+  `REMINDER_CATCH_UP_MINUTES` (`120`), `REMINDERS_CRON` and the stop switch `REMINDERS_ENABLED`. They are checked at
+  start-up; an unusable value stops the server with a message naming it. A change needs a restart, not a release.
+- A user's own morning/evening time and countdown days, set in the app, override the defaults.
 - `EXPO_ACCESS_TOKEN` is optional: set it only if the Expo project has enhanced push security enabled.
 - Devices whose push address Google or Apple report as gone are deleted when the receipts are collected.
 

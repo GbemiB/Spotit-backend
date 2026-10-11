@@ -1,8 +1,6 @@
 package com.spotit.api.user.service;
 
-import com.spotit.api.configuration.service.ConfigurationDomainService;
-import com.spotit.api.configuration.entity.GlobalConfig;
-import com.spotit.api.configuration.ReminderSettings;
+import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.log.entity.CycleLog;
@@ -19,9 +17,9 @@ import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.ExportJobRepository;
 import com.spotit.api.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
@@ -44,8 +42,13 @@ class UserReadServiceImplTest {
     @Mock ExportJobRepository exportJobRepository;
     @Mock CycleLogRepository cycleLogRepository;
     @Mock PointsHistoryRepository pointsHistoryRepository;
-    @Mock ConfigurationDomainService configurationDomainService;
-    @InjectMocks UserReadServiceImpl service;
+    UserReadServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        service = new UserReadServiceImpl(userRepository, exportJobRepository, cycleLogRepository, pointsHistoryRepository,
+                ReminderSettingsFixture.defaults());
+    }
 
     UUID userId = UUID.randomUUID();
     UUID jobId = UUID.randomUUID();
@@ -89,10 +92,9 @@ class UserReadServiceImplTest {
     @Test
     void notificationPrefsMirrorTheUserFlagsAndFallBackToTheServerDefaults() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user()));
-        when(configurationDomainService.getReminderSettings()).thenReturn(ReminderSettings.from(new GlobalConfig()));
 
         assertThat(service.getNotificationPrefs(userId)).isEqualTo(
-                new NotificationPrefsResponse(true, false, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+                new NotificationPrefsResponse(true, false, true, false, "06:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
     }
 
     @Test
@@ -103,7 +105,6 @@ class UserReadServiceImplTest {
         user.setPeriodDaysBefore("1,0");
         user.setOvulationDaysBefore("0");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(configurationDomainService.getReminderSettings()).thenReturn(ReminderSettings.from(new GlobalConfig()));
 
         assertThat(service.getNotificationPrefs(userId)).isEqualTo(
                 new NotificationPrefsResponse(true, false, true, false, "07:30", "21:15", List.of(1, 0), List.of(0), 3));

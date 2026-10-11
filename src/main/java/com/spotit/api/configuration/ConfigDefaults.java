@@ -36,12 +36,4 @@ public final class ConfigDefaults {
     public static final long REWARDS_HISTORY_PAGE_SIZE = 20L;
     public static final long CONTENT_FEED_DEFAULT_LIMIT = 10L;
 
-    // global_config — reminders. Times are local to each user; days-before lists count down to the day itself (0).
-    public static final String REMINDER_MORNING_TIME = "09:00";
-    public static final String REMINDER_EVENING_TIME = "20:00";
-    public static final String REMINDER_DIGEST_TIME = "18:00";
-    public static final long REMINDER_DIGEST_DAY = 7L;
-    public static final String REMINDER_DAYS_BEFORE = "3,2,1,0";
-    public static final long REMINDER_MAX_DAYS_BEFORE = 3L;
-    public static final long REMINDER_CATCH_UP_MINUTES = 120L;
 }
