@@ -54,7 +54,7 @@ public class ReminderPlanner {
                 period(user, today, cycleDay, NotificationPrefsMapper.periodDaysBefore(user, settings)).ifPresent(planned::add);
             }
             if (user.isNotifOvulation()) {
-                ovulation(user, cycleDay, NotificationPrefsMapper.ovulationDaysBefore(user, settings)).ifPresent(planned::add);
+                ovulation(user, cycleDay).ifPresent(planned::add);
             }
         }
         if (hasCycle && user.isNotifDailyLog() && due(NotificationPrefsMapper.eveningTime(user, settings), now, settings)) {
@@ -86,15 +86,12 @@ public class ReminderPlanner {
         return Optional.of(new Planned(ReminderType.period_upcoming, "Your period is predicted to start " + inDays(daysLeft) + "."));
     }
 
-    private static Optional<Planned> ovulation(User user, int cycleDay, List<Integer> daysBefore) {
+    // Ovulation is announced on the day only, with no countdown.
+    private static Optional<Planned> ovulation(User user, int cycleDay) {
         int ovulationDay = user.getCycleLength() - LUTEAL_DAYS;
-        int daysLeft = ovulationDay - cycleDay;
-        if (ovulationDay < 1 || daysLeft < 0 || !daysBefore.contains(daysLeft)) {
-            return Optional.empty();
-        }
-        return Optional.of(daysLeft == 0
-                ? new Planned(ReminderType.ovulation_today, "Today is your predicted ovulation day.")
-                : new Planned(ReminderType.ovulation_upcoming, "Ovulation is predicted " + inDays(daysLeft) + "."));
+        return ovulationDay >= 1 && cycleDay == ovulationDay
+                ? Optional.of(new Planned(ReminderType.ovulation_today, "Today is your predicted ovulation day."))
+                : Optional.empty();
     }
 
     private static String inDays(int days) {

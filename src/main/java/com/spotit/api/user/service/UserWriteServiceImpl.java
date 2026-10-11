@@ -109,13 +109,6 @@ public class UserWriteServiceImpl implements UserWriteService {
                 user.setPeriodDaysBefore(daysBefore(request.periodDaysBefore(), settings));
             }
         }
-        if (request.ovulationDaysBefore() != null) {
-            if (request.ovulationDaysBefore().isEmpty()) {
-                user.setNotifOvulation(false);
-            } else {
-                user.setOvulationDaysBefore(daysBefore(request.ovulationDaysBefore(), settings));
-            }
-        }
         userRepository.save(user);
         return NotificationPrefsMapper.toResponse(user, settings);
     }

@@ -26,7 +26,6 @@ class ReminderSettingsTest {
         values.put("spotit.reminders.digest-time", "19:00");
         values.put("spotit.reminders.digest-day", "SUNDAY");
         values.put("spotit.reminders.period-days-before", "3,2,1,0");
-        values.put("spotit.reminders.ovulation-days-before", "3,2,1,0");
         values.put("spotit.reminders.max-days-before", "3");
         values.put("spotit.reminders.catch-up-minutes", "120");
         return values;
@@ -88,10 +87,10 @@ class ReminderSettingsTest {
     @Test
     void aCountdownDayAboveTheMaximumStopsTheStartAndSaysWhich() {
         Map<String, String> values = shipped();
-        values.put("spotit.reminders.ovulation-days-before", "4,0");
+        values.put("spotit.reminders.period-days-before", "4,0");
 
         assertThatThrownBy(() -> bind(values)).isInstanceOf(BindException.class)
-                .rootCause().hasMessageContaining("spotit.reminders.ovulation-days-before");
+                .rootCause().hasMessageContaining("spotit.reminders.period-days-before");
     }
 
     @Test

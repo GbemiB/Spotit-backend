@@ -127,37 +127,36 @@ class UserWriteServiceImplTest {
 
     @Test
     void updateNotificationPrefsAppliesOnlyTheSentFlags() {
-        NotificationPrefsResponse response = service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, true, null, null, null, null));
+        NotificationPrefsResponse response = service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, true, null, null, null));
 
-        assertThat(response).isEqualTo(new NotificationPrefsResponse(false, true, true, true, "06:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+        assertThat(response).isEqualTo(new NotificationPrefsResponse(false, true, true, true, "06:00", "20:00", List.of(3, 2, 1, 0), 3));
         verify(userRepository).save(user);
     }
 
     @Test
     void updateNotificationPrefsCanChangeEveryFlag() {
-        assertThat(service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, false, false, false, null, null, null, null)))
-                .isEqualTo(new NotificationPrefsResponse(false, false, false, false, "06:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+        assertThat(service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, false, false, false, null, null, null)))
+                .isEqualTo(new NotificationPrefsResponse(false, false, false, false, "06:00", "20:00", List.of(3, 2, 1, 0), 3));
     }
 
     @Test
     void updateNotificationPrefsStoresTimesAndCountdownDays() {
         NotificationPrefsResponse response = service.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, "07:30", "21:00", List.of(0, 1, 1), List.of(3)));
+                new UpdateNotificationPrefsRequest(null, null, null, null, "07:30", "21:00", List.of(0, 1, 1)));
 
-        assertThat(response).isEqualTo(new NotificationPrefsResponse(true, true, true, false, "07:30", "21:00", List.of(1, 0), List.of(3), 3));
+        assertThat(response).isEqualTo(new NotificationPrefsResponse(true, true, true, false, "07:30", "21:00", List.of(1, 0), 3));
         assertThat(user.getPeriodDaysBefore()).isEqualTo("1,0");
-        assertThat(user.getOvulationDaysBefore()).isEqualTo("3");
     }
 
     @Test
-    void anEmptyCountdownTurnsThatReminderOffAndKeepsTheLastChoice() {
+    void anEmptyPeriodCountdownTurnsThePeriodReminderOffAndKeepsTheLastChoice() {
         user.setPeriodDaysBefore("2,0");
 
         NotificationPrefsResponse response = service.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of(), List.of()));
+                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of()));
 
         assertThat(response.period()).isFalse();
-        assertThat(response.ovulation()).isFalse();
+        assertThat(response.ovulation()).isTrue();
         assertThat(response.dailyLog()).isTrue();
         assertThat(response.periodDaysBefore()).containsExactly(2, 0);
         assertThat(user.getPeriodDaysBefore()).isEqualTo("2,0");
@@ -166,10 +165,10 @@ class UserWriteServiceImplTest {
     @Test
     void updateNotificationPrefsRejectsCountdownDaysOutsideTheAllowedRange() {
         assertThatThrownBy(() -> service.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of(4), null)))
+                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of(4))))
                 .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
         assertThatThrownBy(() -> service.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, null, List.of(-1))))
+                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of(-1))))
                 .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 

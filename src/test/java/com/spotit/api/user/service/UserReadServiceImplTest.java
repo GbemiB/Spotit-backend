@@ -94,7 +94,7 @@ class UserReadServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user()));
 
         assertThat(service.getNotificationPrefs(userId)).isEqualTo(
-                new NotificationPrefsResponse(true, false, true, false, "06:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+                new NotificationPrefsResponse(true, false, true, false, "06:00", "20:00", List.of(3, 2, 1, 0), 3));
     }
 
     @Test
@@ -103,11 +103,10 @@ class UserReadServiceImplTest {
         user.setReminderMorningTime("07:30");
         user.setReminderEveningTime("21:15");
         user.setPeriodDaysBefore("1,0");
-        user.setOvulationDaysBefore("0");
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         assertThat(service.getNotificationPrefs(userId)).isEqualTo(
-                new NotificationPrefsResponse(true, false, true, false, "07:30", "21:15", List.of(1, 0), List.of(0), 3));
+                new NotificationPrefsResponse(true, false, true, false, "07:30", "21:15", List.of(1, 0), 3));
     }
 
     @Test

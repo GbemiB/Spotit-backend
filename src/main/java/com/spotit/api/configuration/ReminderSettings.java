@@ -15,14 +15,14 @@ import java.util.List;
  * by an environment variable). They are checked when the server starts: a value that cannot be used stops the
  * start-up with a message naming it, rather than reminders quietly going out at the wrong time.
  *
- * <p>Times are local to each user. Day lists count down to the day itself (0) and are stored largest first.
+ * <p>Times are local to each user. The period countdown counts down to the day itself (0) and are stored largest first.
  */
 @ConfigurationProperties(prefix = "spotit.reminders")
 public record ReminderSettings(boolean enabled,
                                @DateTimeFormat(pattern = "HH:mm") LocalTime morningTime,
                                @DateTimeFormat(pattern = "HH:mm") LocalTime eveningTime,
                                @DateTimeFormat(pattern = "HH:mm") LocalTime digestTime,
-                               DayOfWeek digestDay, List<Integer> periodDaysBefore, List<Integer> ovulationDaysBefore,
+                               DayOfWeek digestDay, List<Integer> periodDaysBefore,
                                int maxDaysBefore, int catchUpMinutes) {
 
     public ReminderSettings {
@@ -33,7 +33,6 @@ public record ReminderSettings(boolean enabled,
         require(maxDaysBefore >= 0, "max-days-before");
         require(catchUpMinutes > 0, "catch-up-minutes");
         periodDaysBefore = checkedDays(periodDaysBefore, maxDaysBefore, "period-days-before");
-        ovulationDaysBefore = checkedDays(ovulationDaysBefore, maxDaysBefore, "ovulation-days-before");
     }
 
     private static void require(boolean ok, String property) {

@@ -63,10 +63,6 @@ class ReminderPlannerTest {
         return new Planned(ReminderType.period_upcoming, body);
     }
 
-    private static Planned ovulation(String body) {
-        return new Planned(ReminderType.ovulation_upcoming, body);
-    }
-
     @Test
     void thePeriodCountsDownThreeTwoOneDaysAndOnTheDay() {
         assertThat(plan(NEXT_PERIOD.minusDays(4), MORNING)).isEmpty();
@@ -78,11 +74,10 @@ class ReminderPlannerTest {
     }
 
     @Test
-    void ovulationCountsDownThreeTwoOneDaysAndOnTheDay() {
-        assertThat(plan(OVULATION.minusDays(4), MORNING)).isEmpty();
-        assertThat(plan(OVULATION.minusDays(3), MORNING)).containsExactly(ovulation("Ovulation is predicted in 3 days."));
-        assertThat(plan(OVULATION.minusDays(2), MORNING)).containsExactly(ovulation("Ovulation is predicted in 2 days."));
-        assertThat(plan(OVULATION.minusDays(1), MORNING)).containsExactly(ovulation("Ovulation is predicted tomorrow."));
+    void ovulationIsAnnouncedOnTheDayOnlyWithNoCountdown() {
+        assertThat(plan(OVULATION.minusDays(3), MORNING)).isEmpty();
+        assertThat(plan(OVULATION.minusDays(2), MORNING)).isEmpty();
+        assertThat(plan(OVULATION.minusDays(1), MORNING)).isEmpty();
         assertThat(plan(OVULATION, MORNING))
                 .containsExactly(new Planned(ReminderType.ovulation_today, "Today is your predicted ovulation day."));
         assertThat(plan(OVULATION.plusDays(1), MORNING)).isEmpty();
@@ -120,7 +115,6 @@ class ReminderPlannerTest {
     @Test
     void aUserOnlyGetsTheCountdownDaysSheKept() {
         user.setPeriodDaysBefore("1,0");
-        user.setOvulationDaysBefore("0");
 
         assertThat(plan(NEXT_PERIOD.minusDays(3), MORNING)).isEmpty();
         assertThat(plan(NEXT_PERIOD.minusDays(2), MORNING)).isEmpty();
@@ -321,13 +315,13 @@ class ReminderPlannerTest {
 
     @Test
     void periodAndOvulationCanBothArriveTheSameMorning() {
-        // In an 18-day cycle ovulation is day 4, so its "3 days before" falls on day 1 of the next predicted period.
-        user.setCycleLength(18);
-        LocalDate next = LAST_PERIOD.plusDays(18);
+        // In a 15-day cycle ovulation is estimated for day 1, the same day the next period is predicted.
+        user.setCycleLength(15);
+        LocalDate next = LAST_PERIOD.plusDays(15);
 
         assertThat(plan(next, MORNING)).containsExactly(
                 new Planned(ReminderType.period_today, "Your period may start today. Tap to log it."),
-                ovulation("Ovulation is predicted in 3 days."));
+                new Planned(ReminderType.ovulation_today, "Today is your predicted ovulation day."));
     }
 
     @Test

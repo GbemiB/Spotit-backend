@@ -8,9 +8,8 @@ public record UpdateNotificationPrefsRequest(
         Boolean period, Boolean ovulation, Boolean dailyLog, Boolean digest,
         @Pattern(regexp = TIME) String morningTime,
         @Pattern(regexp = TIME) String eveningTime,
-        // Days before the predicted date, 0 = on the day. An empty list turns that reminder off.
-        List<Integer> periodDaysBefore,
-        List<Integer> ovulationDaysBefore
+        // Days before the predicted period, 0 = on the day. An empty list turns the period reminder off.
+        List<Integer> periodDaysBefore
 ) {
     static final String TIME = "([01]\\d|2[0-3]):[0-5]\\d";
 }

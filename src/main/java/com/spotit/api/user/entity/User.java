@@ -83,9 +83,6 @@ public class User {
     @Column(name = "period_days_before", length = 40)
     private String periodDaysBefore;
 
-    @Column(name = "ovulation_days_before", length = 40)
-    private String ovulationDaysBefore;
-
     // IANA zone of the most recently seen device; reminder times are local to it.
     @Column(name = "time_zone", length = 64)
     private String timeZone;

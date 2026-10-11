@@ -64,9 +64,9 @@ spotit:
     # Weekly digest (not user-adjustable). Day is MONDAY ... SUNDAY.
     digest-time: ${REMINDER_DIGEST_TIME:19:00}
     digest-day: ${REMINDER_DIGEST_DAY:SUNDAY}
-    # Default countdown for users who have not chosen their own: days before, 0 = on the day
+    # Default period countdown for users who have not chosen their own: days before, 0 = on the day. Ovulation is
+    # announced on the predicted day only, with no countdown.
     period-days-before: ${REMINDER_PERIOD_DAYS_BEFORE:3,2,1,0}
-    ovulation-days-before: ${REMINDER_OVULATION_DAYS_BEFORE:3,2,1,0}
     # Largest days-before value anyone may choose (the app shows this many tick boxes plus "On the day")
     max-days-before: ${REMINDER_MAX_DAYS_BEFORE:3}
     # How late a missed reminder (e.g. during a restart) may still go out, in minutes

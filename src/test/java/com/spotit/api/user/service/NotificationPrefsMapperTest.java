@@ -21,26 +21,22 @@ class NotificationPrefsMapperTest {
         assertThat(NotificationPrefsMapper.morningTime(user, settings)).isEqualTo(LocalTime.of(6, 0));
         assertThat(NotificationPrefsMapper.eveningTime(user, settings)).isEqualTo(LocalTime.of(20, 0));
         assertThat(NotificationPrefsMapper.periodDaysBefore(user, settings)).containsExactly(3, 2, 1, 0);
-        assertThat(NotificationPrefsMapper.ovulationDaysBefore(user, settings)).containsExactly(3, 2, 1, 0);
     }
 
     @Test
-    void periodAndOvulationDaysAreKeptSeparately() {
-        User user = User.builder().periodDaysBefore("1,0").ovulationDaysBefore("3").build();
+    void herOwnPeriodCountdownIsUsed() {
+        User user = User.builder().periodDaysBefore("1,0").build();
 
         assertThat(NotificationPrefsMapper.periodDaysBefore(user, settings)).containsExactly(1, 0);
-        assertThat(NotificationPrefsMapper.ovulationDaysBefore(user, settings)).containsExactly(3);
     }
 
     @Test
     void unreadableStoredChoicesFallBackToTheServerDefaults() {
-        User user = User.builder().reminderMorningTime("9am").reminderEveningTime("").periodDaysBefore("x").ovulationDaysBefore("9").build();
+        User user = User.builder().reminderMorningTime("9am").reminderEveningTime("").periodDaysBefore("x").build();
 
         assertThat(NotificationPrefsMapper.morningTime(user, settings)).isEqualTo(LocalTime.of(6, 0));
         assertThat(NotificationPrefsMapper.eveningTime(user, settings)).isEqualTo(LocalTime.of(20, 0));
         assertThat(NotificationPrefsMapper.periodDaysBefore(user, settings)).containsExactly(3, 2, 1, 0);
-        // 9 is beyond the allowed maximum of 3, so nothing usable is left.
-        assertThat(NotificationPrefsMapper.ovulationDaysBefore(user, settings)).containsExactly(3, 2, 1, 0);
     }
 
     @Test
@@ -49,6 +45,6 @@ class NotificationPrefsMapperTest {
                 .reminderMorningTime("07:30").periodDaysBefore("0").build();
 
         assertThat(NotificationPrefsMapper.toResponse(user, settings)).isEqualTo(
-                new NotificationPrefsResponse(true, false, true, false, "07:30", "20:00", List.of(0), List.of(3, 2, 1, 0), 3));
+                new NotificationPrefsResponse(true, false, true, false, "07:30", "20:00", List.of(0), 3));
     }
 }

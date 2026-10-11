@@ -163,7 +163,7 @@ class ReminderJobTest {
     @Test
     void switchingThePeriodReminderOffStopsItAndLeavesOvulationArriving() {
         UUID userId = user("Africa/Lagos", token("lagos"));
-        userWriteService.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, null, null, null, null, null));
+        userWriteService.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, null, null, null, null));
 
         reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
         assertThat(sentMessages()).isEmpty();
@@ -177,7 +177,7 @@ class ReminderJobTest {
     void uncheckingACountdownDaySkipsOnlyThatDay() {
         UUID userId = user("Africa/Lagos", token("lagos"));
         userWriteService.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of(2, 0), null));
+                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of(2, 0)));
 
         reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
         assertThat(sentMessages()).isEmpty();
@@ -190,7 +190,7 @@ class ReminderJobTest {
     void aChangedReminderTimeIsHonoured() {
         UUID userId = user("Africa/Lagos", token("lagos"));
         userWriteService.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, "08:30", null, null, null));
+                new UpdateNotificationPrefsRequest(null, null, null, null, "08:30", null, null));
 
         reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
         reminderJob.run(Instant.parse("2026-10-30T07:15:00Z"));
@@ -242,7 +242,6 @@ class ReminderJobTest {
         assertThat(reminderSettings.digestDay()).isEqualTo(DayOfWeek.SUNDAY);
         assertThat(reminderSettings.digestTime()).isEqualTo(LocalTime.of(19, 0));
         assertThat(reminderSettings.periodDaysBefore()).containsExactly(3, 2, 1, 0);
-        assertThat(reminderSettings.ovulationDaysBefore()).containsExactly(3, 2, 1, 0);
         assertThat(reminderSettings.maxDaysBefore()).isEqualTo(3);
         assertThat(reminderSettings.catchUpMinutes()).isEqualTo(120);
     }

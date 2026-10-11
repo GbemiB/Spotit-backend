@@ -15,7 +15,7 @@ public final class NotificationPrefsMapper {
     public static NotificationPrefsResponse toResponse(User user, ReminderSettings settings) {
         return new NotificationPrefsResponse(user.isNotifPeriod(), user.isNotifOvulation(), user.isNotifDailyLog(), user.isNotifDigest(),
                 morningTime(user, settings).toString(), eveningTime(user, settings).toString(),
-                periodDaysBefore(user, settings), ovulationDaysBefore(user, settings), settings.maxDaysBefore());
+                periodDaysBefore(user, settings), settings.maxDaysBefore());
     }
 
     public static LocalTime morningTime(User user, ReminderSettings settings) {
@@ -28,9 +28,5 @@ public final class NotificationPrefsMapper {
 
     public static List<Integer> periodDaysBefore(User user, ReminderSettings settings) {
         return ReminderSettings.parseDays(user.getPeriodDaysBefore(), settings.maxDaysBefore(), settings.periodDaysBefore());
-    }
-
-    public static List<Integer> ovulationDaysBefore(User user, ReminderSettings settings) {
-        return ReminderSettings.parseDays(user.getOvulationDaysBefore(), settings.maxDaysBefore(), settings.ovulationDaysBefore());
     }
 }

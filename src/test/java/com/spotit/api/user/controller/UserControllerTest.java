@@ -103,7 +103,7 @@ class UserControllerTest {
     @Test
     void getNotificationsReturnsThePreferences() throws Exception {
         when(userReadService.getNotificationPrefs(USER_ID))
-                .thenReturn(new NotificationPrefsResponse(true, false, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+                .thenReturn(new NotificationPrefsResponse(true, false, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), 3));
 
         mvc.perform(get("/api/v1/users/me/notifications"))
                 .andExpect(status().isOk())
@@ -113,9 +113,9 @@ class UserControllerTest {
 
     @Test
     void updateNotificationsAppliesThePatch() throws Exception {
-        UpdateNotificationPrefsRequest request = new UpdateNotificationPrefsRequest(null, true, null, null, "08:30", null, List.of(1, 0), null);
+        UpdateNotificationPrefsRequest request = new UpdateNotificationPrefsRequest(null, true, null, null, "08:30", null, List.of(1, 0));
         when(userWriteService.updateNotificationPrefs(USER_ID, request))
-                .thenReturn(new NotificationPrefsResponse(true, true, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+                .thenReturn(new NotificationPrefsResponse(true, true, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), 3));
 
         mvc.perform(patch("/api/v1/users/me/notifications").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
