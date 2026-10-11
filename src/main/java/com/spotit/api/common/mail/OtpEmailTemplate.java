@@ -13,7 +13,6 @@ public final class OtpEmailTemplate {
     }
 
     public static String html(String greeting, String code, String heading, String introLine, long ttlMinutes) {
-        String spacedCode = String.join(" ", code.split(""));
         return """
                 <!doctype html>
                 <html>
@@ -39,7 +38,8 @@ public final class OtpEmailTemplate {
                                 <table role="presentation" width="100%%" cellpadding="0" cellspacing="0">
                                   <tr>
                                     <td align="center" style="background:%s;border-radius:14px;padding:18px 12px;">
-                                      <span style="font-size:24px;font-weight:700;letter-spacing:8px;color:%s;font-family:'SF Mono',Consolas,Menlo,monospace;">%s</span>
+                                      <span style="display:inline-block;white-space:nowrap;font-size:26px;line-height:32px;font-weight:700;letter-spacing:6px;\
+                margin-right:-6px;color:%s;font-family:'SF Mono',Consolas,Menlo,monospace;">%s</span>
                                     </td>
                                   </tr>
                                 </table>
@@ -68,7 +68,7 @@ public final class OtpEmailTemplate {
                 INK, ACCENT_SOFT,
                 INK, heading,
                 MUTED, greeting, introLine,
-                CODE_TILE_BG, ACCENT, spacedCode,
+                CODE_TILE_BG, ACCENT, code,
                 MUTED, ACCENT,
                 ttlMinutes,
                 MUTED,
