@@ -30,9 +30,6 @@ springdoc:
   swagger-ui:
     path: /api/v1/swagger-ui.html
 
-# SMTP relay for all transactional mail (SmtpProperties). The only source of these values: each environment
-# supplies them as env vars (entered in the Render dashboard on a new deployment); nothing is stored in the DB.
-# Mail is disabled — sends fail with "SMTP is not configured" — until username, password and from-address are set.
 spotit:
   smtp:
     host: ${SMTP_HOST:smtp.gmail.com}
@@ -41,35 +38,21 @@ spotit:
     password: ${SMTP_PASSWORD:}
     from-address: ${SMTP_FROM_ADDRESS:}
     use-tls: ${SMTP_USE_TLS:true}
-  # Accounts allowed to call /api/v1/config/** (AdminProperties). Comma-separated emails; empty = nobody.
+  # Comma-separated emails allowed to call /api/v1/config/**; empty = nobody
   admin:
     emails: ${ADMIN_EMAILS:}
-  # Reminder push delivery through Expo (PushProperties). The token is optional unless the Expo project has
-  # "enhanced security for push notifications" switched on.
   push:
     base-url: ${EXPO_PUSH_BASE_URL:https://exp.host/--/api/v2/push}
     expo-access-token: ${EXPO_ACCESS_TOKEN:}
-  # Reminder schedule (ReminderSettings). Checked at start-up: an unusable value stops the server with a message.
-  # Times are HH:mm in each user's own time zone, the same for everyone (users cannot change them in the app).
-  # Change one on Render by setting the env var and restarting; no code change or app release needed.
   reminders:
-    # false stops all reminder sending (for incidents; users never see it)
     enabled: ${REMINDERS_ENABLED:true}
-    # How often the job runs. Its accuracy: a 06:00 reminder arrives between 06:00 and 06:15.
     cron: ${REMINDERS_CRON:0 */15 * * * *}
-    # Period and ovulation reminders
     morning-time: ${REMINDER_MORNING_TIME:06:00}
-    # Daily log nudge (on period days)
     evening-time: ${REMINDER_EVENING_TIME:20:00}
-    # Weekly digest. Day is MONDAY ... SUNDAY.
     digest-time: ${REMINDER_DIGEST_TIME:19:00}
     digest-day: ${REMINDER_DIGEST_DAY:SUNDAY}
-    # Default period countdown for users who have not chosen their own: days before, 0 = on the day. Ovulation is
-    # announced on the predicted day only, with no countdown.
     period-days-before: ${REMINDER_PERIOD_DAYS_BEFORE:3,2,1,0}
-    # Largest days-before value anyone may choose (the app shows this many tick boxes plus "On the day")
     max-days-before: ${REMINDER_MAX_DAYS_BEFORE:3}
-    # How late a missed reminder (e.g. during a restart) may still go out, in minutes
     catch-up-minutes: ${REMINDER_CATCH_UP_MINUTES:120}
 
 logging:
