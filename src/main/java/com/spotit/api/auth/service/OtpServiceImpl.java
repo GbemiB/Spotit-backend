@@ -33,6 +33,7 @@ public class OtpServiceImpl implements OtpService {
     private final ConfigurationDomainService configurationDomainService;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final AuthAttemptRecorder attemptRecorder;
 
     @Override
     @Transactional
@@ -41,7 +42,6 @@ public class OtpServiceImpl implements OtpService {
         otpCodeRepository.invalidateActive(user.getId(), purpose);
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
 
-        log.warn("[OTP] {} code for user {} ({}): {}", purpose, user.getId(), user.getEmail(), code);
         OtpCode otp = OtpCode.builder()
                 .userId(user.getId())
                 .codeHash(passwordEncoder.encode(code))
@@ -94,7 +94,7 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public void checkValid(UUID userId, String code, OtpPurpose expectedPurpose) {
         OtpCode otp = otpCodeRepository.findFirstByUserIdAndPurposeAndConsumedFalseOrderByCreatedAtDesc(userId, expectedPurpose)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
@@ -127,6 +127,9 @@ public class OtpServiceImpl implements OtpService {
             throw new ApiException(ErrorCode.OTP_EXPIRED, ErrorMessage.CODE_EXPIRED);
         }
         if (!passwordEncoder.matches(code, otp.getCodeHash())) {
+            if (attemptRecorder.recordOtpFailure(otp.getId())) {
+                throw new ApiException(ErrorCode.OTP_EXPIRED, ErrorMessage.TOO_MANY_CODE_ATTEMPTS);
+            }
             throw new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE);
         }
     }

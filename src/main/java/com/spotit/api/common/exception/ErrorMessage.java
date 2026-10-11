@@ -6,6 +6,8 @@ public final class ErrorMessage {
 
     public static final String INVALID_OR_USED_CODE = "Invalid or already-used code.";
     public static final String CODE_EXPIRED = "This code has expired.";
+    public static final String TOO_MANY_CODE_ATTEMPTS = "Too many incorrect attempts. Please request a new code.";
+    public static final String ACCOUNT_LOCKED = "Too many failed login attempts. Try again in 15 minutes, or reset your password.";
     public static final String CODE_VERIFIED = "Code verified.";
     public static final String EMAIL_ALREADY_REGISTERED = "An account with this email already exists.";
     public static final String INVALID_CREDENTIALS = "Invalid email or password.";
@@ -20,6 +22,8 @@ public final class ErrorMessage {
     public static final String MONTH_OUT_OF_RANGE = "month must be between 1 and 12.";
     public static final String CYCLE_LENGTH_OUT_OF_RANGE = "cycleLength must be between 21 and 45.";
     public static final String PERIOD_LENGTH_OUT_OF_RANGE = "periodLength must be between 2 and 10.";
+    public static final String REMINDER_DAYS_OUT_OF_RANGE = "Reminder days are outside the allowed range.";
+    public static final String AGE_BELOW_MINIMUM = "You must be at least 13 to use Spot it.";
     public static final String EXPORT_JOB_NOT_FOUND = "Export job not found.";
 
     public static final String BADGE_NOT_FOUND = "Badge definition not found.";

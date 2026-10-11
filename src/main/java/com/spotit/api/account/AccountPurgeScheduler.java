@@ -5,6 +5,7 @@ import com.spotit.api.auth.repository.RefreshTokenRepository;
 import com.spotit.api.billing.repository.SubscriptionRepository;
 import com.spotit.api.device.repository.DeviceRepository;
 import com.spotit.api.log.repository.CycleLogRepository;
+import com.spotit.api.reminder.repository.ReminderDeliveryRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.rewards.repository.UserBadgeRepository;
 import com.spotit.api.rewards.repository.UserChallengeProgressRepository;
@@ -36,6 +37,7 @@ public class AccountPurgeScheduler {
     private final SubscriptionRepository subscriptionRepository;
     private final DeviceRepository deviceRepository;
     private final ExportJobRepository exportJobRepository;
+    private final ReminderDeliveryRepository reminderDeliveryRepository;
 
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
@@ -57,6 +59,7 @@ public class AccountPurgeScheduler {
         subscriptionRepository.deleteByUserId(userId);
         deviceRepository.deleteByUserId(userId);
         exportJobRepository.deleteByUserId(userId);
+        reminderDeliveryRepository.deleteByUserId(userId);
         userRepository.deleteById(userId);
     }
 }

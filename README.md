@@ -64,8 +64,23 @@ eventually an admin UI) can manage live, under a dedicated `/api/v1/config/*` na
 - `GET/POST/PATCH/DELETE /api/v1/config/challenges` — weekly-challenge definitions
 - `GET/POST/PATCH/DELETE /api/v1/config/content` — "For you today" feed items
 
-These endpoints aren't authorization-gated yet (no admin role exists) — add one before exposing them
-publicly.
+These endpoints (and `/api/v1/config/global`, `/api/v1/config/levels`, `/api/v1/config/smtp`) require the
+`ADMIN` role. An account is an admin when its email is listed in the `ADMIN_EMAILS` environment variable
+(comma-separated, bound to `spotit.admin.emails`); everyone else gets `403 forbidden`. The list is read at
+boot, so changing it needs a restart, and leaving it unset means nobody can call these endpoints.
+
+## Reminders (push notifications)
+
+`reminder/ReminderScheduler` runs `ReminderJob` every 15 minutes. For each user with a reminder switched on and a
+registered device, `ReminderPlanner` decides what is due in her own time zone (period and ovulation countdowns,
+the log nudge, the weekly digest); a row in `reminder_deliveries` — unique on user, type and local date — is
+written first, and only then is the message sent through Expo's push service (`reminder/push/ExpoPushSender`).
+The same rows back the in-app inbox (`GET /api/v1/notifications`).
+
+- Defaults (times, countdown days, catch-up window) and an all-sending stop switch (`reminders-enabled`) live in
+  the `reminders` group of `/api/v1/config/global`; a user's own choices override the defaults.
+- `EXPO_ACCESS_TOKEN` is optional: set it only if the Expo project has enhanced push security enabled.
+- Devices whose push address Google or Apple report as gone are deleted when the receipts are collected.
 
 ## Response envelope
 

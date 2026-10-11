@@ -80,7 +80,7 @@ public class UserController {
                     examples = @ExampleObject(value = UserControllerSwagger.UPDATE_NOTIFICATIONS_200_EXAMPLE)))
     })
     @PatchMapping("/notifications")
-    public NotificationPrefsResponse updateNotifications(@CurrentUserId UUID userId, @RequestBody UpdateNotificationPrefsRequest request) {
+    public NotificationPrefsResponse updateNotifications(@CurrentUserId UUID userId, @Valid @RequestBody UpdateNotificationPrefsRequest request) {
         return userWriteService.updateNotificationPrefs(userId, request);
     }
 

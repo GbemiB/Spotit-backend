@@ -5,11 +5,13 @@ final class DeviceControllerSwagger {
     }
 
     static final String REGISTER_SUMMARY = "Register a device";
-    static final String REGISTER_DESCRIPTION = "Registers (or re-associates) a push token with the current user, for sending push notifications.";
+    static final String REGISTER_DESCRIPTION = "Registers (or re-associates) an Expo push token with the current user. "
+            + "The optional time zone sets the local time reminders are sent at.";
     static final String REGISTER_REQUEST_EXAMPLE = """
             {
-              "pushToken": "fcm:d7f3a1b2-token-example",
-              "platform": "android"
+              "pushToken": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]",
+              "platform": "android",
+              "timeZone": "Africa/Lagos"
             }
             """;
     static final String REGISTER_200_EXAMPLE = """

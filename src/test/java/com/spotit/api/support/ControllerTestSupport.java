@@ -42,7 +42,7 @@ public final class ControllerTestSupport {
 
     /** Puts USER_ID into the SecurityContext, as JwtAuthenticationFilter would for a valid bearer token. */
     public static void authenticate() {
-        SecurityUser user = new SecurityUser(USER_ID, "jane@example.com", false);
+        SecurityUser user = new SecurityUser(USER_ID, "jane@example.com", false, false);
         SecurityContextHolder.getContext()
                 .setAuthentication(new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
     }

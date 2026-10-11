@@ -1,5 +1,8 @@
 package com.spotit.api.user.service;
 
+import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.configuration.entity.GlobalConfig;
+import com.spotit.api.configuration.ReminderSettings;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.log.entity.CycleLog;
@@ -41,6 +44,7 @@ class UserReadServiceImplTest {
     @Mock ExportJobRepository exportJobRepository;
     @Mock CycleLogRepository cycleLogRepository;
     @Mock PointsHistoryRepository pointsHistoryRepository;
+    @Mock ConfigurationDomainService configurationDomainService;
     @InjectMocks UserReadServiceImpl service;
 
     UUID userId = UUID.randomUUID();
@@ -83,10 +87,26 @@ class UserReadServiceImplTest {
     }
 
     @Test
-    void notificationPrefsMirrorTheUserFlags() {
+    void notificationPrefsMirrorTheUserFlagsAndFallBackToTheServerDefaults() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user()));
+        when(configurationDomainService.getReminderSettings()).thenReturn(ReminderSettings.from(new GlobalConfig()));
 
-        assertThat(service.getNotificationPrefs(userId)).isEqualTo(new NotificationPrefsResponse(true, false, true, false));
+        assertThat(service.getNotificationPrefs(userId)).isEqualTo(
+                new NotificationPrefsResponse(true, false, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
+    }
+
+    @Test
+    void notificationPrefsPreferTheUsersOwnChoices() {
+        User user = user();
+        user.setReminderMorningTime("07:30");
+        user.setReminderEveningTime("21:15");
+        user.setPeriodDaysBefore("1,0");
+        user.setOvulationDaysBefore("0");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(configurationDomainService.getReminderSettings()).thenReturn(ReminderSettings.from(new GlobalConfig()));
+
+        assertThat(service.getNotificationPrefs(userId)).isEqualTo(
+                new NotificationPrefsResponse(true, false, true, false, "07:30", "21:15", List.of(1, 0), List.of(0), 3));
     }
 
     @Test

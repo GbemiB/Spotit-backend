@@ -1,6 +1,7 @@
 package com.spotit.api.config;
 
 import com.spotit.api.common.security.JwtAuthenticationFilter;
+import com.spotit.api.common.security.RestAccessDeniedHandler;
 import com.spotit.api.common.security.RestAuthEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -40,17 +41,24 @@ public class SecurityConfig {
             "/actuator/health"
     };
 
+    // Reference data and tunables (products, levels, badges, challenges, content, global settings, SMTP status).
+    private static final String ADMIN_PATHS = "/api/v1/config/**";
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RestAuthEntryPoint restAuthEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(eh -> eh.authenticationEntryPoint(restAuthEntryPoint))
+                .exceptionHandling(eh -> eh
+                        .authenticationEntryPoint(restAuthEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers(ADMIN_PATHS).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

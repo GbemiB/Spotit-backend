@@ -102,7 +102,8 @@ class UserControllerTest {
 
     @Test
     void getNotificationsReturnsThePreferences() throws Exception {
-        when(userReadService.getNotificationPrefs(USER_ID)).thenReturn(new NotificationPrefsResponse(true, false, true, false));
+        when(userReadService.getNotificationPrefs(USER_ID))
+                .thenReturn(new NotificationPrefsResponse(true, false, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
 
         mvc.perform(get("/api/v1/users/me/notifications"))
                 .andExpect(status().isOk())
@@ -112,12 +113,23 @@ class UserControllerTest {
 
     @Test
     void updateNotificationsAppliesThePatch() throws Exception {
-        UpdateNotificationPrefsRequest request = new UpdateNotificationPrefsRequest(null, true, null, null);
-        when(userWriteService.updateNotificationPrefs(USER_ID, request)).thenReturn(new NotificationPrefsResponse(true, true, true, false));
+        UpdateNotificationPrefsRequest request = new UpdateNotificationPrefsRequest(null, true, null, null, "08:30", null, List.of(1, 0), null);
+        when(userWriteService.updateNotificationPrefs(USER_ID, request))
+                .thenReturn(new NotificationPrefsResponse(true, true, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), List.of(3, 2, 1, 0), 3));
 
         mvc.perform(patch("/api/v1/users/me/notifications").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.ovulation").value(true));
+                .andExpect(jsonPath("$.data.ovulation").value(true))
+                .andExpect(jsonPath("$.data.periodDaysBefore[0]").value(3))
+                .andExpect(jsonPath("$.data.maxDaysBefore").value(3));
+    }
+
+    @Test
+    void updateNotificationsRejectsATimeThatIsNotHoursAndMinutes() throws Exception {
+        mvc.perform(patch("/api/v1/users/me/notifications").contentType(MediaType.APPLICATION_JSON).content("{\"morningTime\":\"9am\"}"))
+                .andExpect(status().isUnprocessableEntity());
+        mvc.perform(patch("/api/v1/users/me/notifications").contentType(MediaType.APPLICATION_JSON).content("{\"eveningTime\":\"24:00\"}"))
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.spotit.api.common.security;
 
+import com.spotit.api.admin.AdminProperties;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -25,8 +26,10 @@ public class JwtService {
     private final SecretKey key;
     private final long accessTokenTtlSeconds;
     private final long refreshTokenTtlSeconds;
+    private final AdminProperties adminProperties;
 
-    public JwtService(ConfigurationDomainService configurationDomainService) {
+    public JwtService(ConfigurationDomainService configurationDomainService, AdminProperties adminProperties) {
+        this.adminProperties = adminProperties;
         this.key = Keys.hmacShaKeyFor(configurationDomainService.getJwtSecret().getBytes(StandardCharsets.UTF_8));
         this.accessTokenTtlSeconds = configurationDomainService.getJwtAccessTokenTtlSeconds();
         this.refreshTokenTtlSeconds = configurationDomainService.getJwtRefreshTokenTtlSeconds();
@@ -74,7 +77,7 @@ public class JwtService {
             UUID userId = UUID.fromString(claims.getSubject());
             String email = claims.get(CLAIM_EMAIL, String.class);
             boolean premium = Boolean.TRUE.equals(claims.get(CLAIM_PREMIUM, Boolean.class));
-            return Optional.of(new SecurityUser(userId, email, premium));
+            return Optional.of(new SecurityUser(userId, email, premium, adminProperties.isAdmin(email)));
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }

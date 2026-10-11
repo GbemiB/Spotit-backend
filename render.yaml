@@ -48,6 +48,13 @@ services:
         sync: false
       - key: SMTP_USE_TLS
         value: "true"
+      # Comma-separated emails allowed to call /api/v1/config/** (spotit.admin.emails). Unset = no admins.
+      - key: ADMIN_EMAILS
+        sync: false
+      # Expo access token for reminder pushes (spotit.push.expo-access-token). Only required when the Expo
+      # project has "enhanced security for push notifications" switched on; unset = unauthenticated sends.
+      - key: EXPO_ACCESS_TOKEN
+        sync: false
 
   - type: web
     name: spotit-backend-prod
@@ -98,6 +105,13 @@ services:
         sync: false
       - key: SMTP_USE_TLS
         value: "true"
+      # Comma-separated emails allowed to call /api/v1/config/** (spotit.admin.emails). Unset = no admins.
+      - key: ADMIN_EMAILS
+        sync: false
+      # Expo access token for reminder pushes (spotit.push.expo-access-token). Only required when the Expo
+      # project has "enhanced security for push notifications" switched on; unset = unauthenticated sends.
+      - key: EXPO_ACCESS_TOKEN
+        sync: false
 
 databases:
   - name: spotit-db-dev

@@ -39,13 +39,15 @@ class OtpServiceImplTest {
     EmailService emailService;
     @Mock
     UserRepository userRepository;
+    @Mock
+    AuthAttemptRecorder attemptRecorder;
 
     OtpServiceImpl service;
     User user;
 
     @BeforeEach
     void setUp() {
-        service = new OtpServiceImpl(otpCodeRepository, passwordEncoder, configurationDomainService, emailService, userRepository);
+        service = new OtpServiceImpl(otpCodeRepository, passwordEncoder, configurationDomainService, emailService, userRepository, attemptRecorder);
         user = User.builder().id(UUID.randomUUID()).firstName("Jane").email("jane@example.com").build();
     }
 
@@ -126,6 +128,21 @@ class OtpServiceImplTest {
                 .isInstanceOf(ApiException.class)
                 .extracting(e -> ((ApiException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_CODE);
+    }
+
+    @Test
+    void verifyCountsAWrongCodeAndExpiresItOnTheLastAttempt() {
+        UUID otpId = UUID.randomUUID();
+        OtpCode otp = OtpCode.builder().id(otpId).purpose(OtpPurpose.signup)
+                .expiresAt(Instant.now().plusSeconds(60)).codeHash("hashed").build();
+        when(otpCodeRepository.findFirstByIdAndConsumedFalseOrderByCreatedAtDesc(otpId)).thenReturn(Optional.of(otp));
+        when(passwordEncoder.matches("000000", "hashed")).thenReturn(false);
+        when(attemptRecorder.recordOtpFailure(otpId)).thenReturn(false, true);
+
+        assertThatThrownBy(() -> service.verify(otpId, "000000", OtpPurpose.signup))
+                .extracting(e -> ((ApiException) e).getErrorCode()).isEqualTo(ErrorCode.INVALID_CODE);
+        assertThatThrownBy(() -> service.verify(otpId, "000000", OtpPurpose.signup))
+                .extracting(e -> ((ApiException) e).getErrorCode()).isEqualTo(ErrorCode.OTP_EXPIRED);
     }
 
     @Test

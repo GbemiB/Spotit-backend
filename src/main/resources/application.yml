@@ -41,6 +41,14 @@ spotit:
     password: ${SMTP_PASSWORD:}
     from-address: ${SMTP_FROM_ADDRESS:}
     use-tls: ${SMTP_USE_TLS:true}
+  # Accounts allowed to call /api/v1/config/** (AdminProperties). Comma-separated emails; empty = nobody.
+  admin:
+    emails: ${ADMIN_EMAILS:}
+  # Reminder push delivery through Expo (PushProperties). The token is optional unless the Expo project has
+  # "enhanced security for push notifications" switched on.
+  push:
+    base-url: ${EXPO_PUSH_BASE_URL:https://exp.host/--/api/v2/push}
+    expo-access-token: ${EXPO_ACCESS_TOKEN:}
 
 logging:
   level:

@@ -28,6 +28,16 @@ public final class PropertyNames {
     public static final String REWARDS_HISTORY_PAGE_SIZE = "rewards-history-page-size";
     public static final String CONTENT_FEED_DEFAULT_LIMIT = "content-feed-default-limit";
 
+    public static final String REMINDERS_ENABLED = "reminders-enabled";
+    public static final String REMINDER_MORNING_TIME = "reminder-morning-time";
+    public static final String REMINDER_EVENING_TIME = "reminder-evening-time";
+    public static final String REMINDER_DIGEST_TIME = "reminder-digest-time";
+    public static final String REMINDER_DIGEST_DAY = "reminder-digest-day";
+    public static final String REMINDER_PERIOD_DAYS_BEFORE = "reminder-period-days-before";
+    public static final String REMINDER_OVULATION_DAYS_BEFORE = "reminder-ovulation-days-before";
+    public static final String REMINDER_MAX_DAYS_BEFORE = "reminder-max-days-before";
+    public static final String REMINDER_CATCH_UP_MINUTES = "reminder-catch-up-minutes";
+
     public static final String GROUP_SECURITY = "security";
     public static final String GROUP_POINTS = "points";
     public static final String GROUP_CYCLE = "cycle";
@@ -38,6 +48,7 @@ public final class PropertyNames {
     public static final String GROUP_LOGS = "logs";
     public static final String GROUP_REWARDS = "rewards";
     public static final String GROUP_CONTENT = "content";
+    public static final String GROUP_REMINDERS = "reminders";
 
     // Legacy row-name prefixes: badge/challenge/level definitions were briefly stored as JSON rows
     // in global_configuration ("badge-definition-{id}", etc.). They now live in their own typed

@@ -39,6 +39,9 @@ public class OtpCode {
     @Column(nullable = false)
     private boolean consumed;
 
+    @Column(name = "failed_attempts")
+    private Integer failedAttempts;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

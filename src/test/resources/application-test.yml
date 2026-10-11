@@ -21,3 +21,6 @@ spotit:
     username: ${SMTP_USERNAME:test@example.com}
     password: ${SMTP_PASSWORD:test-password}
     from-address: ${SMTP_FROM_ADDRESS:test@example.com}
+  # The reminder job is driven directly by ReminderJobTest; the timer stays off so it cannot fire mid-test.
+  reminders:
+    cron: "-"

@@ -73,6 +73,23 @@ public class User {
     @Column(name = "notif_digest", nullable = false)
     private boolean notifDigest;
 
+    // Reminder choices. Null means "use the server default" (ReminderSettings), so nothing needs backfilling.
+    @Column(name = "reminder_morning_time", length = 5)
+    private String reminderMorningTime;
+
+    @Column(name = "reminder_evening_time", length = 5)
+    private String reminderEveningTime;
+
+    @Column(name = "period_days_before", length = 40)
+    private String periodDaysBefore;
+
+    @Column(name = "ovulation_days_before", length = 40)
+    private String ovulationDaysBefore;
+
+    // IANA zone of the most recently seen device; reminder times are local to it.
+    @Column(name = "time_zone", length = 64)
+    private String timeZone;
+
     @Column(nullable = false)
     private long points;
 
@@ -93,6 +110,12 @@ public class User {
 
     @Column(name = "is_premium", nullable = false)
     private boolean premium;
+
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts;
+
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
 
     @Column(name = "pending_deletion_at")
     private Instant pendingDeletionAt;

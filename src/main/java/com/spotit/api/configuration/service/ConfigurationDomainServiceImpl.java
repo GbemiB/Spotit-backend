@@ -8,6 +8,7 @@ import com.spotit.api.configuration.ConfigPropertyCatalog;
 import com.spotit.api.configuration.ConfigPropertyCatalog.Context;
 import com.spotit.api.configuration.ConfigPropertyCatalog.Property;
 import com.spotit.api.configuration.PropertyNames;
+import com.spotit.api.configuration.ReminderSettings;
 import com.spotit.api.configuration.dto.GlobalConfigurationResponse;
 import com.spotit.api.configuration.dto.UpdateGlobalConfigurationRequest;
 import com.spotit.api.configuration.entity.GlobalConfig;
@@ -113,7 +114,38 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getContentFeedDefaultLimit() == 0) {
             global.setContentFeedDefaultLimit(ConfigDefaults.CONTENT_FEED_DEFAULT_LIMIT);
         }
+        seedReminderDefaults(global);
         globalConfigRepository.save(global);
+    }
+
+    private static void seedReminderDefaults(GlobalConfig global) {
+        if (global.getRemindersEnabled() == null) {
+            global.setRemindersEnabled(true);
+        }
+        if (global.getReminderMorningTime() == null) {
+            global.setReminderMorningTime(ConfigDefaults.REMINDER_MORNING_TIME);
+        }
+        if (global.getReminderEveningTime() == null) {
+            global.setReminderEveningTime(ConfigDefaults.REMINDER_EVENING_TIME);
+        }
+        if (global.getReminderDigestTime() == null) {
+            global.setReminderDigestTime(ConfigDefaults.REMINDER_DIGEST_TIME);
+        }
+        if (global.getReminderDigestDay() == null) {
+            global.setReminderDigestDay(ConfigDefaults.REMINDER_DIGEST_DAY);
+        }
+        if (global.getReminderPeriodDaysBefore() == null) {
+            global.setReminderPeriodDaysBefore(ConfigDefaults.REMINDER_DAYS_BEFORE);
+        }
+        if (global.getReminderOvulationDaysBefore() == null) {
+            global.setReminderOvulationDaysBefore(ConfigDefaults.REMINDER_DAYS_BEFORE);
+        }
+        if (global.getReminderMaxDaysBefore() == null) {
+            global.setReminderMaxDaysBefore(ConfigDefaults.REMINDER_MAX_DAYS_BEFORE);
+        }
+        if (global.getReminderCatchUpMinutes() == null) {
+            global.setReminderCatchUpMinutes(ConfigDefaults.REMINDER_CATCH_UP_MINUTES);
+        }
     }
 
     private String generateEncryptedJwtSecret() {
@@ -262,6 +294,12 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getContentFeedDefaultLimit() {
         return (int) loadGlobal().getContentFeedDefaultLimit();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReminderSettings getReminderSettings() {
+        return ReminderSettings.from(loadGlobal());
     }
 
     @Override

@@ -42,6 +42,9 @@ public class SignupLead {
     @Column(name = "otp_verified", nullable = false)
     private boolean otpVerified;
 
+    @Column(name = "otp_failed_attempts")
+    private Integer otpFailedAttempts;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

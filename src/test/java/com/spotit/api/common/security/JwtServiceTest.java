@@ -1,11 +1,13 @@
 package com.spotit.api.common.security;
 
+import com.spotit.api.admin.AdminProperties;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +24,7 @@ class JwtServiceTest {
         when(configurationDomainService.getJwtSecret()).thenReturn(SECRET);
         when(configurationDomainService.getJwtAccessTokenTtlSeconds()).thenReturn(accessTtlSeconds);
         when(configurationDomainService.getJwtRefreshTokenTtlSeconds()).thenReturn(refreshTtlSeconds);
-        return new JwtService(configurationDomainService);
+        return new JwtService(configurationDomainService, new AdminProperties(List.of("boss@example.com")));
     }
 
     private JwtService service() {
@@ -41,6 +43,19 @@ class JwtServiceTest {
         assertThat(parsed.get().userId()).isEqualTo(userId);
         assertThat(parsed.get().email()).isEqualTo("user@example.com");
         assertThat(parsed.get().premium()).isTrue();
+    }
+
+    @Test
+    void onlyAListedEmailIsAnAdmin() {
+        JwtService jwtService = service();
+
+        SecurityUser boss = jwtService.parseAccessToken(jwtService.generateAccessToken(UUID.randomUUID(), "Boss@Example.com", false)).orElseThrow();
+        SecurityUser user = jwtService.parseAccessToken(jwtService.generateAccessToken(UUID.randomUUID(), "user@example.com", true)).orElseThrow();
+
+        assertThat(boss.admin()).isTrue();
+        assertThat(boss.getAuthorities()).extracting("authority").contains("ROLE_ADMIN");
+        assertThat(user.admin()).isFalse();
+        assertThat(user.getAuthorities()).extracting("authority").doesNotContain("ROLE_ADMIN");
     }
 
     @Test
