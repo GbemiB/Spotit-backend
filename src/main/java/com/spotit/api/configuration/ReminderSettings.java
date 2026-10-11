@@ -5,7 +5,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -45,15 +44,6 @@ public record ReminderSettings(boolean enabled,
         require(days != null && !days.isEmpty() && days.stream().allMatch(day -> day != null && day >= 0 && day <= maxDays),
                 property + " (each day must be between 0 and max-days-before)");
         return days.stream().distinct().sorted(Comparator.reverseOrder()).toList();
-    }
-
-    /** Parses "HH:mm"; returns the fallback (also "HH:mm") when the value is missing or unreadable. */
-    public static LocalTime parseTime(String value, String fallback) {
-        try {
-            return LocalTime.parse(value == null ? fallback : value.trim());
-        } catch (DateTimeParseException e) {
-            return LocalTime.parse(fallback);
-        }
     }
 
     /** Parses "3,2,1,0" into distinct days within 0..maxDays, largest first; the fallback when nothing usable is left. */

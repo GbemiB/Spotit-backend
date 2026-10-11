@@ -166,16 +166,6 @@ class ReminderPlannerTest {
     }
 
     @Test
-    void herOwnMorningTimeReplacesTheDefault() {
-        user.setReminderMorningTime("08:30");
-        LocalDate day = NEXT_PERIOD.minusDays(3);
-
-        assertThat(plan(day, LocalTime.of(6, 0))).isEmpty();
-        assertThat(plan(day, LocalTime.of(8, 29))).isEmpty();
-        assertThat(plan(day, LocalTime.of(8, 30))).hasSize(1);
-    }
-
-    @Test
     void theLogNudgeGoesOutOnPeriodDaysOnly() {
         user.setNotifDigest(false);
 

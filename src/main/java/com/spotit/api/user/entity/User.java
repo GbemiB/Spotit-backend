@@ -73,13 +73,7 @@ public class User {
     @Column(name = "notif_digest", nullable = false)
     private boolean notifDigest;
 
-    // Reminder choices. Null means "use the server default" (ReminderSettings), so nothing needs backfilling.
-    @Column(name = "reminder_morning_time", length = 5)
-    private String reminderMorningTime;
-
-    @Column(name = "reminder_evening_time", length = 5)
-    private String reminderEveningTime;
-
+    // Reminder choice. Null means "use the server default" (ReminderSettings), so nothing needs backfilling.
     @Column(name = "period_days_before", length = 40)
     private String periodDaysBefore;
 

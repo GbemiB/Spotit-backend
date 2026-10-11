@@ -113,7 +113,7 @@ class UserControllerTest {
 
     @Test
     void updateNotificationsAppliesThePatch() throws Exception {
-        UpdateNotificationPrefsRequest request = new UpdateNotificationPrefsRequest(null, true, null, null, "08:30", null, List.of(1, 0));
+        UpdateNotificationPrefsRequest request = new UpdateNotificationPrefsRequest(null, true, null, null, List.of(1, 0));
         when(userWriteService.updateNotificationPrefs(USER_ID, request))
                 .thenReturn(new NotificationPrefsResponse(true, true, true, false, "09:00", "20:00", List.of(3, 2, 1, 0), 3));
 
@@ -125,11 +125,13 @@ class UserControllerTest {
     }
 
     @Test
-    void updateNotificationsRejectsATimeThatIsNotHoursAndMinutes() throws Exception {
-        mvc.perform(patch("/api/v1/users/me/notifications").contentType(MediaType.APPLICATION_JSON).content("{\"morningTime\":\"9am\"}"))
-                .andExpect(status().isUnprocessableEntity());
-        mvc.perform(patch("/api/v1/users/me/notifications").contentType(MediaType.APPLICATION_JSON).content("{\"eveningTime\":\"24:00\"}"))
-                .andExpect(status().isUnprocessableEntity());
+    void updateNotificationsIgnoresAReminderTimeBecauseUsersCannotSetOne() throws Exception {
+        when(userWriteService.updateNotificationPrefs(USER_ID, new UpdateNotificationPrefsRequest(null, null, null, null, null)))
+                .thenReturn(new NotificationPrefsResponse(true, true, true, false, "06:00", "20:00", List.of(3, 2, 1, 0), 3));
+
+        mvc.perform(patch("/api/v1/users/me/notifications").contentType(MediaType.APPLICATION_JSON).content("{\"morningTime\":\"09:00\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.morningTime").value("06:00"));
     }
 
     @Test

@@ -95,12 +95,6 @@ public class UserWriteServiceImpl implements UserWriteService {
             user.setNotifDigest(request.digest());
         }
         ReminderSettings settings = reminderSettings;
-        if (request.morningTime() != null) {
-            user.setReminderMorningTime(request.morningTime());
-        }
-        if (request.eveningTime() != null) {
-            user.setReminderEveningTime(request.eveningTime());
-        }
         if (request.periodDaysBefore() != null) {
             // No countdown day left means the reminder is off; the last non-empty choice is kept for when it comes back on.
             if (request.periodDaysBefore().isEmpty()) {

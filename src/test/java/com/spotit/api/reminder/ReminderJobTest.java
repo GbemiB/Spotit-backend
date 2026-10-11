@@ -163,7 +163,7 @@ class ReminderJobTest {
     @Test
     void switchingThePeriodReminderOffStopsItAndLeavesOvulationArriving() {
         UUID userId = user("Africa/Lagos", token("lagos"));
-        userWriteService.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, null, null, null, null));
+        userWriteService.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, null, null));
 
         reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
         assertThat(sentMessages()).isEmpty();
@@ -177,27 +177,13 @@ class ReminderJobTest {
     void uncheckingACountdownDaySkipsOnlyThatDay() {
         UUID userId = user("Africa/Lagos", token("lagos"));
         userWriteService.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, null, null, List.of(2, 0)));
+                new UpdateNotificationPrefsRequest(null, null, null, null, List.of(2, 0)));
 
         reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
         assertThat(sentMessages()).isEmpty();
 
         reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(86_400));
         assertThat(sentMessages()).extracting(PushMessage::body).containsExactly("Your period is predicted to start in 2 days.");
-    }
-
-    @Test
-    void aChangedReminderTimeIsHonoured() {
-        UUID userId = user("Africa/Lagos", token("lagos"));
-        userWriteService.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, "08:30", null, null));
-
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
-        reminderJob.run(Instant.parse("2026-10-30T07:15:00Z"));
-        assertThat(sentMessages()).isEmpty();
-
-        reminderJob.run(Instant.parse("2026-10-30T07:30:00Z"));
-        assertThat(sentMessages()).hasSize(1);
     }
 
     @Test
