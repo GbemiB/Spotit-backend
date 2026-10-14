@@ -43,10 +43,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-/**
- * The job's own decisions with every collaborator mocked: whose local time is used, which devices are skipped,
- * and how one failure is kept from affecting anyone else. {@link ReminderJobTest} covers the same path end to end.
- */
 @ExtendWith(MockitoExtension.class)
 class ReminderJobUnitTest {
     static final Instant NOW = Instant.parse("2026-10-30T05:00:00Z");
@@ -182,7 +178,6 @@ class ReminderJobUnitTest {
 
     @Test
     void theReminderDateIsTheUsersLocalDateNotTheServers() {
-        // 12:00 UTC on the 30th is already 02:00 on the 31st in Kiritimati (UTC+14).
         Instant noonUtc = Instant.parse("2026-10-30T12:00:00Z");
         User user = user("Pacific/Kiritimati");
         given(List.of(user), device(user, "ExponentPushToken[a]", null));

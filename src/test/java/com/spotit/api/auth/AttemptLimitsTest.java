@@ -25,10 +25,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Runs against a real database on purpose. A failed login or wrong code throws, which rolls the request's
- * transaction back; these tests prove the attempt count is still saved and the limit really takes hold.
- */
 @SpringBootTest
 @ActiveProfiles("test")
 class AttemptLimitsTest {

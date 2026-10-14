@@ -27,7 +27,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** Admin catalogue management in ShopWriteServiceImpl (redeem is covered by ShopWriteServiceImplTest). */
 @ExtendWith(MockitoExtension.class)
 class ShopWriteServiceImplAdminTest {
     @Mock ProductRepository productRepository;

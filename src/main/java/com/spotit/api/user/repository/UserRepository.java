@@ -19,7 +19,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     List<User> findByPendingDeletionAtBefore(Instant instant);
 
-    // Everyone the reminder job has to look at: at least one reminder on and at least one registered device.
     @Query("""
             select u from User u
             where u.pendingDeletionAt is null and u.onboarded = true

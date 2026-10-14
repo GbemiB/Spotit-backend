@@ -13,7 +13,6 @@ class SmtpPropertiesTest {
 
     @Test
     void theDefaultsAloneAreNotEnough() {
-        // What an environment gets from application.yml when the SMTP_* variables were never entered.
         assertThat(new SmtpProperties("smtp.gmail.com", 587, "", "", "", true).isConfigured()).isFalse();
     }
 

@@ -8,11 +8,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Boots the full application context against in-memory H2 and asserts that the SMTP relay comes from the
- * spotit.smtp.* placeholders (application.yml, with test values from application-test.yml) and that no
- * SMTP table exists in the database any more.
- */
 @SpringBootTest
 @ActiveProfiles("test")
 class SmtpPropertiesContextTest {

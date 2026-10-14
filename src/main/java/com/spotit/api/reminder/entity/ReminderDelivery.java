@@ -12,10 +12,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * A reminder that was sent. The unique key (user, type, local date) is what makes a duplicate send impossible,
- * however often the job runs; the rows also back the in-app notification inbox.
- */
 @Entity
 @Table(name = "reminder_deliveries",
         uniqueConstraints = @UniqueConstraint(name = "uq_reminder_deliveries_user_type_date", columnNames = {"user_id", "type", "for_date"}))
@@ -36,7 +32,6 @@ public class ReminderDelivery {
     @Column(nullable = false, length = 30)
     private ReminderType type;
 
-    // The user's local date the reminder was for.
     @Column(name = "for_date", nullable = false)
     private LocalDate forDate;
 

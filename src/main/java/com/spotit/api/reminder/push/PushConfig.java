@@ -10,7 +10,6 @@ import java.time.Duration;
 
 @Configuration
 public class PushConfig {
-    // The reminder job runs on the single scheduler thread, so a hung call to Expo must not be able to stall it.
     @Bean
     RestClientCustomizer pushTimeouts() {
         return builder -> builder.requestFactory(ClientHttpRequestFactories.get(ClientHttpRequestFactorySettings.DEFAULTS

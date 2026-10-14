@@ -11,10 +11,6 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Expo accepts a push and returns a ticket; whether Google or Apple delivered it is only known from the receipt,
- * a while later. Tickets wait here until the job collects their receipts.
- */
 @Entity
 @Table(name = "push_tickets")
 @Getter

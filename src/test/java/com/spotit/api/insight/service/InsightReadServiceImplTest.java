@@ -43,7 +43,6 @@ class InsightReadServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(User.builder().id(userId).cycleLength(28).periodLength(5).build()));
     }
 
-    /** Flow logs for consecutive-day periods starting {@code daysAgo} days back, each {@code length} days long. */
     private void stubPeriods(int length, int... daysAgo) {
         List<CycleLog> logs = new ArrayList<>();
         for (int start : daysAgo) {
@@ -51,7 +50,6 @@ class InsightReadServiceImplTest {
                 logs.add(CycleLog.builder().userId(userId).logDate(today.minusDays(start - d)).flow(FlowIntensity.medium).build());
             }
         }
-        // A non-flow log in between must not split or extend an episode.
         logs.add(CycleLog.builder().userId(userId).logDate(today.minusDays(1)).mood(MoodType.calm).build());
         when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(eq(userId), any(), any())).thenReturn(logs);
     }

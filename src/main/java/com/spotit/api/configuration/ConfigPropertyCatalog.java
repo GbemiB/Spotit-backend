@@ -13,18 +13,6 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-/**
- * The single source of truth that lets the flat, name-keyed admin API
- * ({@code GET/PATCH /api/v1/config/global/**}) keep working now that settings live in typed
- * columns across {@link SecurityConfig} and {@link GlobalConfig} instead of
- * one row per property in {@code global_configuration}.
- *
- * <p>Every property the old table exposed is listed here once, together with the metadata the API
- * response needs (group, description, redaction) and a typed getter/setter pair over a
- * {@link Context} holding the three entities. {@code ConfigurationDomainServiceImpl} drives
- * {@code listAll}/{@code getByName}/{@code update}/{@code listByGroup}/{@code listGroupNames}
- * entirely through this catalog, so the three code paths can never drift apart.
- */
 @Component
 public class ConfigPropertyCatalog {
 
@@ -32,7 +20,6 @@ public class ConfigPropertyCatalog {
 
     public enum Section { SECURITY, GLOBAL }
 
-    /** Mutable holder for the three singleton config rows a getter reads from / a setter writes to. */
     public record Context(SecurityConfig security, GlobalConfig global) {
     }
 
@@ -70,7 +57,6 @@ public class ConfigPropertyCatalog {
     }
 
     private static void addSecurityProperties(List<Property> list) {
-        // --- security_config -------------------------------------------------------------------
         list.add(new Property(PropertyNames.JWT_SECRET, PropertyNames.GROUP_SECURITY,
                 "Encrypted JWT signing secret", Kind.STRING, Section.SECURITY, true, true,
                 c -> c.security().getJwtSecret(),
@@ -98,7 +84,6 @@ public class ConfigPropertyCatalog {
     }
 
     private static void addGlobalProperties(List<Property> list) {
-        // --- global_config ------------------------------------------------------------------
         list.add(new Property(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS,
                 "Max rewarded ad views per user per day", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getAdsDailyLimit(),

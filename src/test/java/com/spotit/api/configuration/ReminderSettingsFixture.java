@@ -4,7 +4,6 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 
-/** The reminder settings as application.yml ships them, for tests that build services by hand. */
 public final class ReminderSettingsFixture {
     private ReminderSettingsFixture() {
     }

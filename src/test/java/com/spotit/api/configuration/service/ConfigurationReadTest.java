@@ -20,10 +20,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.lenient;
 
-/**
- * The typed getters every other service reads its tunables through (those services mock this one, so
- * the real mapping from the stored rows is pinned here), plus group listing.
- */
 @ExtendWith(MockitoExtension.class)
 class ConfigurationReadTest {
     @Mock SecurityConfigRepository securityConfigRepository;

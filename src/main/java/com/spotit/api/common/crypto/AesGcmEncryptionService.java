@@ -16,10 +16,6 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-// @DependsOn: ConfigStoreMigration copies any pre-existing global_configuration.crypto-aes-key
-// into security_config.crypto_aes_key before this bean initialises — without it, an
-// already-deployed database would look keyless here and we'd generate a fresh key, stranding
-// every secret already encrypted with the old one.
 @Service
 @Slf4j
 @DependsOn("configStoreMigration")

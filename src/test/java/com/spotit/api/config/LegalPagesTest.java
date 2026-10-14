@@ -14,10 +14,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * The privacy policy, terms and account-deletion pages are linked from the app store listings, so they
- * must be served as plain HTML to anyone, with no token, while everything else stays authenticated.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

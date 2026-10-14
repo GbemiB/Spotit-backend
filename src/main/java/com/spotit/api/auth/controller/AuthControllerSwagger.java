@@ -39,7 +39,7 @@ final class AuthControllerSwagger {
     static final String VERIFY_OTP_REQUEST_EXAMPLE = """
             {
               "otpId": "9d1e2b0a-1234-4c56-9abc-1234567890ab",
-              "code": "482913"
+              "code": "4829"
             }
             """;
     static final String VERIFY_OTP_200_EXAMPLE = """
@@ -173,7 +173,7 @@ final class AuthControllerSwagger {
     static final String VERIFY_RESET_OTP_REQUEST_EXAMPLE = """
             {
               "email": "amara@example.com",
-              "code": "482913"
+              "code": "4829"
             }
             """;
     static final String VERIFY_RESET_OTP_200_EXAMPLE = """
@@ -189,7 +189,7 @@ final class AuthControllerSwagger {
     static final String RESET_PASSWORD_REQUEST_EXAMPLE = """
             {
               "email": "amara@example.com",
-              "code": "482913",
+              "code": "4829",
               "newPassword": "EvenBetterSecret456"
             }
             """;

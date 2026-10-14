@@ -13,10 +13,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Counts wrong passwords and wrong one-time codes. Every method runs in its own transaction: the caller
- * is about to throw, which rolls its transaction back, and the count has to survive that.
- */
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -29,7 +25,6 @@ public class AuthAttemptRecorder {
     private final OtpCodeRepository otpCodeRepository;
     private final SignupLeadRepository signupLeadRepository;
 
-    /** Returns true if this failure locked the account. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean recordLoginFailure(UUID userId) {
         return userRepository.findById(userId).map(user -> {
@@ -45,7 +40,6 @@ public class AuthAttemptRecorder {
         }).orElse(false);
     }
 
-    /** Returns true if this failure used up the code; it is expired on the spot so a new one must be requested. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean recordOtpFailure(UUID otpId) {
         return otpCodeRepository.findById(otpId).map(otp -> {
@@ -61,7 +55,6 @@ public class AuthAttemptRecorder {
         }).orElse(false);
     }
 
-    /** Signup codes live on the lead itself. Returns true if this failure used up the code. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean recordSignupOtpFailure(UUID leadId) {
         return signupLeadRepository.findById(leadId).map(lead -> {

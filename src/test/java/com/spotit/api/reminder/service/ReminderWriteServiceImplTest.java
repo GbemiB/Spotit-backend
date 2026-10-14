@@ -114,7 +114,6 @@ class ReminderWriteServiceImplTest {
                 Map.of("delivered", "", "gone", PushResult.DEVICE_NOT_REGISTERED), NOW);
 
         verify(deviceRepository).deleteByPushTokenIn(List.of("token-b"));
-        // "pending" has no receipt yet and stays for the next run; "stale" will never get one.
         verify(pushTicketRepository).deleteAll(List.of(delivered, gone, stale));
     }
 

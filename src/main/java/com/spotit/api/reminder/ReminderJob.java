@@ -29,12 +29,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * One pass of the reminder job: work out who is due what in her own local time, record it, push it.
- *
- * <p>The delivery record is written before the push. If the server stops between the two, that reminder is lost
- * rather than sent twice on restart, which is the better failure for a notification.
- */
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -69,7 +63,6 @@ public class ReminderJob {
             try {
                 messages.addAll(remindersFor(user, devices, settings, now));
             } catch (RuntimeException e) {
-                // One user's bad data must not cost everyone else their reminder.
                 log.error("Reminder planning failed for user {}", user.getId(), e);
             }
         }
@@ -87,7 +80,6 @@ public class ReminderJob {
             try {
                 delivery = reminderWriteService.record(user.getId(), planned.type(), localNow.toLocalDate(), planned.body(), now);
             } catch (DataIntegrityViolationException e) {
-                // Another run recorded it in the same instant.
                 continue;
             }
             delivery.ifPresent(sent -> devices.forEach(device -> messages.add(new PushMessage(
@@ -106,7 +98,6 @@ public class ReminderJob {
         reminderWriteService.applyReceipts(tickets, receipts, now);
     }
 
-    // The account's zone follows the phone opened last; a device's own zone covers accounts registered before that existed.
     private static ZoneId zoneOf(User user, List<Device> devices) {
         return Optional.ofNullable(user.getTimeZone())
                 .or(() -> devices.stream().map(Device::getTimeZone).filter(Objects::nonNull).findFirst())
@@ -122,7 +113,6 @@ public class ReminderJob {
         }
     }
 
-    // Version 1.0.0 registered a device id here, not a push address; those rows cannot receive anything.
     static boolean isExpoToken(String pushToken) {
         return pushToken != null && (pushToken.startsWith("ExponentPushToken[") || pushToken.startsWith("ExpoPushToken["));
     }

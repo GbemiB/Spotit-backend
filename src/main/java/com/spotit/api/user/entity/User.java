@@ -73,11 +73,9 @@ public class User {
     @Column(name = "notif_digest", nullable = false)
     private boolean notifDigest;
 
-    // Reminder choice. Null means "use the server default" (ReminderSettings), so nothing needs backfilling.
     @Column(name = "period_days_before", length = 40)
     private String periodDaysBefore;
 
-    // IANA zone of the most recently seen device; reminder times are local to it.
     @Column(name = "time_zone", length = 64)
     private String timeZone;
 

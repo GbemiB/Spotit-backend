@@ -1,23 +1,13 @@
 package com.spotit.api.configuration;
 
-/**
- * Seed values for the typed config tables on a fresh database. {@code ConfigurationDomainServiceImpl}
- * fills any column still left at its zero/null default (whether because the row is brand new or
- * because {@code ConfigStoreMigration} found no legacy row to copy from) with the value here.
- */
 public final class ConfigDefaults {
     private ConfigDefaults() {
     }
 
-    // security_config
     public static final long JWT_ACCESS_TOKEN_TTL_SECONDS = 3600L;
-    // Long-lived on purpose: Spotit is a utility app, not a banking app. A login is meant to last
-    // until the user explicitly signs out. Combined with the sliding-expiry refresh in
-    // AuthWriteServiceImpl.refresh(), an actively-used session effectively never lapses.
     public static final long JWT_REFRESH_TOKEN_TTL_SECONDS = 315_360_000L;
     public static final long OTP_TTL_SECONDS = 600L;
 
-    // global_config
     public static final long ADS_DAILY_LIMIT = 5L;
     public static final long CYCLE_DEFAULT_LENGTH = 28L;
     public static final long CYCLE_DEFAULT_PERIOD_LENGTH = 5L;

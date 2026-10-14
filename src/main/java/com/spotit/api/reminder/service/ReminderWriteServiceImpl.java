@@ -24,7 +24,6 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class ReminderWriteServiceImpl implements ReminderWriteService {
-    // Expo asks callers to wait about 15 minutes before fetching a receipt, and keeps receipts for a day.
     static final Duration RECEIPT_DELAY = Duration.ofMinutes(15);
     static final Duration TICKET_MAX_AGE = Duration.ofHours(24);
     static final Duration INBOX_RETENTION = Duration.ofDays(90);
@@ -33,8 +32,6 @@ public class ReminderWriteServiceImpl implements ReminderWriteService {
     private final PushTicketRepository pushTicketRepository;
     private final DeviceRepository deviceRepository;
 
-    // The exists check keeps the common case quiet; the unique key on (user, type, date) is what actually guarantees
-    // one send. saveAndFlush makes a clash surface here, as a DataIntegrityViolationException, not at some later commit.
     @Override
     @Transactional
     public Optional<ReminderDelivery> record(UUID userId, ReminderType type, LocalDate forDate, String body, Instant now) {
@@ -79,7 +76,6 @@ public class ReminderWriteServiceImpl implements ReminderWriteService {
                 .filter(ticket -> receipts.containsKey(ticket.getTicketId()))
                 .filter(ticket -> !receipts.get(ticket.getTicketId()).isEmpty())
                 .forEach(ticket -> log.warn("Push ticket {} was not delivered: {}", ticket.getTicketId(), receipts.get(ticket.getTicketId())));
-        // A ticket with no receipt yet is kept for the next run, unless Expo will never have one for it any more.
         Instant expired = now.minus(TICKET_MAX_AGE);
         pushTicketRepository.deleteAll(tickets.stream()
                 .filter(ticket -> receipts.containsKey(ticket.getTicketId()) || ticket.getCreatedAt().isBefore(expired))
@@ -92,7 +88,6 @@ public class ReminderWriteServiceImpl implements ReminderWriteService {
         reminderDeliveryRepository.deleteBySentAtBefore(now.minus(INBOX_RETENTION));
     }
 
-    // Google or Apple reported the app as uninstalled: stop sending to that address.
     private void forgetDevices(List<String> pushTokens) {
         if (!pushTokens.isEmpty()) {
             deviceRepository.deleteByPushTokenIn(pushTokens);

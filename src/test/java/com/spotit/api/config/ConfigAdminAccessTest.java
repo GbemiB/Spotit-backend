@@ -18,10 +18,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * The /config endpoints change prices, point values and content for every user, so a normal login
- * must not be enough to reach them: only an email listed in spotit.admin.emails may.
- */
 @SpringBootTest(properties = "spotit.admin.emails=admin@example.com, second-admin@example.com")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

@@ -29,10 +29,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-/**
- * The worked example throughout: a period logged on Monday 5 October 2026, 28-day cycle, 5-day period.
- * Ovulation is then predicted for Sunday 18 October (cycle day 14) and the next period for Monday 2 November.
- */
 @ExtendWith(MockitoExtension.class)
 class ReminderPlannerTest {
     static final LocalDate LAST_PERIOD = LocalDate.of(2026, 10, 5);
@@ -86,12 +82,10 @@ class ReminderPlannerTest {
     @Test
     void shortAndLongCyclesMoveTheDates() {
         user.setCycleLength(21);
-        // 21-day cycle: next period 26 October, ovulation on cycle day 7 = 11 October.
         assertThat(plan(LocalDate.of(2026, 10, 23), MORNING)).containsExactly(period("Your period is predicted to start in 3 days."));
         assertThat(plan(LocalDate.of(2026, 10, 11), MORNING)).extracting(Planned::type).containsExactly(ReminderType.ovulation_today);
 
         user.setCycleLength(35);
-        // 35-day cycle: next period 9 November, ovulation on cycle day 21 = 25 October.
         assertThat(plan(LocalDate.of(2026, 11, 8), MORNING)).containsExactly(period("Your period is predicted to start tomorrow."));
         assertThat(plan(LocalDate.of(2026, 10, 25), MORNING)).extracting(Planned::type).containsExactly(ReminderType.ovulation_today);
     }
@@ -139,7 +133,6 @@ class ReminderPlannerTest {
 
     @Test
     void aPeriodLoggedEarlyCancelsTheRestOfTheCountdown() {
-        // Two days before the predicted start she logs her period: the old countdown no longer applies.
         LocalDate early = NEXT_PERIOD.minusDays(2);
         user.setLastPeriodDate(early);
 
@@ -181,7 +174,6 @@ class ReminderPlannerTest {
         user.setNotifDigest(false);
         LocalDate day = LAST_PERIOD.plusDays(1);
 
-        // Logging a period leaves a flow-only entry on each of its days; that is not yet "today's log".
         when(cycleLogRepository.findByUserIdAndLogDate(user.getId(), day))
                 .thenReturn(Optional.of(CycleLog.builder().flow(FlowIntensity.medium).build()));
         assertThat(plan(day, EVENING)).hasSize(1);
@@ -234,7 +226,6 @@ class ReminderPlannerTest {
     void theWeeklyDigestIsOnlySentOnItsDayAtItsTimeWhenThereIsSomethingToSay() {
         LocalDate sunday = LocalDate.of(2026, 10, 25);
 
-        // Nothing logged: no digest.
         assertThat(plan(sunday, LocalTime.of(19, 0))).isEmpty();
 
         lenient().when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(any(), any(), any()))
@@ -257,7 +248,6 @@ class ReminderPlannerTest {
 
     @Test
     void anAccountNotOpenedForMonthsKeepsGettingCorrectDates() {
-        // Three cycles on with nothing logged, the prediction simply rolls forward 28 days at a time.
         LocalDate later = NEXT_PERIOD.plusDays(28 * 3);
 
         assertThat(plan(later.minusDays(3), MORNING)).containsExactly(period("Your period is predicted to start in 3 days."));
@@ -292,7 +282,6 @@ class ReminderPlannerTest {
 
     @Test
     void aCycleTooShortToEstimateOvulationStillGetsPeriodReminders() {
-        // With 14 days or fewer there is no follicular phase left to place ovulation in.
         user.setCycleLength(14);
         LocalDate next = LAST_PERIOD.plusDays(14);
 
@@ -305,7 +294,6 @@ class ReminderPlannerTest {
 
     @Test
     void periodAndOvulationCanBothArriveTheSameMorning() {
-        // In a 15-day cycle ovulation is estimated for day 1, the same day the next period is predicted.
         user.setCycleLength(15);
         LocalDate next = LAST_PERIOD.plusDays(15);
 
@@ -318,9 +306,7 @@ class ReminderPlannerTest {
     void theMorningAndEveningRemindersDoNotLeakIntoEachOther() {
         user.setNotifDigest(false);
 
-        // 3 days before the period is not a period day, so the evening has nothing to say.
         assertThat(plan(NEXT_PERIOD.minusDays(3), EVENING)).isEmpty();
-        // A period day morning has no countdown reminder, and the log nudge waits for the evening.
         assertThat(plan(LAST_PERIOD.plusDays(1), MORNING)).isEmpty();
     }
 

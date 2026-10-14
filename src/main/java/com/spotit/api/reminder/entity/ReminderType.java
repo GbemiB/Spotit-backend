@@ -1,10 +1,8 @@
 package com.spotit.api.reminder.entity;
 
-/** One value per reminder the job can send. {@code screen} tells the app where a tap on the notification lands. */
 public enum ReminderType {
     period_upcoming("Period reminder", "home"),
     period_today("Period reminder", "home"),
-    // No longer sent (ovulation is announced on the day only); kept so earlier inbox rows still load.
     ovulation_upcoming("Ovulation reminder", "calendar"),
     ovulation_today("Ovulation reminder", "calendar"),
     log_nudge("Daily log", "calendar"),

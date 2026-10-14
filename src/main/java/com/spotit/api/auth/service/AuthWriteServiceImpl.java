@@ -27,7 +27,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +35,6 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthWriteServiceImpl implements AuthWriteService {
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -125,7 +123,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
 
     private long issueLeadOtp(SignupLead lead) {
         long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
-        String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
+        String code = OtpCodes.newCode();
 
         lead.setOtpCodeHash(passwordEncoder.encode(code));
         lead.setOtpExpiresAt(Instant.now().plusSeconds(ttlSeconds));
@@ -241,9 +239,6 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, ErrorMessage.INVALID_REFRESH_TOKEN));
 
-        // Sliding session: every refresh pushes the stored token's expiry out by another full TTL,
-        // so a login that keeps getting used never lapses. Utility app — a session should last
-        // until the user explicitly signs out, not until a fixed timeout.
         stored.setExpiresAt(Instant.now().plusSeconds(jwtService.refreshTokenTtlSeconds()));
         refreshTokenRepository.save(stored);
 

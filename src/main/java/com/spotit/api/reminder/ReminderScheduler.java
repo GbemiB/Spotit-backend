@@ -15,8 +15,6 @@ public class ReminderScheduler {
     private final ReminderJob reminderJob;
     private final ReminderWriteService reminderWriteService;
 
-    // Every 15 minutes: that is the accuracy a reminder time is honoured with. Tests set the cron to "-" (off)
-    // and drive ReminderJob with their own clock.
     @Scheduled(cron = "${spotit.reminders.cron}")
     public void sendDueReminders() {
         try {

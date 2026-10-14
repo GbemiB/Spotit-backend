@@ -51,8 +51,8 @@ spotit:
     evening-time: ${REMINDER_EVENING_TIME:20:00}
     digest-time: ${REMINDER_DIGEST_TIME:19:00}
     digest-day: ${REMINDER_DIGEST_DAY:SUNDAY}
-    period-days-before: ${REMINDER_PERIOD_DAYS_BEFORE:3,2,1,0}
-    max-days-before: ${REMINDER_MAX_DAYS_BEFORE:3}
+    period-days-before: ${REMINDER_PERIOD_DAYS_BEFORE:2,1,0}
+    max-days-before: ${REMINDER_MAX_DAYS_BEFORE:2}
     catch-up-minutes: ${REMINDER_CATCH_UP_MINUTES:120}
 
 logging:

@@ -40,19 +40,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * The whole reminder path against a real database, with only the call to Expo replaced: registration, the job,
- * the delivery record that prevents duplicates, the preference switches and the inbox.
- *
- * <p>Every user here logged a period on 5 October 2026 with a 28-day cycle, so the next one is predicted for
- * 2 November and Friday 30 October is "3 days before". 06:00 in Lagos (UTC+1) is 05:00 UTC.
- */
 @SpringBootTest
 @ActiveProfiles("test")
 class ReminderJobTest {
     static final LocalDate LAST_PERIOD = LocalDate.of(2026, 10, 5);
-    static final Instant LAGOS_0600_3_DAYS_BEFORE = Instant.parse("2026-10-30T05:00:00Z");
-    static final String THREE_DAYS = "Your period is predicted to start in 3 days.";
+    static final Instant LAGOS_0600_2_DAYS_BEFORE = Instant.parse("2026-10-31T05:00:00Z");
+    static final String TWO_DAYS = "Your period is predicted to start in 2 days.";
 
     @Autowired ReminderJob reminderJob;
     @Autowired UserRepository userRepository;
@@ -73,7 +66,6 @@ class ReminderJobTest {
         deviceRepository.deleteAll();
         reminderDeliveryRepository.deleteAll();
         pushTicketRepository.deleteAll();
-        // Expo accepts everything unless a test says otherwise.
         when(pushSender.send(anyList())).thenAnswer(inv -> inv.<List<PushMessage>>getArgument(0).stream()
                 .map(message -> new PushResult(message.to(), "ticket-" + ticketCounter++, null)).toList());
     }
@@ -93,7 +85,6 @@ class ReminderJobTest {
         return "ExponentPushToken[" + name + "]";
     }
 
-    /** Every message handed to the push service so far, across runs. */
     private List<PushMessage> sentMessages() {
         List<PushMessage> all = new ArrayList<>();
         mockingDetails(pushSender).getInvocations().stream()
@@ -106,25 +97,25 @@ class ReminderJobTest {
     void aReminderIsSentAtNineInTheUsersOwnTimeAndOnlyOnce() {
         UUID userId = user("Africa/Lagos", token("lagos"));
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.minusSeconds(60));
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.minusSeconds(60));
         assertThat(sentMessages()).isEmpty();
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(15 * 60));
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(30 * 60));
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(15 * 60));
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(30 * 60));
 
         List<PushMessage> messages = sentMessages();
         assertThat(messages).hasSize(1);
         assertThat(messages.get(0).to()).isEqualTo(token("lagos"));
         assertThat(messages.get(0).title()).isEqualTo("Period reminder");
-        assertThat(messages.get(0).body()).isEqualTo(THREE_DAYS);
+        assertThat(messages.get(0).body()).isEqualTo(TWO_DAYS);
         assertThat(messages.get(0).data()).containsEntry("type", "period_upcoming").containsEntry("screen", "home").containsKey("id");
         assertThat(pushTicketRepository.count()).isEqualTo(1);
 
         NotificationInboxResponse inbox = reminderReadService.getInbox(userId);
         assertThat(inbox.unreadCount()).isEqualTo(1);
         assertThat(inbox.items()).hasSize(1);
-        assertThat(inbox.items().get(0).body()).isEqualTo(THREE_DAYS);
+        assertThat(inbox.items().get(0).body()).isEqualTo(TWO_DAYS);
         assertThat(inbox.items().get(0).id()).hasToString(messages.get(0).data().get("id"));
 
         reminderWriteService.markAllRead(userId);
@@ -136,13 +127,12 @@ class ReminderJobTest {
     void theCountdownContinuesOnTheFollowingDays() {
         user("Africa/Lagos", token("lagos"));
 
-        for (int day = 0; day <= 3; day++) {
-            reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(day * 86_400L));
+        for (int day = 0; day <= 2; day++) {
+            reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(day * 86_400L));
         }
 
         assertThat(sentMessages()).extracting(PushMessage::body).containsExactly(
-                THREE_DAYS,
-                "Your period is predicted to start in 2 days.",
+                TWO_DAYS,
                 "Your period is predicted to start tomorrow.",
                 "Your period may start today. Tap to log it.");
     }
@@ -152,11 +142,10 @@ class ReminderJobTest {
         user("Africa/Lagos", token("lagos"));
         user("America/New_York", token("newyork"));
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
         assertThat(sentMessages()).extracting(PushMessage::to).containsExactly(token("lagos"));
 
-        // 06:00 in New York on 30 October 2026 (daylight time, UTC-4) is 10:00 UTC.
-        reminderJob.run(Instant.parse("2026-10-30T10:00:00Z"));
+        reminderJob.run(Instant.parse("2026-10-31T10:00:00Z"));
         assertThat(sentMessages()).extracting(PushMessage::to).containsExactly(token("lagos"), token("newyork"));
     }
 
@@ -165,10 +154,9 @@ class ReminderJobTest {
         UUID userId = user("Africa/Lagos", token("lagos"));
         userWriteService.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, null, null));
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
         assertThat(sentMessages()).isEmpty();
 
-        // 18 October is her predicted ovulation day.
         reminderJob.run(Instant.parse("2026-10-18T05:00:00Z"));
         assertThat(sentMessages()).extracting(PushMessage::body).containsExactly("Today is your predicted ovulation day.");
     }
@@ -177,33 +165,32 @@ class ReminderJobTest {
     void uncheckingACountdownDaySkipsOnlyThatDay() {
         UUID userId = user("Africa/Lagos", token("lagos"));
         userWriteService.updateNotificationPrefs(userId,
-                new UpdateNotificationPrefsRequest(null, null, null, null, List.of(2, 0)));
+                new UpdateNotificationPrefsRequest(null, null, null, null, List.of(1, 0)));
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
         assertThat(sentMessages()).isEmpty();
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(86_400));
-        assertThat(sentMessages()).extracting(PushMessage::body).containsExactly("Your period is predicted to start in 2 days.");
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(86_400));
+        assertThat(sentMessages()).extracting(PushMessage::body).containsExactly("Your period is predicted to start tomorrow.");
     }
 
     @Test
     void aRunMissedDuringARestartIsCaughtUpWithinTwoHoursButNotLater() {
         user("Africa/Lagos", token("ontime"));
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(90 * 60));
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(90 * 60));
         assertThat(sentMessages()).hasSize(1);
 
         deviceRepository.deleteAll();
         user("Africa/Lagos", token("toolate"));
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(120 * 60));
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(120 * 60));
         assertThat(sentMessages()).hasSize(1);
     }
 
     @Test
     void everyPhoneOnTheAccountGetsTheReminderButAnOldDeviceIdRowDoesNot() {
-        // Version 1.0.0 registered a device id where the push address now goes.
         user("Africa/Lagos", token("phone"), token("tablet"), "a1b2c3d4-device-id");
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
 
         assertThat(sentMessages()).extracting(PushMessage::to).containsExactlyInAnyOrder(token("phone"), token("tablet"));
         assertThat(reminderDeliveryRepository.count()).isEqualTo(1);
@@ -214,7 +201,7 @@ class ReminderJobTest {
         UUID userId = user("Africa/Lagos", token("lagos"));
         deviceWriteService.unregister(token("lagos"));
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
 
         assertThat(sentMessages()).isEmpty();
         assertThat(reminderReadService.getInbox(userId).items()).isEmpty();
@@ -227,8 +214,8 @@ class ReminderJobTest {
         assertThat(reminderSettings.eveningTime()).isEqualTo(LocalTime.of(20, 0));
         assertThat(reminderSettings.digestDay()).isEqualTo(DayOfWeek.SUNDAY);
         assertThat(reminderSettings.digestTime()).isEqualTo(LocalTime.of(19, 0));
-        assertThat(reminderSettings.periodDaysBefore()).containsExactly(3, 2, 1, 0);
-        assertThat(reminderSettings.maxDaysBefore()).isEqualTo(3);
+        assertThat(reminderSettings.periodDaysBefore()).containsExactly(2, 1, 0);
+        assertThat(reminderSettings.maxDaysBefore()).isEqualTo(2);
         assertThat(reminderSettings.catchUpMinutes()).isEqualTo(120);
     }
 
@@ -240,7 +227,7 @@ class ReminderJobTest {
                         ? new PushResult(message.to(), null, PushResult.DEVICE_NOT_REGISTERED)
                         : new PushResult(message.to(), "ticket-kept", null)).toList());
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
 
         assertThat(deviceRepository.findByPushToken(token("gone"))).isEmpty();
         assertThat(deviceRepository.findByPushToken(token("kept"))).isPresent();
@@ -249,15 +236,14 @@ class ReminderJobTest {
     @Test
     void receiptsAreCollectedOnALaterRunAndDeadDevicesRemoved() {
         user("Africa/Lagos", token("lagos"));
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE);
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE);
         String ticketId = pushTicketRepository.findAll().get(0).getTicketId();
         when(pushSender.receipts(List.of(ticketId))).thenReturn(Map.of(ticketId, PushResult.DEVICE_NOT_REGISTERED));
 
-        // Too soon: Expo asks for about 15 minutes before a receipt is fetched.
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(10 * 60));
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(10 * 60));
         verify(pushSender, never()).receipts(anyList());
 
-        reminderJob.run(LAGOS_0600_3_DAYS_BEFORE.plusSeconds(16 * 60));
+        reminderJob.run(LAGOS_0600_2_DAYS_BEFORE.plusSeconds(16 * 60));
         assertThat(pushTicketRepository.count()).isZero();
         assertThat(deviceRepository.findByPushToken(token("lagos"))).isEmpty();
     }

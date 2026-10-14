@@ -15,7 +15,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Binds {@code spotit.reminders.*} the way Spring does at start-up, from plain text as an env var would give it. */
 class ReminderSettingsTest {
 
     private static Map<String, String> shipped() {
@@ -62,7 +61,6 @@ class ReminderSettingsTest {
         assertThat(settings.enabled()).isFalse();
         assertThat(settings.morningTime()).isEqualTo(LocalTime.of(7, 30));
         assertThat(settings.digestDay()).isEqualTo(DayOfWeek.MONDAY);
-        // Stored largest first with repeats removed, as the countdown is read.
         assertThat(settings.periodDaysBefore()).containsExactly(5, 1, 0);
         assertThat(settings.maxDaysBefore()).isEqualTo(5);
         assertThat(settings.catchUpMinutes()).isEqualTo(30);

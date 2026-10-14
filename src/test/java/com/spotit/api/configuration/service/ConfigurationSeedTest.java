@@ -22,7 +22,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** The startup seeder in {@link ConfigurationDomainServiceImpl#seedDefaults()}. */
 @ExtendWith(MockitoExtension.class)
 class ConfigurationSeedTest {
     @Mock SecurityConfigRepository securityConfigRepository;

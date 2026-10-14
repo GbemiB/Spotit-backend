@@ -96,7 +96,6 @@ public class UserWriteServiceImpl implements UserWriteService {
         }
         ReminderSettings settings = reminderSettings;
         if (request.periodDaysBefore() != null) {
-            // No countdown day left means the reminder is off; the last non-empty choice is kept for when it comes back on.
             if (request.periodDaysBefore().isEmpty()) {
                 user.setNotifPeriod(false);
             } else {
@@ -118,7 +117,6 @@ public class UserWriteServiceImpl implements UserWriteService {
     @Transactional
     public OnboardingResponse completeOnboarding(UUID userId, OnboardingRequest request) {
         User user = requireUser(userId);
-        // One day of leeway so a user who turns 13 today in a timezone ahead of UTC isn't turned away.
         if (request.dob().isAfter(LocalDate.now(ZoneOffset.UTC).plusDays(1).minusYears(MIN_AGE_YEARS))) {
             throw new ApiException(ErrorCode.AGE_BELOW_MINIMUM, ErrorMessage.AGE_BELOW_MINIMUM);
         }
@@ -184,7 +182,6 @@ public class UserWriteServiceImpl implements UserWriteService {
         pointsHistoryRepository.deleteByUserId(userId);
         userBadgeRepository.deleteByUserId(userId);
         userChallengeProgressRepository.deleteByUserId(userId);
-        // Sent reminders quote cycle predictions, so they go with the rest of the data.
         reminderDeliveryRepository.deleteByUserId(userId);
 
         user.setOnboarded(false);

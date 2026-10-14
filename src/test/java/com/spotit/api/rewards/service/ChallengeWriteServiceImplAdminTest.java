@@ -25,7 +25,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** Admin definition management in ChallengeWriteServiceImpl (claim is covered by ChallengeWriteServiceImplTest). */
 @ExtendWith(MockitoExtension.class)
 class ChallengeWriteServiceImplAdminTest {
     @Mock ChallengeDefinitionRepository challengeDefinitionRepository;

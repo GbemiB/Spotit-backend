@@ -16,15 +16,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.UUID;
 
-/**
- * Standalone MockMvc wiring shared by the controller tests: the real @CurrentUserId resolver, exception
- * handler and ApiResponse envelope advice around a controller whose services are mocks — so each test
- * pins routing, validation, status codes and the JSON envelope without booting the application context.
- */
 public final class ControllerTestSupport {
     public static final UUID USER_ID = UUID.fromString("7c9e6679-7425-40de-944b-e07fc1f90ae7");
 
-    // Mirrors Spring Boot's auto-configured mapper: java.time values serialise as ISO-8601 strings.
     private static final ObjectMapper JSON = Jackson2ObjectMapperBuilder.json()
             .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .build();
@@ -40,7 +34,6 @@ public final class ControllerTestSupport {
                 .build();
     }
 
-    /** Puts USER_ID into the SecurityContext, as JwtAuthenticationFilter would for a valid bearer token. */
     public static void authenticate() {
         SecurityUser user = new SecurityUser(USER_ID, "jane@example.com", false, false);
         SecurityContextHolder.getContext()

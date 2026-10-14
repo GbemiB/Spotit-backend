@@ -16,18 +16,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Sends through Expo's push service, which hands each message to Google (Android) or Apple (iPhone).
- * A call that fails on the network, with a 5xx or with 429 is retried; anything else is reported as an error
- * result so the reminder job can carry on with the next batch.
- */
 @Component
 @Slf4j
 public class ExpoPushSender implements PushSender {
     static final int SEND_BATCH = 100;
     static final int RECEIPT_BATCH = 300;
     static final String CHANNEL_ID = "reminders";
-    // A reminder that cannot reach the phone the same day is dropped rather than arriving stale.
     static final int TTL_SECONDS = 12 * 60 * 60;
     private static final int ATTEMPTS = 3;
     private static final String FAILED = "SendFailed";
@@ -110,7 +104,6 @@ public class ExpoPushSender implements PushSender {
         return receipts;
     }
 
-    /** Returns the response's {@code data} node, or null when the call could not be completed. */
     private JsonNode post(String path, Object body) {
         for (int attempt = 1; attempt <= ATTEMPTS; attempt++) {
             try {

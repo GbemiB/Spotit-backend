@@ -6,7 +6,6 @@ import com.spotit.api.user.entity.User;
 
 import java.util.List;
 
-/** Resolves a user's reminder choices against the server settings. Reminder times are the server's, not hers. Shared by the preferences API and the reminder job. */
 public final class NotificationPrefsMapper {
     private NotificationPrefsMapper() {
     }

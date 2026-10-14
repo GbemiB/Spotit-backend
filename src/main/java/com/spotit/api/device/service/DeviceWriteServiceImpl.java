@@ -31,7 +31,6 @@ public class DeviceWriteServiceImpl implements DeviceWriteService {
         String timeZone = validZone(request.timeZone());
         if (timeZone != null) {
             device.setTimeZone(timeZone);
-            // Reminder times follow the phone the user opened last.
             userRepository.findById(userId).ifPresent(user -> {
                 user.setTimeZone(timeZone);
                 userRepository.save(user);

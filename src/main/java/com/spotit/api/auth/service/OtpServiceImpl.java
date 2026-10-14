@@ -18,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -26,7 +25,6 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final OtpCodeRepository otpCodeRepository;
     private final PasswordEncoder passwordEncoder;
@@ -40,7 +38,7 @@ public class OtpServiceImpl implements OtpService {
     public OtpCode issue(User user, OtpPurpose purpose) {
         long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
         otpCodeRepository.invalidateActive(user.getId(), purpose);
-        String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
+        String code = OtpCodes.newCode();
 
         OtpCode otp = OtpCode.builder()
                 .userId(user.getId())
