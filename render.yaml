@@ -3,6 +3,7 @@ services:
     name: spotit-backend-dev
     runtime: docker
     region: oregon
+    repo: https://github.com/GbemiB/Spotit-backend
     plan: starter
     branch: dev
     # Deploy only after the GitHub Actions CI job (tests, checkstyle, coverage) passes on this branch.
@@ -59,6 +60,7 @@ services:
   - type: web
     name: spotit-backend-prod
     runtime: docker
+    repo: https://github.com/GbemiB/Spotit-backend
     region: oregon
     plan: starter
     branch: main
