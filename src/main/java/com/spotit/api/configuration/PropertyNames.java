@@ -27,6 +27,10 @@ public final class PropertyNames {
     public static final String LOG_MAX_PERIOD_RANGE_DAYS = "log-max-period-range-days";
     public static final String REWARDS_HISTORY_PAGE_SIZE = "rewards-history-page-size";
     public static final String CONTENT_FEED_DEFAULT_LIMIT = "content-feed-default-limit";
+    public static final String APP_MIN_BUILD_ANDROID = "app-min-build-android";
+    public static final String APP_MIN_BUILD_IOS = "app-min-build-ios";
+    public static final String APP_STORE_URL_ANDROID = "app-store-url-android";
+    public static final String APP_STORE_URL_IOS = "app-store-url-ios";
 
     public static final String GROUP_SECURITY = "security";
     public static final String GROUP_POINTS = "points";
@@ -38,6 +42,7 @@ public final class PropertyNames {
     public static final String GROUP_LOGS = "logs";
     public static final String GROUP_REWARDS = "rewards";
     public static final String GROUP_CONTENT = "content";
+    public static final String GROUP_APP = "app";
 
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";

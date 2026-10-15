@@ -79,6 +79,18 @@ public class GlobalConfig {
     @Column(name = "content_feed_default_limit", nullable = false)
     private long contentFeedDefaultLimit;
 
+    @Column(name = "app_min_build_android")
+    private Long appMinBuildAndroid;
+
+    @Column(name = "app_min_build_ios")
+    private Long appMinBuildIos;
+
+    @Column(name = "app_store_url_android")
+    private String appStoreUrlAndroid;
+
+    @Column(name = "app_store_url_ios")
+    private String appStoreUrlIos;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

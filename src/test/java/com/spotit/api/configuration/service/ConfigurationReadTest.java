@@ -74,6 +74,35 @@ class ConfigurationReadTest {
     }
 
     @Test
+    void unsetAppVersionSettingsTurnTheCheckOffAndUseThePlayListing() {
+        assertThat(service.getAppMinBuildAndroid()).isZero();
+        assertThat(service.getAppMinBuildIos()).isZero();
+        assertThat(service.getAppStoreUrlAndroid()).isEqualTo("https://play.google.com/store/apps/details?id=com.spotit.app");
+        assertThat(service.getAppStoreUrlIos()).isNull();
+    }
+
+    @Test
+    void setAppVersionSettingsAreReturned() {
+        lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
+                .id(GlobalConfig.SINGLETON_ID)
+                .appMinBuildAndroid(14L).appMinBuildIos(3L)
+                .appStoreUrlAndroid("market://details?id=com.spotit.app").appStoreUrlIos("https://apps.apple.com/app/id1")
+                .build()));
+
+        assertThat(service.getAppMinBuildAndroid()).isEqualTo(14);
+        assertThat(service.getAppMinBuildIos()).isEqualTo(3);
+        assertThat(service.getAppStoreUrlAndroid()).isEqualTo("market://details?id=com.spotit.app");
+        assertThat(service.getAppStoreUrlIos()).isEqualTo("https://apps.apple.com/app/id1");
+    }
+
+    @Test
+    void appSettingsAreListedInTheirOwnGroup() {
+        assertThat(service.listByGroup(PropertyNames.GROUP_APP)).extracting(GlobalConfigurationResponse::name)
+                .containsExactlyInAnyOrder(PropertyNames.APP_MIN_BUILD_ANDROID, PropertyNames.APP_MIN_BUILD_IOS,
+                        PropertyNames.APP_STORE_URL_ANDROID, PropertyNames.APP_STORE_URL_IOS);
+    }
+
+    @Test
     void listByAnUnknownGroupIsEmpty() {
         assertThat(service.listByGroup("smtp")).isEmpty();
     }

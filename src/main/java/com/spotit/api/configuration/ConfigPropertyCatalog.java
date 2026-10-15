@@ -152,6 +152,26 @@ public class ConfigPropertyCatalog {
                 "Default number of items returned by the content feed", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getContentFeedDefaultLimit(),
                 (c, v) -> c.global().setContentFeedDefaultLimit((Long) v)));
+        list.add(new Property(PropertyNames.APP_MIN_BUILD_ANDROID, PropertyNames.GROUP_APP,
+                "Lowest Android build number (versionCode) allowed to run; older builds must update. 0 or unset turns the check off",
+                Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getAppMinBuildAndroid(),
+                (c, v) -> c.global().setAppMinBuildAndroid((Long) v)));
+        list.add(new Property(PropertyNames.APP_MIN_BUILD_IOS, PropertyNames.GROUP_APP,
+                "Lowest iOS build number allowed to run; older builds must update. 0 or unset turns the check off",
+                Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getAppMinBuildIos(),
+                (c, v) -> c.global().setAppMinBuildIos((Long) v)));
+        list.add(new Property(PropertyNames.APP_STORE_URL_ANDROID, PropertyNames.GROUP_APP,
+                "Store page the Android update screen opens; unset uses the Google Play listing",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getAppStoreUrlAndroid(),
+                (c, v) -> c.global().setAppStoreUrlAndroid((String) v)));
+        list.add(new Property(PropertyNames.APP_STORE_URL_IOS, PropertyNames.GROUP_APP,
+                "Store page the iOS update screen opens; unset hides the update button on iOS",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getAppStoreUrlIos(),
+                (c, v) -> c.global().setAppStoreUrlIos((String) v)));
         list.sort(Comparator.comparing(Property::name));
     }
 
