@@ -262,6 +262,34 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
+    public long getAppMinBuildAndroid() {
+        Long value = loadGlobal().getAppMinBuildAndroid();
+        return value == null ? 0L : value;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getAppMinBuildIos() {
+        Long value = loadGlobal().getAppMinBuildIos();
+        return value == null ? 0L : value;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getAppStoreUrlAndroid() {
+        String value = loadGlobal().getAppStoreUrlAndroid();
+        return value == null || value.isBlank() ? ConfigDefaults.APP_STORE_URL_ANDROID : value;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getAppStoreUrlIos() {
+        String value = loadGlobal().getAppStoreUrlIos();
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<GlobalConfigurationResponse> listAll() {
         Context context = loadContext();
         return catalog.all().stream().map(property -> toResponse(property, context)).toList();

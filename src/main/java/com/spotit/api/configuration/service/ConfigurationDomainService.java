@@ -48,6 +48,14 @@ public interface ConfigurationDomainService {
 
     int getContentFeedDefaultLimit();
 
+    long getAppMinBuildAndroid();
+
+    long getAppMinBuildIos();
+
+    String getAppStoreUrlAndroid();
+
+    String getAppStoreUrlIos();
+
     List<GlobalConfigurationResponse> listAll();
 
     List<String> listGroupNames();
