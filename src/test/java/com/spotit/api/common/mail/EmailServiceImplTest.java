@@ -10,11 +10,6 @@ import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * EmailServiceImpl builds a fresh JavaMailSender from the SMTP properties on every send. Pointing it at a
- * closed local port exercises the whole build-and-send path (STARTTLS and implicit-SSL variants, with and
- * without an attachment) without a real relay: success is a MailSendException from the refused connection.
- */
 class EmailServiceImplTest {
 
     private static EmailServiceImpl relayAt(int port, boolean useTls) {
@@ -22,7 +17,6 @@ class EmailServiceImplTest {
     }
 
     private static EmailServiceImpl unconfigured() {
-        // What an environment gets when the SMTP_* variables were never entered in Render.
         return new EmailServiceImpl(new SmtpProperties("smtp.gmail.com", 587, "", "", "", true));
     }
 

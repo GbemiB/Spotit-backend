@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Pattern;
 
 public record RegisterDeviceRequest(
         @NotBlank String pushToken,
-        @NotBlank @Pattern(regexp = "ios|android") String platform
+        @NotBlank @Pattern(regexp = "ios|android") String platform,
+        String timeZone
 ) {
 }

@@ -30,9 +30,6 @@ springdoc:
   swagger-ui:
     path: /api/v1/swagger-ui.html
 
-# SMTP relay for all transactional mail (SmtpProperties). The only source of these values: each environment
-# supplies them as env vars (entered in the Render dashboard on a new deployment); nothing is stored in the DB.
-# Mail is disabled — sends fail with "SMTP is not configured" — until username, password and from-address are set.
 spotit:
   smtp:
     host: ${SMTP_HOST:smtp.gmail.com}
@@ -41,6 +38,22 @@ spotit:
     password: ${SMTP_PASSWORD:}
     from-address: ${SMTP_FROM_ADDRESS:}
     use-tls: ${SMTP_USE_TLS:true}
+  # Comma-separated emails allowed to call /api/v1/config/**; empty = nobody
+  admin:
+    emails: ${ADMIN_EMAILS:}
+  push:
+    base-url: ${EXPO_PUSH_BASE_URL:https://exp.host/--/api/v2/push}
+    expo-access-token: ${EXPO_ACCESS_TOKEN:}
+  reminders:
+    enabled: ${REMINDERS_ENABLED:true}
+    cron: ${REMINDERS_CRON:0 */15 * * * *}
+    morning-time: ${REMINDER_MORNING_TIME:06:00}
+    evening-time: ${REMINDER_EVENING_TIME:20:00}
+    digest-time: ${REMINDER_DIGEST_TIME:19:00}
+    digest-day: ${REMINDER_DIGEST_DAY:SUNDAY}
+    period-days-before: ${REMINDER_PERIOD_DAYS_BEFORE:2,1,0}
+    max-days-before: ${REMINDER_MAX_DAYS_BEFORE:2}
+    catch-up-minutes: ${REMINDER_CATCH_UP_MINUTES:120}
 
 logging:
   level:

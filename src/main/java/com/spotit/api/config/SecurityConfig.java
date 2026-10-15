@@ -1,6 +1,7 @@
 package com.spotit.api.config;
 
 import com.spotit.api.common.security.JwtAuthenticationFilter;
+import com.spotit.api.common.security.RestAccessDeniedHandler;
 import com.spotit.api.common.security.RestAuthEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -33,24 +34,29 @@ public class SecurityConfig {
             "/api/v1/api-docs/**",
             "/api/v1/swagger-ui/**",
             "/api/v1/swagger-ui.html",
-            // Public legal pages (src/main/resources/static) linked from the app store listings.
             "/privacy.html",
             "/terms.html",
             "/delete-account.html",
             "/actuator/health"
     };
 
+    private static final String ADMIN_PATHS = "/api/v1/config/**";
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RestAuthEntryPoint restAuthEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(eh -> eh.authenticationEntryPoint(restAuthEntryPoint))
+                .exceptionHandling(eh -> eh
+                        .authenticationEntryPoint(restAuthEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers(ADMIN_PATHS).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

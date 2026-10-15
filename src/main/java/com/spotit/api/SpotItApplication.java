@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ConfigurationPropertiesScan
 @EnableScheduling
 public class SpotItApplication {
-    // Not private: Spring subclasses @Configuration classes, so it needs a visible constructor.
     protected SpotItApplication() {
     }
 

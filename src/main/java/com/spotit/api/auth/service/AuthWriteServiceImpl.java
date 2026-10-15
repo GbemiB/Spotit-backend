@@ -27,7 +27,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +35,6 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthWriteServiceImpl implements AuthWriteService {
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -47,6 +45,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private final OtpService otpService;
     private final EmailService emailService;
     private final ConfigurationDomainService configurationDomainService;
+    private final AuthAttemptRecorder attemptRecorder;
 
     @Override
     @Transactional
@@ -73,6 +72,9 @@ public class AuthWriteServiceImpl implements AuthWriteService {
             throw new ApiException(ErrorCode.OTP_EXPIRED, ErrorMessage.CODE_EXPIRED);
         }
         if (!passwordEncoder.matches(request.code(), lead.getOtpCodeHash())) {
+            if (attemptRecorder.recordSignupOtpFailure(lead.getId())) {
+                throw new ApiException(ErrorCode.OTP_EXPIRED, ErrorMessage.TOO_MANY_CODE_ATTEMPTS);
+            }
             throw new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE);
         }
         lead.setOtpVerified(true);
@@ -121,11 +123,11 @@ public class AuthWriteServiceImpl implements AuthWriteService {
 
     private long issueLeadOtp(SignupLead lead) {
         long ttlSeconds = configurationDomainService.getOtpTtlSeconds();
-        String code = "%06d".formatted(RANDOM.nextInt(1_000_000));
+        String code = OtpCodes.newCode();
 
-        log.warn("[OTP] signup code for lead {} ({}): {}", lead.getId(), lead.getEmail(), code);
         lead.setOtpCodeHash(passwordEncoder.encode(code));
         lead.setOtpExpiresAt(Instant.now().plusSeconds(ttlSeconds));
+        lead.setOtpFailedAttempts(0);
         signupLeadRepository.save(lead);
 
         String greeting = lead.getFirstName() == null || lead.getFirstName().isBlank() ? "there" : lead.getFirstName();
@@ -146,9 +148,16 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS));
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(Instant.now())) {
+            throw new ApiException(ErrorCode.ACCOUNT_LOCKED, ErrorMessage.ACCOUNT_LOCKED);
+        }
         if (!passwordEncoder.matches(request.password().strip(), user.getPasswordHash())) {
+            if (attemptRecorder.recordLoginFailure(user.getId())) {
+                throw new ApiException(ErrorCode.ACCOUNT_LOCKED, ErrorMessage.ACCOUNT_LOCKED);
+            }
             throw new ApiException(ErrorCode.INVALID_CREDENTIALS, ErrorMessage.INVALID_CREDENTIALS);
         }
+        clearLoginFailures(user);
 
         if (!user.isEmailVerified()) {
             OtpCode otp = otpService.issue(user, OtpPurpose.signup);
@@ -192,7 +201,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public void verifyResetOtp(ResetOtpVerifyRequest request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_CODE, ErrorMessage.INVALID_OR_USED_CODE));
@@ -207,6 +216,8 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         otpService.verifyLatest(user.getId(), request.code(), OtpPurpose.password_reset);
         enforcePasswordHistory(user.getId(), request.newPassword().strip());
         user.setPasswordHash(passwordEncoder.encode(request.newPassword().strip()));
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(user.getId());
         recordPasswordHistory(user.getId(), user.getPasswordHash());
@@ -228,9 +239,6 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REFRESH_TOKEN, ErrorMessage.INVALID_REFRESH_TOKEN));
 
-        // Sliding session: every refresh pushes the stored token's expiry out by another full TTL,
-        // so a login that keeps getting used never lapses. Utility app — a session should last
-        // until the user explicitly signs out, not until a fixed timeout.
         stored.setExpiresAt(Instant.now().plusSeconds(jwtService.refreshTokenTtlSeconds()));
         refreshTokenRepository.save(stored);
 
@@ -254,6 +262,15 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(userId);
         return new AccountDeletionResponse(ErrorMessage.ACCOUNT_DELETION_SCHEDULED, purgeBy);
+    }
+
+    private void clearLoginFailures(User user) {
+        boolean hasFailures = user.getFailedLoginAttempts() != null && user.getFailedLoginAttempts() > 0;
+        if (hasFailures || user.getLockedUntil() != null) {
+            user.setFailedLoginAttempts(0);
+            user.setLockedUntil(null);
+            userRepository.save(user);
+        }
     }
 
     private void enforcePasswordHistory(UUID userId, String rawPassword) {

@@ -53,13 +53,15 @@ class AuthWriteServiceImplTest {
     EmailService emailService;
     @Mock
     ConfigurationDomainService configurationDomainService;
+    @Mock
+    AuthAttemptRecorder attemptRecorder;
 
     AuthWriteServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, passwordHistoryRepository,
-                signupLeadRepository, passwordEncoder, jwtService, otpService, emailService, configurationDomainService);
+                signupLeadRepository, passwordEncoder, jwtService, otpService, emailService, configurationDomainService, attemptRecorder);
     }
 
     private User existingUser(UUID id) {
@@ -227,6 +229,79 @@ class AuthWriteServiceImplTest {
                 .isInstanceOf(ApiException.class)
                 .extracting(e -> ((ApiException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_CREDENTIALS);
+    }
+
+    @Test
+    void loginCountsAWrongPassword() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.of(existingUser(id)));
+        when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.login(new LoginRequest("jane@example.com", "wrong")))
+                .isInstanceOf(ApiException.class);
+
+        verify(attemptRecorder).recordLoginFailure(id);
+    }
+
+    @Test
+    void loginReportsTheLockWhenAWrongPasswordUsesUpTheLastAttempt() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.of(existingUser(id)));
+        when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
+        when(attemptRecorder.recordLoginFailure(id)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.login(new LoginRequest("jane@example.com", "wrong")))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.ACCOUNT_LOCKED);
+    }
+
+    @Test
+    void loginRejectsALockedAccountWithoutCheckingThePassword() {
+        UUID id = UUID.randomUUID();
+        User user = existingUser(id);
+        user.setLockedUntil(Instant.now().plusSeconds(600));
+        when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.login(new LoginRequest("jane@example.com", "correct")))
+                .isInstanceOf(ApiException.class)
+                .extracting(e -> ((ApiException) e).getErrorCode())
+                .isEqualTo(ErrorCode.ACCOUNT_LOCKED);
+
+        verifyNoInteractions(passwordEncoder);
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+    }
+
+    @Test
+    void loginAfterTheLockHasPassedSucceedsAndClearsTheCount() {
+        UUID id = UUID.randomUUID();
+        User user = existingUser(id);
+        user.setLockedUntil(Instant.now().minusSeconds(5));
+        user.setFailedLoginAttempts(3);
+        when(userRepository.findByEmailIgnoreCase("jane@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("correct", "hashed")).thenReturn(true);
+        stubTokenIssuance(id);
+
+        TokenResponse response = service.login(new LoginRequest("jane@example.com", "correct"));
+
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(user.getLockedUntil()).isNull();
+        assertThat(user.getFailedLoginAttempts()).isZero();
+        verify(userRepository).save(user);
+        verify(attemptRecorder, never()).recordLoginFailure(any());
+    }
+
+    @Test
+    void verifySignupOtpCountsAWrongCodeAndExpiresItOnTheLastAttempt() {
+        UUID leadId = UUID.randomUUID();
+        when(signupLeadRepository.findById(leadId)).thenReturn(Optional.of(existingLead(leadId, false)));
+        when(passwordEncoder.matches("000000", "hashed-code")).thenReturn(false);
+        when(attemptRecorder.recordSignupOtpFailure(leadId)).thenReturn(false, true);
+
+        assertThatThrownBy(() -> service.verifySignupOtp(new OtpVerifyRequest(leadId, "000000")))
+                .extracting(e -> ((ApiException) e).getErrorCode()).isEqualTo(ErrorCode.INVALID_CODE);
+        assertThatThrownBy(() -> service.verifySignupOtp(new OtpVerifyRequest(leadId, "000000")))
+                .extracting(e -> ((ApiException) e).getErrorCode()).isEqualTo(ErrorCode.OTP_EXPIRED);
     }
 
     @Test

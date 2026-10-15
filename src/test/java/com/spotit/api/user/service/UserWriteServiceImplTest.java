@@ -1,5 +1,7 @@
 package com.spotit.api.user.service;
 
+import com.spotit.api.reminder.repository.ReminderDeliveryRepository;
+import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
@@ -58,6 +60,7 @@ class UserWriteServiceImplTest {
     @Mock PointsHistoryRepository pointsHistoryRepository;
     @Mock UserBadgeRepository userBadgeRepository;
     @Mock UserChallengeProgressRepository userChallengeProgressRepository;
+    @Mock ReminderDeliveryRepository reminderDeliveryRepository;
     @Mock ConfigurationDomainService configurationDomainService;
     @Mock UserReadService userReadService;
     @Mock EmailService emailService;
@@ -69,7 +72,8 @@ class UserWriteServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new UserWriteServiceImpl(userRepository, exportJobRepository, cycleLogRepository, pointsHistoryRepository,
-                userBadgeRepository, userChallengeProgressRepository, configurationDomainService, userReadService, emailService);
+                userBadgeRepository, userChallengeProgressRepository, reminderDeliveryRepository, configurationDomainService,
+                ReminderSettingsFixture.defaults(), userReadService, emailService);
         user = User.builder().id(userId).firstName("Jane").lastName("Doe").email("jane@example.com").goal(Goal.track)
                 .cycleLength(28).periodLength(5).themePref(ThemePref.system).onboarded(true).points(620).streak(4).longestStreak(9)
                 .notifPeriod(true).notifOvulation(true).notifDailyLog(true).notifDigest(false).build();
@@ -123,16 +127,49 @@ class UserWriteServiceImplTest {
 
     @Test
     void updateNotificationPrefsAppliesOnlyTheSentFlags() {
-        NotificationPrefsResponse response = service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, true));
+        NotificationPrefsResponse response = service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, null, null, true, null));
 
-        assertThat(response).isEqualTo(new NotificationPrefsResponse(false, true, true, true));
+        assertThat(response).isEqualTo(new NotificationPrefsResponse(false, true, true, true, "06:00", "20:00", List.of(3, 2, 1, 0), 3));
         verify(userRepository).save(user);
     }
 
     @Test
     void updateNotificationPrefsCanChangeEveryFlag() {
-        assertThat(service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, false, false, false)))
-                .isEqualTo(new NotificationPrefsResponse(false, false, false, false));
+        assertThat(service.updateNotificationPrefs(userId, new UpdateNotificationPrefsRequest(false, false, false, false, null)))
+                .isEqualTo(new NotificationPrefsResponse(false, false, false, false, "06:00", "20:00", List.of(3, 2, 1, 0), 3));
+    }
+
+    @Test
+    void updateNotificationPrefsStoresThePeriodCountdown() {
+        NotificationPrefsResponse response = service.updateNotificationPrefs(userId,
+                new UpdateNotificationPrefsRequest(null, null, null, null, List.of(0, 1, 1)));
+
+        assertThat(response).isEqualTo(new NotificationPrefsResponse(true, true, true, false, "06:00", "20:00", List.of(1, 0), 3));
+        assertThat(user.getPeriodDaysBefore()).isEqualTo("1,0");
+    }
+
+    @Test
+    void anEmptyPeriodCountdownTurnsThePeriodReminderOffAndKeepsTheLastChoice() {
+        user.setPeriodDaysBefore("2,0");
+
+        NotificationPrefsResponse response = service.updateNotificationPrefs(userId,
+                new UpdateNotificationPrefsRequest(null, null, null, null, List.of()));
+
+        assertThat(response.period()).isFalse();
+        assertThat(response.ovulation()).isTrue();
+        assertThat(response.dailyLog()).isTrue();
+        assertThat(response.periodDaysBefore()).containsExactly(2, 0);
+        assertThat(user.getPeriodDaysBefore()).isEqualTo("2,0");
+    }
+
+    @Test
+    void updateNotificationPrefsRejectsCountdownDaysOutsideTheAllowedRange() {
+        assertThatThrownBy(() -> service.updateNotificationPrefs(userId,
+                new UpdateNotificationPrefsRequest(null, null, null, null, List.of(4))))
+                .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+        assertThatThrownBy(() -> service.updateNotificationPrefs(userId,
+                new UpdateNotificationPrefsRequest(null, null, null, null, List.of(-1))))
+                .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 
     @Test
@@ -172,6 +209,22 @@ class UserWriteServiceImplTest {
         assertThatThrownBy(() -> service.completeOnboarding(userId, new OnboardingRequest(dob, null, "track", null, 1)))
                 .isInstanceOf(ApiException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PERIOD_LENGTH_OUT_OF_RANGE);
+    }
+
+    @Test
+    void completeOnboardingRejectsAUserUnderThirteen() {
+        LocalDate dob = LocalDate.now().minusYears(12);
+        assertThatThrownBy(() -> service.completeOnboarding(userId, new OnboardingRequest(dob, null, "track", null, null)))
+                .isInstanceOf(ApiException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.AGE_BELOW_MINIMUM);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void completeOnboardingAcceptsAUserWhoIsExactlyThirteen() {
+        LocalDate dob = LocalDate.now().minusYears(13);
+        OnboardingResponse response = service.completeOnboarding(userId, new OnboardingRequest(dob, null, "track", null, null));
+        assertThat(response.onboarded()).isTrue();
     }
 
     private UUID stubExport() {
@@ -233,6 +286,7 @@ class UserWriteServiceImplTest {
         verify(pointsHistoryRepository).deleteByUserId(userId);
         verify(userBadgeRepository).deleteByUserId(userId);
         verify(userChallengeProgressRepository).deleteByUserId(userId);
+        verify(reminderDeliveryRepository).deleteByUserId(userId);
         assertThat(user.isOnboarded()).isFalse();
         assertThat(user.getGoal()).isNull();
         assertThat(user.getPoints()).isZero();

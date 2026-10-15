@@ -55,7 +55,6 @@ class CycleReadServiceImplTest {
 
     @Test
     void currentOnOvulationDayWithEnoughLogsIsHighConfidence() {
-        // 28-day cycle: ovulation is day 14, i.e. 13 days after the period started.
         stubUser(LocalDate.now().minusDays(13));
         when(cycleLogRepository.countByUserId(userId)).thenReturn(10L);
         when(configurationDomainService.getCycleHighConfidenceLogThreshold()).thenReturn(10L);

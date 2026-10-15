@@ -23,22 +23,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
-/**
- * One-time, one-way migration off the old single {@code global_configuration} table.
- *
- * <p>History: app_settings / smtp_settings and, briefly, badge/challenge/level "definition" rows
- * were all folded into {@code global_configuration}. That table is now split into typed tables —
- * {@link SecurityConfig} ({@code security_config}),
- * {@link GlobalConfig} ({@code global_config}), and {@code badge_config} / {@code challenge_config}
- * / {@code level_config} for the definitions. Hibernate's {@code ddl-auto: update} creates the new
- * tables but never drops the old one, and never moves data, so this runner does both.
- *
- * <p>It runs in {@code @PostConstruct} and every consumer of config
- * ({@code ConfigurationDomainServiceImpl}, {@code AesGcmEncryptionService}) is
- * {@code @DependsOn("configStoreMigration")}, so the copy always finishes before anything seeds
- * defaults or reads a key. Idempotent: once {@code global_configuration} is dropped the body is a
- * no-op, and a half-finished run just re-copies (existing target rows/definitions are left alone).
- */
 @Component("configStoreMigration")
 @Slf4j
 @RequiredArgsConstructor
@@ -59,8 +43,6 @@ public class ConfigStoreMigration {
     void run() {
         jdbcTemplate.execute("DROP TABLE IF EXISTS app_settings");
         jdbcTemplate.execute("DROP TABLE IF EXISTS smtp_settings");
-        // SMTP now comes only from the spotit.smtp.* properties (env vars per environment); the old
-        // DB-stored relay and its encrypted password are dropped rather than left behind as stale secrets.
         jdbcTemplate.execute("DROP TABLE IF EXISTS smtp_config");
         jdbcTemplate.execute("DROP TABLE IF EXISTS badge_definitions");
         jdbcTemplate.execute("DROP TABLE IF EXISTS challenge_definitions");

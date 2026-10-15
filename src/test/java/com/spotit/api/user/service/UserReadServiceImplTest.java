@@ -1,5 +1,6 @@
 package com.spotit.api.user.service;
 
+import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.log.entity.CycleLog;
@@ -16,9 +17,9 @@ import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.ExportJobRepository;
 import com.spotit.api.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
@@ -41,7 +42,13 @@ class UserReadServiceImplTest {
     @Mock ExportJobRepository exportJobRepository;
     @Mock CycleLogRepository cycleLogRepository;
     @Mock PointsHistoryRepository pointsHistoryRepository;
-    @InjectMocks UserReadServiceImpl service;
+    UserReadServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        service = new UserReadServiceImpl(userRepository, exportJobRepository, cycleLogRepository, pointsHistoryRepository,
+                ReminderSettingsFixture.defaults());
+    }
 
     UUID userId = UUID.randomUUID();
     UUID jobId = UUID.randomUUID();
@@ -83,10 +90,21 @@ class UserReadServiceImplTest {
     }
 
     @Test
-    void notificationPrefsMirrorTheUserFlags() {
+    void notificationPrefsMirrorTheUserFlagsAndFallBackToTheServerDefaults() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user()));
 
-        assertThat(service.getNotificationPrefs(userId)).isEqualTo(new NotificationPrefsResponse(true, false, true, false));
+        assertThat(service.getNotificationPrefs(userId)).isEqualTo(
+                new NotificationPrefsResponse(true, false, true, false, "06:00", "20:00", List.of(3, 2, 1, 0), 3));
+    }
+
+    @Test
+    void notificationPrefsUseHerOwnCountdownAndTheServerTimes() {
+        User user = user();
+        user.setPeriodDaysBefore("1,0");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThat(service.getNotificationPrefs(userId)).isEqualTo(
+                new NotificationPrefsResponse(true, false, true, false, "06:00", "20:00", List.of(1, 0), 3));
     }
 
     @Test

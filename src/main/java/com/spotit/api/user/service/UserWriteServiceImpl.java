@@ -6,9 +6,11 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.common.mail.ExportReadyEmailTemplate;
 import com.spotit.api.log.repository.CycleLogRepository;
+import com.spotit.api.reminder.repository.ReminderDeliveryRepository;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.rewards.repository.UserBadgeRepository;
 import com.spotit.api.rewards.repository.UserChallengeProgressRepository;
+import com.spotit.api.configuration.ReminderSettings;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.user.dto.*;
 import com.spotit.api.user.entity.ExportJob;
@@ -24,19 +26,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserWriteServiceImpl implements UserWriteService {
+    private static final int MIN_AGE_YEARS = 13;
+
     private final UserRepository userRepository;
     private final ExportJobRepository exportJobRepository;
     private final CycleLogRepository cycleLogRepository;
     private final PointsHistoryRepository pointsHistoryRepository;
     private final UserBadgeRepository userBadgeRepository;
     private final UserChallengeProgressRepository userChallengeProgressRepository;
+    private final ReminderDeliveryRepository reminderDeliveryRepository;
     private final ConfigurationDomainService configurationDomainService;
+    private final ReminderSettings reminderSettings;
     private final UserReadService userReadService;
     private final EmailService emailService;
 
@@ -85,14 +94,32 @@ public class UserWriteServiceImpl implements UserWriteService {
         if (request.digest() != null) {
             user.setNotifDigest(request.digest());
         }
+        ReminderSettings settings = reminderSettings;
+        if (request.periodDaysBefore() != null) {
+            if (request.periodDaysBefore().isEmpty()) {
+                user.setNotifPeriod(false);
+            } else {
+                user.setPeriodDaysBefore(daysBefore(request.periodDaysBefore(), settings));
+            }
+        }
         userRepository.save(user);
-        return new NotificationPrefsResponse(user.isNotifPeriod(), user.isNotifOvulation(), user.isNotifDailyLog(), user.isNotifDigest());
+        return NotificationPrefsMapper.toResponse(user, settings);
+    }
+
+    private static String daysBefore(List<Integer> days, ReminderSettings settings) {
+        if (days.stream().anyMatch(day -> day == null || day < 0 || day > settings.maxDaysBefore())) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.REMINDER_DAYS_OUT_OF_RANGE);
+        }
+        return ReminderSettings.formatDays(days);
     }
 
     @Override
     @Transactional
     public OnboardingResponse completeOnboarding(UUID userId, OnboardingRequest request) {
         User user = requireUser(userId);
+        if (request.dob().isAfter(LocalDate.now(ZoneOffset.UTC).plusDays(1).minusYears(MIN_AGE_YEARS))) {
+            throw new ApiException(ErrorCode.AGE_BELOW_MINIMUM, ErrorMessage.AGE_BELOW_MINIMUM);
+        }
         user.setDob(request.dob());
         user.setLastPeriodDate(request.lastPeriodDate());
         user.setGoal(resolveGoal(request.goal()));
@@ -155,6 +182,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         pointsHistoryRepository.deleteByUserId(userId);
         userBadgeRepository.deleteByUserId(userId);
         userChallengeProgressRepository.deleteByUserId(userId);
+        reminderDeliveryRepository.deleteByUserId(userId);
 
         user.setOnboarded(false);
         user.setGoal(null);

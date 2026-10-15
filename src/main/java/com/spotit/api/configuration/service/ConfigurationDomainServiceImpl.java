@@ -27,10 +27,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
-// @DependsOn: ConfigStoreMigration must finish copying any already-deployed global_configuration
-// rows into security_config/global_config before this bean's @PostConstruct seeder
-// runs, otherwise the seeder would write fresh defaults on top of a database that already had
-// real, admin-tuned values.
 @Service
 @Slf4j
 @DependsOn("configStoreMigration")
@@ -344,8 +340,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
                 value, null, stringValue, property.description());
     }
 
-    // There is no longer one DB row (hence one UUID) per property. The admin API still exposes an
-    // `id`, so derive a stable one from the property name — same name always yields the same UUID.
     private static UUID synthId(String name) {
         return UUID.nameUUIDFromBytes(("global-config:" + name).getBytes(StandardCharsets.UTF_8));
     }

@@ -64,8 +64,28 @@ eventually an admin UI) can manage live, under a dedicated `/api/v1/config/*` na
 - `GET/POST/PATCH/DELETE /api/v1/config/challenges` — weekly-challenge definitions
 - `GET/POST/PATCH/DELETE /api/v1/config/content` — "For you today" feed items
 
-These endpoints aren't authorization-gated yet (no admin role exists) — add one before exposing them
-publicly.
+These endpoints (and `/api/v1/config/global`, `/api/v1/config/levels`, `/api/v1/config/smtp`) require the
+`ADMIN` role. An account is an admin when its email is listed in the `ADMIN_EMAILS` environment variable
+(comma-separated, bound to `spotit.admin.emails`); everyone else gets `403 forbidden`. The list is read at
+boot, so changing it needs a restart, and leaving it unset means nobody can call these endpoints.
+
+## Reminders (push notifications)
+
+`reminder/ReminderScheduler` runs `ReminderJob` every 15 minutes. For each user with a reminder switched on and a
+registered device, `ReminderPlanner` decides what is due in her own time zone (period and ovulation countdowns,
+the log nudge, the weekly digest); a row in `reminder_deliveries` — unique on user, type and local date — is
+written first, and only then is the message sent through Expo's push service (`reminder/push/ExpoPushSender`).
+The same rows back the in-app inbox (`GET /api/v1/notifications`).
+
+- The schedule lives in `application.yml` under `spotit.reminders` (`ReminderSettings`), each value overridable by an
+  env var: `REMINDER_MORNING_TIME` (period and ovulation, default `06:00`), `REMINDER_EVENING_TIME` (log nudge,
+  `20:00`), `REMINDER_DIGEST_DAY` / `REMINDER_DIGEST_TIME` (weekly digest, `SUNDAY` `19:00`),
+  `REMINDER_PERIOD_DAYS_BEFORE` / `REMINDER_OVULATION_DAYS_BEFORE` (`3,2,1,0`), `REMINDER_MAX_DAYS_BEFORE` (`3`),
+  `REMINDER_CATCH_UP_MINUTES` (`120`), `REMINDERS_CRON` and the stop switch `REMINDERS_ENABLED`. They are checked at
+  start-up; an unusable value stops the server with a message naming it. A change needs a restart, not a release.
+- A user's own morning/evening time and countdown days, set in the app, override the defaults.
+- `EXPO_ACCESS_TOKEN` is optional: set it only if the Expo project has enhanced push security enabled.
+- Devices whose push address Google or Apple report as gone are deleted when the receipts are collected.
 
 ## Response envelope
 

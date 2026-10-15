@@ -7,10 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Builds a spreadsheet-friendly CSV (opens directly in Excel/Sheets/Numbers) out of a user's
- * export data, laid out as three clearly labelled sections rather than a raw data dump.
- */
 public final class ExportCsvBuilder {
 
     private ExportCsvBuilder() {
@@ -18,7 +14,7 @@ public final class ExportCsvBuilder {
 
     public static byte[] build(ExportDataResponse data) {
         StringBuilder sb = new StringBuilder();
-        sb.append("﻿"); // UTF-8 BOM so Excel picks the right encoding
+        sb.append("﻿");
 
         appendProfile(sb, data.profile());
         sb.append('\n');

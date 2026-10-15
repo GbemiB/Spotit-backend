@@ -33,6 +33,12 @@ public class Device {
     @Column(nullable = false, length = 20)
     private DevicePlatform platform;
 
+    @Column(name = "time_zone", length = 64)
+    private String timeZone;
+
+    @Column(name = "last_seen_at")
+    private Instant lastSeenAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

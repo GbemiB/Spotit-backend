@@ -14,11 +14,6 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-// Single-row table (id is always SINGLETON_ID) holding every setting in the "security" group.
-// Split out of the former one-size-fits-all global_configuration table so each value is a typed
-// column rather than a name/string_value pair. jwt-secret is stored encrypted (see
-// EncryptionService); crypto-aes-key is plaintext by necessity — it can't be encrypted with
-// itself — and is managed exclusively by AesGcmEncryptionService.
 @Entity
 @Table(name = "security_config")
 @Getter

@@ -49,8 +49,6 @@ public class EmailServiceImpl implements EmailService {
         boolean hasAttachment = attachmentFilename != null && attachmentBytes != null;
         MimeMessage message = mailSender.createMimeMessage();
         try {
-            // Always multipart: setText(text, html) writes alternative bodies, which needs multipart
-            // mode even when there's no attachment.
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(settings.fromAddress(), SENDER_DISPLAY_NAME);
             helper.setTo(to);

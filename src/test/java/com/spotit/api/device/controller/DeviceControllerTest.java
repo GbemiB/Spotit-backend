@@ -42,7 +42,7 @@ class DeviceControllerTest {
 
     @Test
     void registerStoresThePushTokenForTheCurrentUser() throws Exception {
-        RegisterDeviceRequest request = new RegisterDeviceRequest("fcm:token", "android");
+        RegisterDeviceRequest request = new RegisterDeviceRequest("ExponentPushToken[abc]", "android", "Africa/Lagos");
 
         mvc.perform(post("/api/v1/devices/register").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
@@ -54,7 +54,7 @@ class DeviceControllerTest {
     @Test
     void registerRejectsAnUnknownPlatform() throws Exception {
         mvc.perform(post("/api/v1/devices/register").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new RegisterDeviceRequest("fcm:token", "blackberry"))))
+                        .content(json(new RegisterDeviceRequest("ExponentPushToken[abc]", "blackberry", null))))
                 .andExpect(status().isUnprocessableEntity());
 
         verifyNoInteractions(deviceWriteService);

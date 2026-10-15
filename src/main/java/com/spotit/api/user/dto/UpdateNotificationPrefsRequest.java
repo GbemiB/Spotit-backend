@@ -1,4 +1,9 @@
 package com.spotit.api.user.dto;
 
-public record UpdateNotificationPrefsRequest(Boolean period, Boolean ovulation, Boolean dailyLog, Boolean digest) {
+import java.util.List;
+
+public record UpdateNotificationPrefsRequest(
+        Boolean period, Boolean ovulation, Boolean dailyLog, Boolean digest,
+        List<Integer> periodDaysBefore
+) {
 }

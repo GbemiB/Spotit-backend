@@ -15,16 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Exercises POST /api/v1/auth/signup end to end: boots the app on in-memory H2 (which seeds the
- * spotit.smtp.* relay into global_configuration), calls the endpoint, and asserts the verification
- * OTP email actually went out through smtp.gmail.com — i.e. AuthWriteServiceImpl logged
- * "Signup OTP email sent to lead" and never "Failed to send signup OTP email" (that path swallows
- * MailException, so a 201 alone does not prove delivery).
- *
- * Sends a REAL email. Tagged "mail-it" and named *IT so the normal build skips it. Run explicitly:
- *   mvn test -Dtest=SignupMailDropIT [-Dmail.it.recipient=you@example.com]
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(OutputCaptureExtension.class)

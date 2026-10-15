@@ -73,6 +73,12 @@ public class User {
     @Column(name = "notif_digest", nullable = false)
     private boolean notifDigest;
 
+    @Column(name = "period_days_before", length = 40)
+    private String periodDaysBefore;
+
+    @Column(name = "time_zone", length = 64)
+    private String timeZone;
+
     @Column(nullable = false)
     private long points;
 
@@ -93,6 +99,12 @@ public class User {
 
     @Column(name = "is_premium", nullable = false)
     private boolean premium;
+
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts;
+
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
 
     @Column(name = "pending_deletion_at")
     private Instant pendingDeletionAt;

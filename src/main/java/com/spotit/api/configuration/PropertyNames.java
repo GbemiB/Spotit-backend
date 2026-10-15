@@ -39,10 +39,6 @@ public final class PropertyNames {
     public static final String GROUP_REWARDS = "rewards";
     public static final String GROUP_CONTENT = "content";
 
-    // Legacy row-name prefixes: badge/challenge/level definitions were briefly stored as JSON rows
-    // in global_configuration ("badge-definition-{id}", etc.). They now live in their own typed
-    // tables (badge_config/challenge_config/level_config); these constants survive only so
-    // ConfigStoreMigration can find and copy any such rows off an already-deployed database.
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";
     public static final String LEVEL_DEFINITION_PREFIX = "level-definition-";

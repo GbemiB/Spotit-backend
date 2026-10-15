@@ -4,6 +4,8 @@ import com.spotit.api.device.dto.RegisterDeviceRequest;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.entity.DevicePlatform;
 import com.spotit.api.device.repository.DeviceRepository;
+import com.spotit.api.user.entity.User;
+import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -16,11 +18,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DeviceWriteServiceImplTest {
     @Mock DeviceRepository deviceRepository;
+    @Mock UserRepository userRepository;
     @InjectMocks DeviceWriteServiceImpl service;
 
     UUID userId = UUID.randomUUID();
@@ -29,13 +33,41 @@ class DeviceWriteServiceImplTest {
     void registerCreatesANewDevice() {
         when(deviceRepository.findByPushToken("token")).thenReturn(Optional.empty());
 
-        service.register(userId, new RegisterDeviceRequest("token", "ios"));
+        service.register(userId, new RegisterDeviceRequest("token", "ios", null));
 
         ArgumentCaptor<Device> saved = ArgumentCaptor.forClass(Device.class);
         verify(deviceRepository).save(saved.capture());
         assertThat(saved.getValue().getPushToken()).isEqualTo("token");
         assertThat(saved.getValue().getUserId()).isEqualTo(userId);
         assertThat(saved.getValue().getPlatform()).isEqualTo(DevicePlatform.ios);
+        assertThat(saved.getValue().getLastSeenAt()).isNotNull();
+        assertThat(saved.getValue().getTimeZone()).isNull();
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void registerWithATimeZoneStoresItOnTheDeviceAndTheUser() {
+        User user = User.builder().id(userId).build();
+        when(deviceRepository.findByPushToken("token")).thenReturn(Optional.empty());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        service.register(userId, new RegisterDeviceRequest("token", "android", " Africa/Lagos "));
+
+        ArgumentCaptor<Device> saved = ArgumentCaptor.forClass(Device.class);
+        verify(deviceRepository).save(saved.capture());
+        assertThat(saved.getValue().getTimeZone()).isEqualTo("Africa/Lagos");
+        assertThat(user.getTimeZone()).isEqualTo("Africa/Lagos");
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void registerIgnoresATimeZoneItCannotRead() {
+        when(deviceRepository.findByPushToken("token")).thenReturn(Optional.empty());
+
+        service.register(userId, new RegisterDeviceRequest("token", "android", "Mars/Olympus"));
+        service.register(userId, new RegisterDeviceRequest("token", "android", "  "));
+
+        verifyNoInteractions(userRepository);
     }
 
     @Test
@@ -43,7 +75,7 @@ class DeviceWriteServiceImplTest {
         Device device = Device.builder().pushToken("token").userId(UUID.randomUUID()).platform(DevicePlatform.ios).build();
         when(deviceRepository.findByPushToken("token")).thenReturn(Optional.of(device));
 
-        service.register(userId, new RegisterDeviceRequest("token", "android"));
+        service.register(userId, new RegisterDeviceRequest("token", "android", null));
 
         assertThat(device.getUserId()).isEqualTo(userId);
         assertThat(device.getPlatform()).isEqualTo(DevicePlatform.android);

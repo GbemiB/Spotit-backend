@@ -43,7 +43,6 @@ class InsightReadServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(User.builder().id(userId).cycleLength(28).periodLength(5).build()));
     }
 
-    /** Flow logs for consecutive-day periods starting {@code daysAgo} days back, each {@code length} days long. */
     private void stubPeriods(int length, int... daysAgo) {
         List<CycleLog> logs = new ArrayList<>();
         for (int start : daysAgo) {
@@ -51,7 +50,6 @@ class InsightReadServiceImplTest {
                 logs.add(CycleLog.builder().userId(userId).logDate(today.minusDays(start - d)).flow(FlowIntensity.medium).build());
             }
         }
-        // A non-flow log in between must not split or extend an episode.
         logs.add(CycleLog.builder().userId(userId).logDate(today.minusDays(1)).mood(MoodType.calm).build());
         when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(eq(userId), any(), any())).thenReturn(logs);
     }
@@ -91,7 +89,7 @@ class InsightReadServiceImplTest {
         stubUser();
         when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(eq(userId), any(), any())).thenReturn(List.of());
 
-        assertThat(service.getTrends(userId, 6)).isEqualTo(new CycleTrendsResponse(List.of(28), 28, 5, 0));
+        assertThat(service.getTrends(userId, 6)).isEqualTo(new CycleTrendsResponse(List.of(), 28, 5, 0));
     }
 
     @Test
@@ -183,5 +181,86 @@ class InsightReadServiceImplTest {
 
         assertThat(response.status()).isEqualTo("irregular_cycle");
         assertThat(response.flags()).hasSize(2);
+    }
+
+    private void stubLogs(List<CycleLog> logs) {
+        when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(eq(userId), any(), any())).thenReturn(logs);
+    }
+
+    private CycleLog flowDaysAgo(int daysAgo, FlowIntensity flow) {
+        return CycleLog.builder().userId(userId).logDate(today.minusDays(daysAgo)).flow(flow).build();
+    }
+
+    @Test
+    void midCycleSpottingDoesNotStartAPeriod() {
+        stubUser();
+        List<CycleLog> logs = new ArrayList<>();
+        for (int d = 60; d > 56; d--) {
+            logs.add(flowDaysAgo(d, FlowIntensity.medium));
+        }
+        logs.add(flowDaysAgo(45, FlowIntensity.spotting));
+        for (int d = 30; d > 26; d--) {
+            logs.add(flowDaysAgo(d, FlowIntensity.medium));
+        }
+        stubLogs(logs);
+
+        assertThat(service.getTrends(userId, 6).cycleLengths()).containsExactly(30);
+    }
+
+    @Test
+    void spottingRightAfterAPeriodCountsTowardsItsLength() {
+        stubUser();
+        List<CycleLog> logs = new ArrayList<>();
+        for (int d = 30; d > 26; d--) {
+            logs.add(flowDaysAgo(d, FlowIntensity.medium));
+        }
+        logs.add(flowDaysAgo(26, FlowIntensity.spotting));
+        stubLogs(logs);
+
+        assertThat(service.getTrends(userId, 6).avgPeriodLength()).isEqualTo(5);
+    }
+
+    @Test
+    void oneUnloggedDayDoesNotSplitAPeriod() {
+        stubUser();
+        stubLogs(List.of(
+                flowDaysAgo(30, FlowIntensity.heavy),
+                flowDaysAgo(29, FlowIntensity.heavy),
+                flowDaysAgo(27, FlowIntensity.light),
+                flowDaysAgo(26, FlowIntensity.light)));
+
+        CycleTrendsResponse trends = service.getTrends(userId, 6);
+
+        assertThat(trends.cycleLengths()).isEmpty();
+        assertThat(trends.avgPeriodLength()).isEqualTo(5);
+    }
+
+    @Test
+    void aPeriodStillInProgressIsNotCountedOrFlagged() {
+        stubUser();
+        List<CycleLog> logs = new ArrayList<>();
+        for (int d = 28; d > 23; d--) {
+            logs.add(flowDaysAgo(d, FlowIntensity.medium));
+        }
+        logs.add(flowDaysAgo(1, FlowIntensity.heavy));
+        logs.add(flowDaysAgo(0, FlowIntensity.heavy));
+        stubLogs(logs);
+        when(configurationDomainService.getInsightDefaultCycles()).thenReturn(6);
+        when(configurationDomainService.getInsightUnusualPeriodLengthDeltaDays()).thenReturn(2);
+
+        CycleTrendsResponse trends = service.getTrends(userId, 6);
+        assertThat(trends.cycleLengths()).containsExactly(27);
+        assertThat(trends.avgPeriodLength()).isEqualTo(5);
+        assertThat(service.getRegularity(userId).flags()).isEmpty();
+    }
+
+    @Test
+    void aSingleNormalPeriodIsNotYetEnoughToCallCyclesRegular() {
+        stubUser();
+        stubPeriods(5, 30);
+        when(configurationDomainService.getInsightDefaultCycles()).thenReturn(6);
+        when(configurationDomainService.getInsightUnusualPeriodLengthDeltaDays()).thenReturn(2);
+
+        assertThat(service.getRegularity(userId).status()).isEqualTo("insufficient_data");
     }
 }
