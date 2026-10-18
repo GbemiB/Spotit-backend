@@ -57,7 +57,7 @@ class ChallengeWriteServiceImplTest {
     @Test
     void claimingBeforeTheChallengeIsCompleteIsRejected() {
         when(challengeDefinitionRepository.findById("log_week")).thenReturn(Optional.of(definition));
-        when(calculator.currentWeekStart()).thenReturn(weekStart);
+        when(calculator.currentWeekStart(userId)).thenReturn(weekStart);
         when(calculator.computeDone(userId, definition)).thenReturn(3);
 
         assertThatThrownBy(() -> service.claim(userId, "log_week"))
@@ -70,7 +70,7 @@ class ChallengeWriteServiceImplTest {
     @Test
     void claimingAnAlreadyClaimedChallengeIsRejected() {
         when(challengeDefinitionRepository.findById("log_week")).thenReturn(Optional.of(definition));
-        when(calculator.currentWeekStart()).thenReturn(weekStart);
+        when(calculator.currentWeekStart(userId)).thenReturn(weekStart);
         when(calculator.computeDone(userId, definition)).thenReturn(7);
         UserChallengeProgress alreadyClaimed = UserChallengeProgress.builder()
                 .userId(userId).challengeId("log_week").weekStartDate(weekStart).claimed(true).build();
@@ -87,7 +87,7 @@ class ChallengeWriteServiceImplTest {
     @Test
     void completingAndClaimingForTheFirstTimeAwardsTheReward() {
         when(challengeDefinitionRepository.findById("log_week")).thenReturn(Optional.of(definition));
-        when(calculator.currentWeekStart()).thenReturn(weekStart);
+        when(calculator.currentWeekStart(userId)).thenReturn(weekStart);
         when(calculator.computeDone(userId, definition)).thenReturn(7);
         when(progressRepository.findByUserIdAndChallengeIdAndWeekStartDate(userId, "log_week", weekStart))
                 .thenReturn(Optional.empty());

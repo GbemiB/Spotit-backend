@@ -3,6 +3,7 @@ package com.spotit.api.config;
 import com.spotit.api.common.security.JwtAuthenticationFilter;
 import com.spotit.api.common.security.RestAccessDeniedHandler;
 import com.spotit.api.common.security.RestAuthEntryPoint;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +44,8 @@ public class SecurityConfig {
 
     private static final String ADMIN_PATHS = "/api/v1/config/**";
 
+    private static final String API_PATHS = "/api/v1/**";
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RestAuthEntryPoint restAuthEntryPoint;
     private final RestAccessDeniedHandler restAccessDeniedHandler;
@@ -56,9 +59,11 @@ public class SecurityConfig {
                         .authenticationEntryPoint(restAuthEntryPoint)
                         .accessDeniedHandler(restAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(PUBLIC_PATHS).permitAll()
                         .requestMatchers(ADMIN_PATHS).hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .requestMatchers(API_PATHS).authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

@@ -18,7 +18,10 @@ final class ContentConfigControllerSwagger {
                   "imageUrl": "https://cdn.spotit.app/content/cramps.jpg",
                   "sponsored": false,
                   "advertiser": null,
-                  "sortOrder": 1
+                  "sortOrder": 1,
+                  "references": [
+                    { "label": "NHS — Period pain", "url": "https://www.nhs.uk/conditions/period-pain/" }
+                  ]
                 },
                 {
                   "id": "9d1e2b0a-1234-4c56-9abc-1234567890ab",
@@ -27,7 +30,10 @@ final class ContentConfigControllerSwagger {
                   "imageUrl": "https://cdn.spotit.app/content/healthco.jpg",
                   "sponsored": true,
                   "advertiser": "HealthCo",
-                  "sortOrder": 2
+                  "sortOrder": 2,
+                  "references": [
+                    { "label": "NHS — Period pain", "url": "https://www.nhs.uk/conditions/period-pain/" }
+                  ]
                 }
               ]
             }
@@ -46,7 +52,10 @@ final class ContentConfigControllerSwagger {
                 "imageUrl": "https://cdn.spotit.app/content/cramps.jpg",
                 "sponsored": false,
                 "advertiser": null,
-                "sortOrder": 1
+                "sortOrder": 1,
+                "references": [
+                  { "label": "NHS — Period pain", "url": "https://www.nhs.uk/conditions/period-pain/" }
+                ]
               }
             }
             """;
@@ -68,7 +77,10 @@ final class ContentConfigControllerSwagger {
               "imageUrl": "https://cdn.spotit.app/content/cramps.jpg",
               "sponsored": false,
               "advertiser": null,
-              "sortOrder": 1
+              "sortOrder": 1,
+              "references": [
+                { "label": "NHS — Period pain", "url": "https://www.nhs.uk/conditions/period-pain/" }
+              ]
             }
             """;
     static final String CREATE_201_EXAMPLE = """
@@ -82,13 +94,17 @@ final class ContentConfigControllerSwagger {
                 "imageUrl": "https://cdn.spotit.app/content/cramps.jpg",
                 "sponsored": false,
                 "advertiser": null,
-                "sortOrder": 1
+                "sortOrder": 1,
+                "references": [
+                  { "label": "NHS — Period pain", "url": "https://www.nhs.uk/conditions/period-pain/" }
+                ]
               }
             }
             """;
 
     static final String UPDATE_SUMMARY = "Update a content item";
-    static final String UPDATE_DESCRIPTION = "Partially updates a content item; only non-null fields are applied.";
+    static final String UPDATE_DESCRIPTION = "Partially updates a content item; only non-null fields are applied. "
+            + "Sending references replaces the whole list; an empty list removes them.";
     static final String UPDATE_REQUEST_EXAMPLE = """
             {
               "tag": "wellness",
@@ -96,7 +112,10 @@ final class ContentConfigControllerSwagger {
               "imageUrl": null,
               "sponsored": null,
               "advertiser": null,
-              "sortOrder": 2
+              "sortOrder": 2,
+              "references": [
+                { "label": "NHS — Period pain", "url": "https://www.nhs.uk/conditions/period-pain/" }
+              ]
             }
             """;
     static final String UPDATE_200_EXAMPLE = """
@@ -110,7 +129,10 @@ final class ContentConfigControllerSwagger {
                 "imageUrl": "https://cdn.spotit.app/content/cramps.jpg",
                 "sponsored": false,
                 "advertiser": null,
-                "sortOrder": 2
+                "sortOrder": 2,
+                "references": [
+                  { "label": "NHS — Period pain", "url": "https://www.nhs.uk/conditions/period-pain/" }
+                ]
               }
             }
             """;

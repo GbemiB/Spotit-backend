@@ -2,6 +2,7 @@ package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.user.entity.User;
@@ -28,6 +29,7 @@ class PointsWriteServiceImplTest {
     @Mock PointsHistoryRepository pointsHistoryRepository;
     @Mock ConfigurationDomainService configurationDomainService;
     @Mock ChallengeReadService challengeReadService;
+    @Mock UserClock userClock;
 
     PointsWriteServiceImpl service;
     UUID userId;
@@ -35,9 +37,10 @@ class PointsWriteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new PointsWriteServiceImpl(userRepository, pointsHistoryRepository, configurationDomainService, challengeReadService);
+        service = new PointsWriteServiceImpl(userRepository, pointsHistoryRepository, configurationDomainService, challengeReadService, userClock);
         userId = UUID.randomUUID();
         today = LocalDate.now(ZoneOffset.UTC);
+        lenient().when(userClock.today(any())).thenReturn(today);
     }
 
     private User userWith(long points, int streak, int longestStreak, LocalDate lastLogDate) {

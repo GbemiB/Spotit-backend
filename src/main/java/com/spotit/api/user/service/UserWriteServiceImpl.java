@@ -122,6 +122,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         }
         user.setDob(request.dob());
         user.setLastPeriodDate(request.lastPeriodDate());
+        user.setTrackingStartDate(request.lastPeriodDate() == null ? null : request.lastPeriodDate().withDayOfMonth(1));
         user.setGoal(resolveGoal(request.goal()));
         if (request.cycleLength() != null) {
             if (request.cycleLength() < 21 || request.cycleLength() > 45) {
@@ -188,6 +189,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         user.setGoal(null);
         user.setDob(null);
         user.setLastPeriodDate(null);
+        user.setTrackingStartDate(null);
         user.setCycleLength(configurationDomainService.getCycleDefaultLength());
         user.setPeriodLength(configurationDomainService.getCycleDefaultPeriodLength());
         user.setThemePref(ThemePref.system);

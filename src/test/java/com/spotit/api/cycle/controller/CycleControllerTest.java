@@ -44,18 +44,20 @@ class CycleControllerTest {
     @Test
     void currentReturnsTheUsersCycleDay() throws Exception {
         when(cycleReadService.getCurrent(USER_ID))
-                .thenReturn(new CycleCurrentResponse(12, "fertile", LocalDate.of(2026, 10, 10), 16L, "high"));
+                .thenReturn(new CycleCurrentResponse(12, "fertile", LocalDate.of(2026, 10, 10), 16L, "high",
+                        "tracking", 0, LocalDate.of(2026, 10, 10), 0, LocalDate.of(2026, 9, 1)));
 
         mvc.perform(get("/api/v1/cycle/current"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.cycleDay").value(12))
-                .andExpect(jsonPath("$.data.nextPeriodDate").value("2026-10-10"));
+                .andExpect(jsonPath("$.data.nextPeriodDate").value("2026-10-10"))
+                .andExpect(jsonPath("$.data.status").value("tracking"));
     }
 
     @Test
     void calendarReturnsTheRequestedMonth() throws Exception {
         when(cycleReadService.getCalendarMonth(USER_ID, 2026, 7)).thenReturn(new CycleCalendarResponse(2026, 7,
-                List.of(new CycleCalendarResponse.DayPhase("2026-07-01", "period"))));
+                List.of(new CycleCalendarResponse.DayPhase("2026-07-01", "period", false, null))));
 
         mvc.perform(get("/api/v1/cycle/calendar").param("year", "2026").param("month", "7"))
                 .andExpect(status().isOk())

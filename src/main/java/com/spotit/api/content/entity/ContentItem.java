@@ -9,6 +9,8 @@ import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -50,6 +52,12 @@ public class ContentItem {
     @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean active = true;
+
+    @Builder.Default
+    @ElementCollection
+    @CollectionTable(name = "content_item_references", joinColumns = @JoinColumn(name = "content_item_id"))
+    @OrderColumn(name = "position")
+    private List<ContentReference> references = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -117,7 +117,7 @@ class LogControllerTest {
     @Test
     void logPeriodRecordsTheRange() throws Exception {
         LogPeriodRequest request = new LogPeriodRequest(date, date.plusDays(4), null, "heavy", null, List.of(), null, false);
-        when(logWriteService.logPeriod(USER_ID, request)).thenReturn(new LogPeriodResponse(date, date.plusDays(4), "heavy", date,
+        when(logWriteService.logPeriod(USER_ID, request)).thenReturn(new LogPeriodResponse(date, date.plusDays(4), "heavy", date, date.withDayOfMonth(1),
                 28, 5, entry(), 20, 120, 4, List.of()));
 
         mvc.perform(put("/api/v1/logs/period").contentType(MediaType.APPLICATION_JSON).content(json(request)))

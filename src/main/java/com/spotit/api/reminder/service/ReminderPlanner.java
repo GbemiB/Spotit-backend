@@ -40,16 +40,18 @@ public class ReminderPlanner {
         LocalTime now = localNow.toLocalTime();
         boolean hasCycle = user.getLastPeriodDate() != null && user.getCycleLength() > 0;
 
+        boolean confirmedCycle = hasCycle && CycleUtil.statusOf(today, user.getLastPeriodDate(), user.getCycleLength()).tracking();
+
         if (hasCycle && due(settings.morningTime(), now, settings)) {
             int cycleDay = CycleUtil.cycleDayOf(today, user.getLastPeriodDate(), user.getCycleLength());
             if (user.isNotifPeriod()) {
                 period(user, today, cycleDay, NotificationPrefsMapper.periodDaysBefore(user, settings)).ifPresent(planned::add);
             }
-            if (user.isNotifOvulation()) {
+            if (user.isNotifOvulation() && confirmedCycle) {
                 ovulation(user, cycleDay).ifPresent(planned::add);
             }
         }
-        if (hasCycle && user.isNotifDailyLog() && due(settings.eveningTime(), now, settings)) {
+        if (confirmedCycle && user.isNotifDailyLog() && due(settings.eveningTime(), now, settings)) {
             logNudge(user, today).ifPresent(planned::add);
         }
         if (user.isNotifDigest() && today.getDayOfWeek() == settings.digestDay() && due(settings.digestTime(), now, settings)) {

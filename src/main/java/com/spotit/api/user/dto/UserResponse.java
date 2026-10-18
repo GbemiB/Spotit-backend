@@ -13,6 +13,7 @@ public record UserResponse(
         int cycleLength,
         int periodLength,
         LocalDate lastPeriodDate,
+        LocalDate trackingStartDate,
         String themePref,
         boolean onboarded,
         boolean isPremium

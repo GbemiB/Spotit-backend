@@ -1,5 +1,8 @@
 package com.spotit.api.log.service;
 
+import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
@@ -35,6 +38,7 @@ class LogWriteServiceImplTest {
     @Mock PointsWriteService pointsWriteService;
     @Mock UserRepository userRepository;
     @Mock ConfigurationDomainService configurationDomainService;
+    @Mock UserClock userClock;
 
     LogWriteServiceImpl service;
     UUID userId;
@@ -42,7 +46,8 @@ class LogWriteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new LogWriteServiceImpl(cycleLogRepository, pointsWriteService, userRepository, configurationDomainService);
+        service = new LogWriteServiceImpl(cycleLogRepository, pointsWriteService, userRepository, configurationDomainService, userClock);
+        lenient().when(userClock.today(any())).thenReturn(LocalDate.of(2026, 12, 31));
         userId = UUID.randomUUID();
         date = LocalDate.of(2026, 7, 28);
 
@@ -209,7 +214,7 @@ class LogWriteServiceImplTest {
     }
 
     @Test
-    void loggingANewPeriodClearsEveryOtherFlowLoggedDayEvenFarInThePast() {
+    void loggingAPeriodClearsOnlyTheRestOfTheSamePeriodAndKeepsEarlierPeriods() {
         LocalDate aug1 = LocalDate.of(2026, 8, 1);
         LocalDate aug2 = LocalDate.of(2026, 8, 2);
         LocalDate may5 = LocalDate.of(2026, 5, 5);
@@ -235,11 +240,11 @@ class LogWriteServiceImplTest {
 
         verify(cycleLogRepository).delete(staleAug1);
         verify(cycleLogRepository).delete(staleAug2);
-        verify(cycleLogRepository).delete(staleMay);
+        verify(cycleLogRepository, never()).delete(staleMay);
 
-        assertThat(response.clearedEntries()).hasSize(3);
+        assertThat(response.clearedEntries()).hasSize(2);
         assertThat(response.clearedEntries()).extracting(com.spotit.api.log.dto.LogEntryResponse::date)
-                .containsExactlyInAnyOrder(aug1, aug2, may5);
+                .containsExactlyInAnyOrder(aug1, aug2);
         assertThat(response.clearedEntries()).allSatisfy(e -> assertThat(e.flow()).isNull());
     }
 
@@ -298,7 +303,7 @@ class LogWriteServiceImplTest {
     }
 
     @Test
-    void logPeriodResyncsLastPeriodDateEvenForAnOldBackfill() {
+    void loggingAnOlderSeparatePeriodKeepsTheMostRecentAsTheLastPeriod() {
         LocalDate current = LocalDate.of(2026, 7, 28);
         User user = userWith(current, 28);
         when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
@@ -312,7 +317,108 @@ class LogWriteServiceImplTest {
 
         LogPeriodResponse response = service.logPeriod(userId, request);
 
-        assertThat(response.lastPeriodDate()).isEqualTo(oldBackfillStart);
+        assertThat(response.lastPeriodDate()).isEqualTo(current);
+        assertThat(response.trackingStartDate()).isEqualTo(oldBackfillStart.withDayOfMonth(1));
         verify(userRepository).save(user);
+    }
+
+    @Test
+    void shorteningThePeriodClearsTheDaysAfterTheNewEnd() {
+        LocalDate start = LocalDate.of(2026, 8, 3);
+        User user = userWith(start, 28);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+        when(cycleLogRepository.findByUserIdAndLogDate(any(), any())).thenReturn(Optional.empty());
+        when(cycleLogRepository.save(any(CycleLog.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(pointsWriteService.recordPeriodLog(any()))
+                .thenReturn(new PointsWriteService.LogPointsResult(0, 100, 3, true));
+        List<CycleLog> old = new java.util.ArrayList<>();
+        for (int d = 3; d <= 7; d++) {
+            old.add(CycleLog.builder().userId(userId).logDate(LocalDate.of(2026, 8, d)).flow(com.spotit.api.log.entity.FlowIntensity.medium).build());
+        }
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(old);
+
+        LogPeriodResponse response = service.logPeriod(userId,
+                new LogPeriodRequest(start, LocalDate.of(2026, 8, 5), null, "medium", null, List.of(), null, false));
+
+        assertThat(response.clearedEntries()).extracting(com.spotit.api.log.dto.LogEntryResponse::date)
+                .containsExactlyInAnyOrder(LocalDate.of(2026, 8, 6), LocalDate.of(2026, 8, 7));
+        assertThat(response.lastPeriodDate()).isEqualTo(start);
+    }
+
+    @Test
+    void loggingTheNextPeriodKeepsThePreviousOneAndBecomesTheLastPeriod() {
+        LocalDate previous = LocalDate.of(2026, 7, 6);
+        User user = userWith(previous, 28);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+        when(cycleLogRepository.findByUserIdAndLogDate(any(), any())).thenReturn(Optional.empty());
+        when(cycleLogRepository.save(any(CycleLog.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(pointsWriteService.recordPeriodLog(any()))
+                .thenReturn(new PointsWriteService.LogPointsResult(0, 100, 3, true));
+        CycleLog july = CycleLog.builder().userId(userId).logDate(previous).flow(com.spotit.api.log.entity.FlowIntensity.medium).build();
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(List.of(july));
+
+        LocalDate next = LocalDate.of(2026, 8, 3);
+        LogPeriodResponse response = service.logPeriod(userId, new LogPeriodRequest(next, next.plusDays(4), null, "medium", null, List.of(), null, false));
+
+        verify(cycleLogRepository, never()).delete(july);
+        assertThat(response.clearedEntries()).isEmpty();
+        assertThat(response.lastPeriodDate()).isEqualTo(next);
+    }
+
+    @Test
+    void aPeriodCannotStartAfterTheUsersToday() {
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(LocalDate.of(2026, 10, 5), 28)));
+        when(userClock.today(any())).thenReturn(LocalDate.of(2026, 10, 18));
+        LocalDate tomorrow = LocalDate.of(2026, 10, 19);
+
+        assertThatThrownBy(() -> service.logPeriod(userId, new LogPeriodRequest(tomorrow, tomorrow.plusDays(4), null, "medium", null, List.of(), null, false)))
+                .isInstanceOf(ApiException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+        verify(cycleLogRepository, never()).save(any(CycleLog.class));
+    }
+
+    @Test
+    void aPeriodStartingTodayMayEndInTheComingDays() {
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(LocalDate.of(2026, 9, 20), 28)));
+        when(userClock.today(any())).thenReturn(LocalDate.of(2026, 10, 18));
+        when(cycleLogRepository.findByUserIdAndLogDate(any(), any())).thenReturn(Optional.empty());
+        when(cycleLogRepository.save(any(CycleLog.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(pointsWriteService.recordPeriodLog(any())).thenReturn(new PointsWriteService.LogPointsResult(0, 100, 3, true));
+        LocalDate today = LocalDate.of(2026, 10, 18);
+
+        LogPeriodResponse response = service.logPeriod(userId, new LogPeriodRequest(today, today.plusDays(4), null, "medium", null, List.of(), null, false));
+
+        assertThat(response.lastPeriodDate()).isEqualTo(today);
+    }
+
+    @Test
+    void logPeriodKeepsAnEarlierTrackingStart() {
+        User user = userWith(LocalDate.of(2026, 7, 28), 28);
+        user.setTrackingStartDate(LocalDate.of(2026, 5, 1));
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+        when(cycleLogRepository.findByUserIdAndLogDate(any(), any())).thenReturn(Optional.empty());
+        when(cycleLogRepository.save(any(CycleLog.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(pointsWriteService.recordPeriodLog(any()))
+                .thenReturn(new PointsWriteService.LogPointsResult(0, 100, 3, true));
+
+        LocalDate next = LocalDate.of(2026, 8, 25);
+        service.logPeriod(userId, new LogPeriodRequest(next, next, null, "medium", null, List.of(), null, false));
+
+        assertThat(user.getTrackingStartDate()).isEqualTo(LocalDate.of(2026, 5, 1));
+    }
+
+    @Test
+    void logPeriodWithoutAStoredStartUsesTheEarlierOfTheOldAndNewPeriod() {
+        User user = userWith(LocalDate.of(2026, 7, 28), 28);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(user));
+        when(cycleLogRepository.findByUserIdAndLogDate(any(), any())).thenReturn(Optional.empty());
+        when(cycleLogRepository.save(any(CycleLog.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(pointsWriteService.recordPeriodLog(any()))
+                .thenReturn(new PointsWriteService.LogPointsResult(0, 100, 3, true));
+
+        LocalDate next = LocalDate.of(2026, 8, 25);
+        service.logPeriod(userId, new LogPeriodRequest(next, next, null, "medium", null, List.of(), null, false));
+
+        assertThat(user.getTrackingStartDate()).isEqualTo(LocalDate.of(2026, 7, 1));
     }
 }

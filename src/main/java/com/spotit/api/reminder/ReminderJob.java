@@ -1,6 +1,7 @@
 package com.spotit.api.reminder;
 
 import com.spotit.api.configuration.ReminderSettings;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
 import com.spotit.api.reminder.entity.PushTicket;
@@ -16,15 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
-import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -73,7 +70,7 @@ public class ReminderJob {
     }
 
     private List<PushMessage> remindersFor(User user, List<Device> devices, ReminderSettings settings, Instant now) {
-        LocalDateTime localNow = LocalDateTime.ofInstant(now, zoneOf(user, devices));
+        LocalDateTime localNow = LocalDateTime.ofInstant(now, UserClock.zoneOf(user, devices));
         List<PushMessage> messages = new ArrayList<>();
         for (ReminderPlanner.Planned planned : reminderPlanner.plan(user, settings, localNow)) {
             Optional<ReminderDelivery> delivery;
@@ -96,21 +93,6 @@ public class ReminderJob {
         }
         Map<String, String> receipts = pushSender.receipts(tickets.stream().map(PushTicket::getTicketId).toList());
         reminderWriteService.applyReceipts(tickets, receipts, now);
-    }
-
-    private static ZoneId zoneOf(User user, List<Device> devices) {
-        return Optional.ofNullable(user.getTimeZone())
-                .or(() -> devices.stream().map(Device::getTimeZone).filter(Objects::nonNull).findFirst())
-                .map(ReminderJob::parseZone)
-                .orElse(ZoneOffset.UTC);
-    }
-
-    private static ZoneId parseZone(String zone) {
-        try {
-            return ZoneId.of(zone);
-        } catch (DateTimeException e) {
-            return ZoneOffset.UTC;
-        }
     }
 
     static boolean isExpoToken(String pushToken) {

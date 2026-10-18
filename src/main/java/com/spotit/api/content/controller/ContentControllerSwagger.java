@@ -18,7 +18,13 @@ final class ContentControllerSwagger {
                     "title": "5 ways to ease cramps",
                     "imageUrl": "https://cdn.spotit.app/content/cramps.jpg",
                     "sponsored": false,
-                    "advertiser": null
+                    "advertiser": null,
+                    "references": [
+                      {
+                        "label": "NHS — Period pain",
+                        "url": "https://www.nhs.uk/conditions/period-pain/"
+                      }
+                    ]
                   },
                   {
                     "id": "9d1e2b0a-1234-4c56-9abc-1234567890ab",
@@ -26,7 +32,8 @@ final class ContentControllerSwagger {
                     "title": "20% off at HealthCo",
                     "imageUrl": "https://cdn.spotit.app/content/healthco.jpg",
                     "sponsored": true,
-                    "advertiser": "HealthCo"
+                    "advertiser": "HealthCo",
+                    "references": []
                   }
                 ]
               }

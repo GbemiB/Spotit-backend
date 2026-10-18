@@ -65,6 +65,40 @@ class CycleUtilTest {
         assertThat(CycleUtil.nextPeriodDate(today, LAST_PERIOD, 28)).isEqualTo(today.plusDays(1));
     }
 
+    @Test
+    void statusIsTrackingWithinTheConfirmedCycle() {
+        CycleUtil.Status status = CycleUtil.statusOf(LAST_PERIOD.plusDays(27), LAST_PERIOD, 28);
+        assertThat(status.state()).isEqualTo(CycleUtil.TRACKING);
+        assertThat(status.cycleDay()).isEqualTo(28);
+        assertThat(status.expectedDate()).isEqualTo(LAST_PERIOD.plusDays(28));
+    }
+
+    @Test
+    void statusIsDueOnThePredictedDayThenLateUntilAFullCycleHasPassed() {
+        assertThat(CycleUtil.statusOf(LAST_PERIOD.plusDays(28), LAST_PERIOD, 28))
+                .isEqualTo(new CycleUtil.Status(CycleUtil.DUE, 28, 0, LAST_PERIOD.plusDays(28), 0));
+        assertThat(CycleUtil.statusOf(LAST_PERIOD.plusDays(29), LAST_PERIOD, 28))
+                .isEqualTo(new CycleUtil.Status(CycleUtil.LATE, 28, 1, LAST_PERIOD.plusDays(28), 0));
+        assertThat(CycleUtil.statusOf(LAST_PERIOD.plusDays(55), LAST_PERIOD, 28))
+                .isEqualTo(new CycleUtil.Status(CycleUtil.LATE, 28, 27, LAST_PERIOD.plusDays(28), 0));
+        assertThat(CycleUtil.statusOf(LAST_PERIOD.plusDays(56), LAST_PERIOD, 28))
+                .isEqualTo(new CycleUtil.Status(CycleUtil.DUE, 28, 0, LAST_PERIOD.plusDays(56), 1));
+    }
+
+    @Test
+    void trackingStartFallsBackToTheMonthOfTheLastPeriod() {
+        assertThat(CycleUtil.trackingStartOf(null, LocalDate.of(2026, 9, 28))).isEqualTo(LocalDate.of(2026, 9, 1));
+        assertThat(CycleUtil.trackingStartOf(LocalDate.of(2026, 6, 1), LocalDate.of(2026, 9, 28))).isEqualTo(LocalDate.of(2026, 6, 1));
+        assertThat(CycleUtil.trackingStartOf(null, null)).isNull();
+    }
+
+    @Test
+    void earlierStartOnlyEverMovesBack() {
+        assertThat(CycleUtil.earlierStart(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 7, 15))).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(CycleUtil.earlierStart(LocalDate.of(2026, 9, 1), LocalDate.of(2026, 10, 3))).isEqualTo(LocalDate.of(2026, 9, 1));
+        assertThat(CycleUtil.earlierStart(null, LocalDate.of(2026, 10, 3))).isEqualTo(LocalDate.of(2026, 10, 1));
+    }
+
     private CyclePhase phase(int cycleDay, int periodLength, int cycleLength) {
         CycleUtil.Phase p = CycleUtil.phaseFor(cycleDay, periodLength, cycleLength);
         return p == null ? null : p.key();

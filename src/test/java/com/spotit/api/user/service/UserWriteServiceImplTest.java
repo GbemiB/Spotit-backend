@@ -186,6 +186,20 @@ class UserWriteServiceImplTest {
     }
 
     @Test
+    void completeOnboardingStartsTrackingFromTheMonthOfTheLastPeriod() {
+        service.completeOnboarding(userId, new OnboardingRequest(LocalDate.of(1998, 4, 12), LocalDate.of(2026, 9, 28), "track", null, null));
+
+        assertThat(user.getTrackingStartDate()).isEqualTo(LocalDate.of(2026, 9, 1));
+    }
+
+    @Test
+    void completeOnboardingWithoutALastPeriodHasNoTrackingStart() {
+        service.completeOnboarding(userId, new OnboardingRequest(LocalDate.of(1998, 4, 12), null, "track", null, null));
+
+        assertThat(user.getTrackingStartDate()).isNull();
+    }
+
+    @Test
     void completeOnboardingKeepsDefaultLengthsWhenNotSent() {
         OnboardingResponse response = service.completeOnboarding(userId, new OnboardingRequest(LocalDate.of(1998, 4, 12), null, "track", null, null));
 
@@ -234,7 +248,7 @@ class UserWriteServiceImplTest {
             job.setId(jobId);
             return job;
         });
-        UserResponse profile = new UserResponse(userId, "Jane", "Doe", "jane@example.com", null, "track", 28, 5, null, "system", true, false);
+        UserResponse profile = new UserResponse(userId, "Jane", "Doe", "jane@example.com", null, "track", 28, 5, null, null, "system", true, false);
         when(userReadService.getExportData(userId, jobId)).thenReturn(new ExportDataResponse(profile,
                 List.of(Map.of("date", "2026-09-01", "flow", "heavy", "mood", "", "symptoms", List.of("cramps"), "notes", "")),
                 List.of(Map.of("label", "Daily log", "delta", 10, "date", "2026-09-01"))));
@@ -289,6 +303,7 @@ class UserWriteServiceImplTest {
         verify(reminderDeliveryRepository).deleteByUserId(userId);
         assertThat(user.isOnboarded()).isFalse();
         assertThat(user.getGoal()).isNull();
+        assertThat(user.getTrackingStartDate()).isNull();
         assertThat(user.getPoints()).isZero();
         assertThat(user.getStreak()).isZero();
         assertThat(user.getLongestStreak()).isZero();

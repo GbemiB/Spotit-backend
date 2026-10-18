@@ -42,7 +42,7 @@ class ChallengeReadServiceImplTest {
     void challengesHideTheDailyLogDefinitionAndCapProgressAtTheTotal() {
         ChallengeDefinition logFive = def("log_5_days", 5);
         ChallengeDefinition streak = def("streak_7", 7);
-        when(calculator.currentWeekStart()).thenReturn(weekStart);
+        when(calculator.currentWeekStart(userId)).thenReturn(weekStart);
         when(challengeDefinitionRepository.findAll()).thenReturn(List.of(def("daily_log", 1), logFive, streak));
         when(calculator.computeDone(userId, logFive)).thenReturn(6);
         when(calculator.computeDone(userId, streak)).thenReturn(3);

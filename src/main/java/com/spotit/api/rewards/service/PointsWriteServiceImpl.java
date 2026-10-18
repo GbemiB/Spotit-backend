@@ -3,6 +3,7 @@ package com.spotit.api.rewards.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.rewards.entity.PointsHistoryEntry;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
@@ -14,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Service
@@ -24,12 +24,13 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     private final PointsHistoryRepository pointsHistoryRepository;
     private final ConfigurationDomainService configurationDomainService;
     private final ChallengeReadService challengeReadService;
+    private final UserClock userClock;
 
     @Override
     @Transactional
     public LogPointsResult recordDailyLog(UUID userId, LocalDate logDate, boolean isNewEntry) {
         User user = requireUserForUpdate(userId);
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate today = userClock.today(user);
 
         boolean earns = isNewEntry;
 
@@ -49,7 +50,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         user.setPoints(user.getPoints() + points);
         userRepository.save(user);
 
-        recordHistory(userId, "📝", "Logged flow, mood & symptoms", points);
+        recordHistory(userId, "📝", "Logged flow, mood & symptoms", points, today);
         return new LogPointsResult(points, user.getPoints(), streak, true);
     }
 
@@ -57,7 +58,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Transactional
     public LogPointsResult recordPeriodLog(UUID userId) {
         User user = requireUserForUpdate(userId);
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate today = userClock.today(user);
         boolean earns = user.getLastPeriodLogDate() == null
                 || !YearMonth.from(user.getLastPeriodLogDate()).equals(YearMonth.from(today));
 
@@ -78,7 +79,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         user.setPoints(user.getPoints() + points);
         userRepository.save(user);
 
-        recordHistory(userId, "📝", "Logged a period", points);
+        recordHistory(userId, "📝", "Logged a period", points, today);
         return new LogPointsResult(points, user.getPoints(), streak, true);
     }
 
@@ -86,7 +87,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Transactional
     public DailyClaimResult claimDaily(UUID userId) {
         User user = requireUserForUpdate(userId);
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate today = userClock.today(user);
         if (today.equals(user.getLastClaimedDate())) {
             return new DailyClaimResult(0, user.getPoints(), true);
         }
@@ -94,7 +95,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         user.setLastClaimedDate(today);
         user.setPoints(user.getPoints() + points);
         userRepository.save(user);
-        recordHistory(userId, "🎁", "Daily check-in bonus", points);
+        recordHistory(userId, "🎁", "Daily check-in bonus", points, today);
         return new DailyClaimResult(points, user.getPoints(), false);
     }
 
@@ -102,7 +103,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     @Transactional
     public AdWatchResult watchAd(UUID userId) {
         User user = requireUserForUpdate(userId);
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        LocalDate today = userClock.today(user);
         long watchedToday = pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad");
         if (watchedToday >= configurationDomainService.getAdsDailyLimit()) {
             throw new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, ErrorMessage.DAILY_AD_LIMIT_REACHED);
@@ -110,7 +111,7 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         int points = configurationDomainService.getPointsWatchAd();
         user.setPoints(user.getPoints() + points);
         userRepository.save(user);
-        recordHistory(userId, "🎬", "Watched a rewarded ad", points);
+        recordHistory(userId, "🎬", "Watched a rewarded ad", points, today);
         return new AdWatchResult(points, user.getPoints());
     }
 
@@ -120,17 +121,17 @@ public class PointsWriteServiceImpl implements PointsWriteService {
         User user = requireUserForUpdate(userId);
         user.setPoints(user.getPoints() + delta);
         userRepository.save(user);
-        recordHistory(userId, icon, label, delta);
+        recordHistory(userId, icon, label, delta, userClock.today(user));
         return user.getPoints();
     }
 
-    private void recordHistory(UUID userId, String icon, String label, int delta) {
+    private void recordHistory(UUID userId, String icon, String label, int delta, LocalDate occurredOn) {
         pointsHistoryRepository.save(PointsHistoryEntry.builder()
                 .userId(userId)
                 .icon(icon)
                 .label(label)
                 .delta(delta)
-                .occurredOn(LocalDate.now(ZoneOffset.UTC))
+                .occurredOn(occurredOn)
                 .build());
     }
 

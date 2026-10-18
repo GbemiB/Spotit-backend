@@ -19,6 +19,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     List<User> findByPendingDeletionAtBefore(Instant instant);
 
+    List<User> findByTrackingStartDateIsNullAndLastPeriodDateIsNotNull();
+
     @Query("""
             select u from User u
             where u.pendingDeletionAt is null and u.onboarded = true

@@ -3,7 +3,10 @@ package com.spotit.api.insight.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.cycle.PeriodEpisodes;
+import com.spotit.api.cycle.PeriodEpisodes.Episode;
 import com.spotit.api.insight.dto.CycleTrendsResponse;
 import com.spotit.api.insight.dto.RegularityResponse;
 import com.spotit.api.insight.dto.WeeklyDigestResponse;
@@ -18,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,24 +29,24 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class InsightReadServiceImpl implements InsightReadService {
-    private static final int MAX_DAYS_BETWEEN_PERIOD_LOGS = 2;
-
     private final CycleLogRepository cycleLogRepository;
     private final UserRepository userRepository;
     private final ConfigurationDomainService configurationDomainService;
+    private final UserClock userClock;
 
     @Override
     @Transactional(readOnly = true)
     public CycleTrendsResponse getTrends(UUID userId, Integer cyclesParam) {
         int cycles = cyclesParam == null ? configurationDomainService.getInsightDefaultCycles() : cyclesParam;
         User user = requireUser(userId);
+        LocalDate today = userClock.today(user);
 
-        List<PeriodEpisode> episodes = detectPeriodEpisodes(userId);
+        List<Episode> episodes = detectPeriodEpisodes(userId, today);
         List<Integer> cycleLengths = cycleLengthsFrom(episodes, cycles);
-        List<PeriodEpisode> completed = completedEpisodes(episodes);
+        List<Episode> completed = completedEpisodes(episodes, today);
         List<Integer> periodLengths = completed.stream()
                 .skip(Math.max(0, completed.size() - cycles))
-                .map(PeriodEpisode::lengthDays)
+                .map(Episode::lengthDays)
                 .toList();
 
         int avgCycleLength = cycleLengths.isEmpty() ? user.getCycleLength() : average(cycleLengths);
@@ -58,7 +60,7 @@ public class InsightReadServiceImpl implements InsightReadService {
     @Override
     @Transactional(readOnly = true)
     public WeeklyDigestResponse getWeeklyDigest(UUID userId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = userClock.today(requireUser(userId));
         LocalDate start = today.minusDays(6);
         List<CycleLog> logs = cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, start, today);
 
@@ -78,7 +80,8 @@ public class InsightReadServiceImpl implements InsightReadService {
     @Transactional(readOnly = true)
     public RegularityResponse getRegularity(UUID userId) {
         User user = requireUser(userId);
-        List<PeriodEpisode> episodes = detectPeriodEpisodes(userId);
+        LocalDate today = userClock.today(user);
+        List<Episode> episodes = detectPeriodEpisodes(userId, today);
 
         if (episodes.isEmpty()) {
             return new RegularityResponse("insufficient_data", List.of(), "This is not medical advice.");
@@ -94,7 +97,7 @@ public class InsightReadServiceImpl implements InsightReadService {
                 flags.add("Your recent cycle lengths have varied by more than " + irregularVariationThresholdDays + " days.");
             }
         }
-        completedEpisodes(episodes).stream().reduce((a, b) -> b).ifPresent(last -> {
+        completedEpisodes(episodes, today).stream().reduce((a, b) -> b).ifPresent(last -> {
             if (Math.abs(last.lengthDays() - user.getPeriodLength()) > configurationDomainService.getInsightUnusualPeriodLengthDeltaDays()) {
                 flags.add("Your most recent period lasted longer or shorter than usual.");
             }
@@ -108,54 +111,20 @@ public class InsightReadServiceImpl implements InsightReadService {
         return new RegularityResponse(status, flags, "This is not medical advice.");
     }
 
-    private record PeriodEpisode(LocalDate start, LocalDate end) {
-        int lengthDays() {
-            return (int) ChronoUnit.DAYS.between(start, end) + 1;
-        }
+    private List<Episode> detectPeriodEpisodes(UUID userId, LocalDate today) {
+        return PeriodEpisodes.detect(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, today.minusYears(2), today));
     }
 
-    private List<PeriodEpisode> detectPeriodEpisodes(UUID userId) {
-        List<CycleLog> flowLogs = cycleLogRepository
-                .findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, LocalDate.now().minusYears(2), LocalDate.now())
-                .stream()
-                .filter(l -> l.getFlow() != null)
-                .sorted(Comparator.comparing(CycleLog::getLogDate))
-                .toList();
-
-        List<PeriodEpisode> episodes = new ArrayList<>();
-        LocalDate episodeStart = null;
-        LocalDate episodeEnd = null;
-        for (CycleLog log : flowLogs) {
-            LocalDate date = log.getLogDate();
-            if (episodeStart != null && ChronoUnit.DAYS.between(episodeEnd, date) <= MAX_DAYS_BETWEEN_PERIOD_LOGS) {
-                episodeEnd = date;
-                continue;
-            }
-            if (episodeStart != null) {
-                episodes.add(new PeriodEpisode(episodeStart, episodeEnd));
-                episodeStart = null;
-            }
-            if (!log.getFlow().isSpotting()) {
-                episodeStart = date;
-                episodeEnd = date;
-            }
-        }
-        if (episodeStart != null) {
-            episodes.add(new PeriodEpisode(episodeStart, episodeEnd));
-        }
-        return episodes;
-    }
-
-    private List<PeriodEpisode> completedEpisodes(List<PeriodEpisode> episodes) {
+    private List<Episode> completedEpisodes(List<Episode> episodes, LocalDate today) {
         if (episodes.isEmpty()) {
             return episodes;
         }
-        PeriodEpisode last = episodes.get(episodes.size() - 1);
-        boolean ongoing = !last.end().isBefore(LocalDate.now().minusDays(MAX_DAYS_BETWEEN_PERIOD_LOGS - 1L));
+        Episode last = episodes.get(episodes.size() - 1);
+        boolean ongoing = !last.end().isBefore(today.minusDays(PeriodEpisodes.MAX_GAP_DAYS - 1L));
         return ongoing ? episodes.subList(0, episodes.size() - 1) : episodes;
     }
 
-    private List<Integer> cycleLengthsFrom(List<PeriodEpisode> episodes, int maxCycles) {
+    private List<Integer> cycleLengthsFrom(List<Episode> episodes, int maxCycles) {
         if (episodes.size() < 2) {
             return List.of();
         }

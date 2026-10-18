@@ -3,7 +3,10 @@ package com.spotit.api.log.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.exception.ErrorMessage;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.cycle.CycleUtil;
+import com.spotit.api.cycle.PeriodEpisodes;
 import com.spotit.api.log.dto.LogEntryResponse;
 import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +38,7 @@ public class LogWriteServiceImpl implements LogWriteService {
     private final PointsWriteService pointsWriteService;
     private final UserRepository userRepository;
     private final ConfigurationDomainService configurationDomainService;
+    private final UserClock userClock;
 
     @Override
     @Transactional
@@ -76,6 +81,9 @@ public class LogWriteServiceImpl implements LogWriteService {
 
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
+        if (startDate.isAfter(userClock.today(user))) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PERIOD_START_IN_FUTURE);
+        }
 
         LogEntryResponse startDayEntry = null;
         long pointsAwarded = 0;
@@ -109,14 +117,18 @@ public class LogWriteServiceImpl implements LogWriteService {
             }
         }
 
-        List<LogEntryResponse> clearedEntries = clearStalePeriodDays(userId, startDate, endDate);
+        ClearedPeriod cleared = clearRestOfSamePeriod(userId, startDate, endDate);
 
-        user.setLastPeriodDate(startDate);
+        LocalDate lastPeriod = user.getLastPeriodDate();
+        user.setTrackingStartDate(CycleUtil.earlierStart(CycleUtil.trackingStartOf(user.getTrackingStartDate(), lastPeriod), startDate));
+        if (lastPeriod == null || startDate.isAfter(lastPeriod) || cleared.touches(lastPeriod)) {
+            user.setLastPeriodDate(startDate);
+        }
         userRepository.save(user);
 
         return new LogPeriodResponse(
-                startDate, endDate, request.flow(), user.getLastPeriodDate(), user.getCycleLength(), user.getPeriodLength(),
-                startDayEntry, pointsAwarded, newBalance, streak, clearedEntries
+                startDate, endDate, request.flow(), user.getLastPeriodDate(), user.getTrackingStartDate(), user.getCycleLength(), user.getPeriodLength(),
+                startDayEntry, pointsAwarded, newBalance, streak, cleared.entries()
         );
     }
 
@@ -126,13 +138,45 @@ public class LogWriteServiceImpl implements LogWriteService {
         cycleLogRepository.deleteByUserIdAndLogDate(userId, date);
     }
 
-    private List<LogEntryResponse> clearStalePeriodDays(UUID userId, LocalDate newStart, LocalDate newEnd) {
-        List<LogEntryResponse> cleared = new ArrayList<>();
-        for (CycleLog entry : cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)) {
-            LocalDate d = entry.getLogDate();
-            if (!d.isBefore(newStart) && !d.isAfter(newEnd)) {
+    private record ClearedPeriod(List<LogEntryResponse> entries, LocalDate from, LocalDate to) {
+        boolean touches(LocalDate date) {
+            return !date.isBefore(from.minusDays(PeriodEpisodes.MAX_GAP_DAYS)) && !date.isAfter(to.plusDays(PeriodEpisodes.MAX_GAP_DAYS));
+        }
+    }
+
+    private ClearedPeriod clearRestOfSamePeriod(UUID userId, LocalDate newStart, LocalDate newEnd) {
+        List<CycleLog> flowDays = cycleLogRepository.findByUserIdAndFlowIsNotNull(userId).stream()
+                .sorted(Comparator.comparing(CycleLog::getLogDate))
+                .toList();
+        List<CycleLog> samePeriod = new ArrayList<>();
+        LocalDate from = newStart;
+        for (int i = flowDays.size() - 1; i >= 0; i--) {
+            LocalDate d = flowDays.get(i).getLogDate();
+            if (!d.isBefore(newStart)) {
                 continue;
             }
+            if (!PeriodEpisodes.sameEpisode(d, from)) {
+                break;
+            }
+            samePeriod.add(flowDays.get(i));
+            from = d;
+        }
+        LocalDate to = newEnd;
+        for (CycleLog entry : flowDays) {
+            LocalDate d = entry.getLogDate();
+            if (!d.isAfter(newEnd)) {
+                continue;
+            }
+            if (!PeriodEpisodes.sameEpisode(to, d)) {
+                break;
+            }
+            samePeriod.add(entry);
+            to = d;
+        }
+
+        List<LogEntryResponse> cleared = new ArrayList<>();
+        for (CycleLog entry : samePeriod) {
+            LocalDate d = entry.getLogDate();
             entry.setFlow(null);
             boolean isNowEmpty = entry.getMood() == null && entry.getSymptoms().isEmpty()
                     && (entry.getNotes() == null || entry.getNotes().isBlank()) && !entry.isIntimate();
@@ -145,6 +189,6 @@ public class LogWriteServiceImpl implements LogWriteService {
                         SymptomType.fromValues(entry.getSymptoms()), entry.getNotes(), entry.isIntimate()));
             }
         }
-        return cleared;
+        return new ClearedPeriod(cleared, from, to);
     }
 }

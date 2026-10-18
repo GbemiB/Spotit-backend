@@ -29,7 +29,7 @@ public class ChallengeReadServiceImpl implements ChallengeReadService {
     @Override
     @Transactional(readOnly = true)
     public List<ChallengeResponse> getChallenges(UUID userId) {
-        LocalDate weekStart = calculator.currentWeekStart();
+        LocalDate weekStart = calculator.currentWeekStart(userId);
         return challengeDefinitionRepository.findAll().stream()
                 .filter(def -> !DAILY_LOG_DEFINITION_ID.equals(def.getId()))
                 .map(def -> toResponse(userId, def, weekStart))

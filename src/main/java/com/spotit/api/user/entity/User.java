@@ -54,6 +54,9 @@ public class User {
     @Column(name = "last_period_date")
     private LocalDate lastPeriodDate;
 
+    @Column(name = "tracking_start_date")
+    private LocalDate trackingStartDate;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "theme_pref", nullable = false)
     private ThemePref themePref;
