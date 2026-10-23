@@ -222,4 +222,37 @@ class PointsWriteServiceImplTest {
         verify(pointsHistoryRepository).save(argThat(entry ->
                 entry.getDelta() == -200 && entry.getLabel().equals("Redeemed something")));
     }
+
+    @Test
+    void aPartnerCheckInEarnsTheDailyRewardAndContinuesHisStreak() {
+        User user = userWith(100, 2, 4, today.minusDays(1));
+        when(challengeReadService.getDailyLogReward()).thenReturn(10);
+
+        PointsWriteService.LogPointsResult result = service.recordCheckIn(userId);
+
+        assertThat(result.pointsAwarded()).isEqualTo(10);
+        assertThat(result.newBalance()).isEqualTo(110);
+        assertThat(result.streak()).isEqualTo(3);
+        assertThat(user.getLastLogDate()).isEqualTo(today);
+        verify(pointsHistoryRepository).save(any());
+    }
+
+    @Test
+    void aPartnerCheckInAfterAGapStartsANewStreak() {
+        userWith(0, 7, 7, today.minusDays(3));
+        when(challengeReadService.getDailyLogReward()).thenReturn(10);
+
+        assertThat(service.recordCheckIn(userId).streak()).isEqualTo(1);
+    }
+
+    @Test
+    void aSecondPartnerCheckInTheSameDayEarnsNothing() {
+        userWith(50, 3, 3, today);
+
+        PointsWriteService.LogPointsResult result = service.recordCheckIn(userId);
+
+        assertThat(result.pointsAwarded()).isZero();
+        assertThat(result.streak()).isEqualTo(3);
+        verify(pointsHistoryRepository, never()).save(any());
+    }
 }

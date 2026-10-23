@@ -16,6 +16,7 @@ public record UserResponse(
         LocalDate trackingStartDate,
         String themePref,
         boolean onboarded,
-        boolean isPremium
+        boolean isPremium,
+        String accountType
 ) {
 }

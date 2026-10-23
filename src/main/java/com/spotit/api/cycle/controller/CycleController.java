@@ -1,7 +1,7 @@
 package com.spotit.api.cycle.controller;
 
 import com.spotit.api.common.dto.ErrorDetail;
-import com.spotit.api.common.security.CurrentUserId;
+import com.spotit.api.common.security.ViewedUserId;
 import com.spotit.api.cycle.dto.CycleCalendarResponse;
 import com.spotit.api.cycle.dto.CycleCurrentResponse;
 import com.spotit.api.cycle.service.CycleReadService;
@@ -36,7 +36,7 @@ public class CycleController {
                     examples = @ExampleObject(value = CycleControllerSwagger.CURRENT_200_EXAMPLE)))
     })
     @GetMapping("/current")
-    public CycleCurrentResponse current(@CurrentUserId UUID userId) {
+    public CycleCurrentResponse current(@ViewedUserId UUID userId) {
         return cycleReadService.getCurrent(userId);
     }
 
@@ -51,7 +51,7 @@ public class CycleController {
                     examples = @ExampleObject(value = CycleControllerSwagger.CALENDAR_422_EXAMPLE)))
     })
     @GetMapping("/calendar")
-    public CycleCalendarResponse calendar(@CurrentUserId UUID userId,
+    public CycleCalendarResponse calendar(@ViewedUserId UUID userId,
                                            @Parameter(description = "Calendar year", example = "2026") @RequestParam int year,
                                            @Parameter(description = "Calendar month (1-12)", example = "7") @RequestParam int month) {
         return cycleReadService.getCalendarMonth(userId, year, month);

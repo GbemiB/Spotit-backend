@@ -248,7 +248,7 @@ class UserWriteServiceImplTest {
             job.setId(jobId);
             return job;
         });
-        UserResponse profile = new UserResponse(userId, "Jane", "Doe", "jane@example.com", null, "track", 28, 5, null, null, "system", true, false);
+        UserResponse profile = new UserResponse(userId, "Jane", "Doe", "jane@example.com", null, "track", 28, 5, null, null, "system", true, false, "owner");
         when(userReadService.getExportData(userId, jobId)).thenReturn(new ExportDataResponse(profile,
                 List.of(Map.of("date", "2026-09-01", "flow", "heavy", "mood", "", "symptoms", List.of("cramps"), "notes", "")),
                 List.of(Map.of("label", "Daily log", "delta", 10, "date", "2026-09-01"))));

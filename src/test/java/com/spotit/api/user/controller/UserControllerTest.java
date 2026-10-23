@@ -59,7 +59,7 @@ class UserControllerTest {
 
     private UserResponse profile(String firstName) {
         return new UserResponse(USER_ID, firstName, "Doe", "jane@example.com", LocalDate.of(1998, 4, 12), "track",
-                28, 5, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 1), "system", true, false);
+                28, 5, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 1), "system", true, false, "owner");
     }
 
     @Test

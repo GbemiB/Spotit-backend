@@ -14,7 +14,8 @@ final class UserMapper {
                 user.getGoal() == null ? null : user.getGoal().name(),
                 user.getCycleLength(), user.getPeriodLength(), user.getLastPeriodDate(),
                 CycleUtil.trackingStartOf(user.getTrackingStartDate(), user.getLastPeriodDate()),
-                user.getThemePref().name(), user.isOnboarded(), user.isPremium()
+                user.getThemePref().name(), user.isOnboarded(), user.isPremium(),
+                user.getAccountType().name()
         );
     }
 }

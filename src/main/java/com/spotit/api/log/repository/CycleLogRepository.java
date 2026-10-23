@@ -19,6 +19,7 @@ public interface CycleLogRepository extends JpaRepository<CycleLog, UUID> {
 
     long countByUserId(UUID userId);
 
+
     void deleteByUserIdAndLogDate(UUID userId, LocalDate logDate);
 
     void deleteByUserId(UUID userId);

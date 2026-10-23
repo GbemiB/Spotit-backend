@@ -19,6 +19,22 @@ public final class ErrorMessage {
     public static final String OTP_NOT_VERIFIED = "Please verify your email code before creating a password.";
     public static final String PASSWORD_REUSED = "You cannot reuse any of your last 3 passwords.";
 
+    public static final String PARTNER_INVITE_SELF = "You can't invite your own email.";
+    public static final String PARTNER_INVITE_NEEDS_OWNER = "Finish setting up your own cycle before inviting a partner.";
+    public static final String PARTNER_ALREADY_LINKED = "You already share with a partner. Stop sharing first.";
+    public static final String PARTNER_INVITEE_TRACKS_CYCLE = "This email belongs to a Spot it account that tracks its own cycle, so it can't be linked as a partner.";
+    public static final String PARTNER_INVITEE_LINKED = "This person is already linked to someone else on Spot it.";
+    public static final String PARTNER_INVITE_LIMIT_REACHED = "You've sent 5 invites in the last 24 hours. Please try again later.";
+    public static final String PARTNER_INVITE_NOT_FOUND = "There's no pending partner invite.";
+    public static final String PARTNER_NO_INVITE_FOR_EMAIL = "We couldn't find an invite for this email. Ask your partner to invite the email you signed up with.";
+    public static final String PARTNER_INVITE_CODE_INVALID = "That invite code isn't right. Check the email and try again.";
+    public static final String PARTNER_INVITE_EXPIRED = "This invite has expired. Ask your partner to send a new one.";
+    public static final String PARTNER_ACCOUNT_TRACKS_CYCLE = "This account tracks its own cycle, so it can't be linked as a partner. Sign up with the invited email instead.";
+    public static final String PARTNER_LINK_NOT_FOUND = "You're not sharing with a partner.";
+    public static final String PARTNER_NICKNAME_BLANK = "Please enter a name.";
+    public static final String PARTNER_ALREADY_CHECKED_IN = "You've already checked in today. Come back tomorrow.";
+    public static final String PARTNER_UNKNOWN_SUPPORT = "Please choose from the listed ways you supported her.";
+
     public static final String MONTH_OUT_OF_RANGE = "month must be between 1 and 12.";
     public static final String CYCLE_LENGTH_OUT_OF_RANGE = "cycleLength must be between 21 and 45.";
     public static final String PERIOD_LENGTH_OUT_OF_RANGE = "periodLength must be between 2 and 10.";

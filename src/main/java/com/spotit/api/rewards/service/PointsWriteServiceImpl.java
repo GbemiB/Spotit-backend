@@ -56,6 +56,25 @@ public class PointsWriteServiceImpl implements PointsWriteService {
 
     @Override
     @Transactional
+    public LogPointsResult recordCheckIn(UUID userId) {
+        User user = requireUserForUpdate(userId);
+        LocalDate today = userClock.today(user);
+        if (today.equals(user.getLastLogDate())) {
+            return new LogPointsResult(0, user.getPoints(), user.getStreak(), false);
+        }
+        int streak = today.minusDays(1).equals(user.getLastLogDate()) ? user.getStreak() + 1 : 1;
+        int points = challengeReadService.getDailyLogReward();
+        user.setStreak(streak);
+        user.setLongestStreak(Math.max(streak, user.getLongestStreak()));
+        user.setLastLogDate(today);
+        user.setPoints(user.getPoints() + points);
+        userRepository.save(user);
+        recordHistory(userId, "💞", "Partner check-in", points, today);
+        return new LogPointsResult(points, user.getPoints(), streak, true);
+    }
+
+    @Override
+    @Transactional
     public LogPointsResult recordPeriodLog(UUID userId) {
         User user = requireUserForUpdate(userId);
         LocalDate today = userClock.today(user);

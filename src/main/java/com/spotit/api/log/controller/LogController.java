@@ -4,6 +4,7 @@ import com.spotit.api.common.dto.ErrorDetail;
 import com.spotit.api.common.dto.MessageResponse;
 import com.spotit.api.common.i18n.EnumMessages;
 import com.spotit.api.common.security.CurrentUserId;
+import com.spotit.api.common.security.ViewedUserId;
 import com.spotit.api.log.dto.EnumOption;
 import com.spotit.api.log.dto.LogEntryResponse;
 import com.spotit.api.log.dto.LogPeriodRequest;
@@ -105,7 +106,7 @@ public class LogController {
                     examples = @ExampleObject(value = LogControllerSwagger.GET_LOG_200_EXAMPLE)))
     })
     @GetMapping("/{date}")
-    public LogEntryResponse getLog(@CurrentUserId UUID userId,
+    public LogEntryResponse getLog(@ViewedUserId UUID userId,
                                     @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10")
                                     @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return logReadService.getLog(userId, date);
@@ -122,7 +123,7 @@ public class LogController {
                     examples = @ExampleObject(value = LogControllerSwagger.GET_LOGS_RANGE_422_EXAMPLE)))
     })
     @GetMapping
-    public LogsRangeResponse getLogsInRange(@CurrentUserId UUID userId,
+    public LogsRangeResponse getLogsInRange(@ViewedUserId UUID userId,
                                              @Parameter(description = "Range start date (inclusive)", example = "2026-07-01")
                                              @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                              @Parameter(description = "Range end date (inclusive)", example = "2026-07-10")

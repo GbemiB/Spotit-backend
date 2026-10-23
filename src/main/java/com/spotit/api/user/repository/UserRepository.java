@@ -24,6 +24,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("""
             select u from User u
             where u.pendingDeletionAt is null and u.onboarded = true
+              and u.accountType = com.spotit.api.user.entity.AccountType.owner
               and (u.notifPeriod = true or u.notifOvulation = true or u.notifDailyLog = true or u.notifDigest = true)
               and u.id in (select d.userId from Device d)
             """)

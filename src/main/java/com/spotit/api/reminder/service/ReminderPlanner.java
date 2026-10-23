@@ -60,7 +60,7 @@ public class ReminderPlanner {
         return planned;
     }
 
-    private static boolean due(LocalTime target, LocalTime now, ReminderSettings settings) {
+    static boolean due(LocalTime target, LocalTime now, ReminderSettings settings) {
         return !now.isBefore(target) && Duration.between(target, now).toMinutes() < settings.catchUpMinutes();
     }
 

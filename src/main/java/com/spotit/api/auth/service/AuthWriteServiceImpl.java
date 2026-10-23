@@ -17,6 +17,8 @@ import com.spotit.api.common.mail.OtpEmailTemplate;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.partner.service.PartnerWriteService;
+import com.spotit.api.user.entity.AccountType;
 import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -46,6 +48,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     private final EmailService emailService;
     private final ConfigurationDomainService configurationDomainService;
     private final AuthAttemptRecorder attemptRecorder;
+    private final PartnerWriteService partnerWriteService;
 
     @Override
     @Transactional
@@ -100,6 +103,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .lastName(lead.getLastName())
                 .email(lead.getEmail())
                 .passwordHash(passwordEncoder.encode(request.password().strip()))
+                .accountType(AccountType.owner)
                 .emailVerified(true)
                 .cycleLength(configurationDomainService.getCycleDefaultLength())
                 .periodLength(configurationDomainService.getCycleDefaultPeriodLength())
@@ -242,7 +246,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         stored.setExpiresAt(Instant.now().plusSeconds(jwtService.refreshTokenTtlSeconds()));
         refreshTokenRepository.save(stored);
 
-        String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail(), user.isPremium());
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail(), user.isPremium(), user.getAccountType().isPartner());
         return new AccessTokenResponse(accessToken, jwtService.accessTokenTtlSeconds());
     }
 
@@ -261,6 +265,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
         user.setPendingDeletionAt(purgeBy);
         userRepository.save(user);
         refreshTokenRepository.deleteByUserId(userId);
+        partnerWriteService.endAllFor(userId);
         return new AccountDeletionResponse(ErrorMessage.ACCOUNT_DELETION_SCHEDULED, purgeBy);
     }
 
@@ -291,7 +296,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
     }
 
     private TokenResponse issueTokens(User user) {
-        String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail(), user.isPremium());
+        String accessToken = jwtService.generateAccessToken(user.getId(), user.getEmail(), user.isPremium(), user.getAccountType().isPartner());
         String refreshToken = jwtService.generateRefreshToken(user.getId());
 
         RefreshToken stored = RefreshToken.builder()
@@ -306,7 +311,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 accessToken,
                 refreshToken,
                 jwtService.accessTokenTtlSeconds(),
-                new TokenResponse.UserSummary(user.getId(), user.isOnboarded())
+                new TokenResponse.UserSummary(user.getId(), user.isOnboarded(), user.getAccountType().name())
         );
     }
 }

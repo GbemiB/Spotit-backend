@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.spotit.api.common.exception.GlobalExceptionHandler;
 import com.spotit.api.common.security.CurrentUserIdArgumentResolver;
+import com.spotit.api.common.security.ViewedUserIdArgumentResolver;
 import com.spotit.api.common.security.SecurityUser;
 import com.spotit.api.common.web.ApiResponseAdvice;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -28,7 +29,8 @@ public final class ControllerTestSupport {
 
     public static MockMvc mockMvc(Object controller) {
         return MockMvcBuilders.standaloneSetup(controller)
-                .setCustomArgumentResolvers(new CurrentUserIdArgumentResolver())
+                .setCustomArgumentResolvers(new CurrentUserIdArgumentResolver(),
+                        new ViewedUserIdArgumentResolver(org.mockito.Mockito.mock(com.spotit.api.partner.repository.PartnerLinkRepository.class)))
                 .setControllerAdvice(new GlobalExceptionHandler(), new ApiResponseAdvice())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(JSON))
                 .build();

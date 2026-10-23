@@ -6,7 +6,8 @@ public enum ReminderType {
     ovulation_upcoming("Ovulation reminder", "calendar"),
     ovulation_today("Ovulation reminder", "calendar"),
     log_nudge("Daily log", "calendar"),
-    weekly_digest("Your week", "insights");
+    weekly_digest("Your week", "insights"),
+    partner_period_upcoming("Period reminder", "partner");
 
     private final String title;
     private final String screen;

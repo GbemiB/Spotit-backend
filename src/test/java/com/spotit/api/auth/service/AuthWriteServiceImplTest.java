@@ -13,6 +13,7 @@ import com.spotit.api.common.mail.EmailService;
 import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.partner.service.PartnerWriteService;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,13 +56,16 @@ class AuthWriteServiceImplTest {
     ConfigurationDomainService configurationDomainService;
     @Mock
     AuthAttemptRecorder attemptRecorder;
+    @Mock
+    PartnerWriteService partnerWriteService;
 
     AuthWriteServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new AuthWriteServiceImpl(userRepository, refreshTokenRepository, passwordHistoryRepository,
-                signupLeadRepository, passwordEncoder, jwtService, otpService, emailService, configurationDomainService, attemptRecorder);
+                signupLeadRepository, passwordEncoder, jwtService, otpService, emailService, configurationDomainService, attemptRecorder,
+                partnerWriteService);
     }
 
     private User existingUser(UUID id) {
@@ -316,6 +320,7 @@ class AuthWriteServiceImplTest {
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
         assertThat(response.user().userId()).isEqualTo(id);
+        assertThat(response.user().accountType()).isEqualTo("owner");
         verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
@@ -402,13 +407,31 @@ class AuthWriteServiceImplTest {
         when(refreshTokenRepository.findByTokenHashAndRevokedFalse(TokenHasher.sha256Hex("token")))
                 .thenReturn(Optional.of(stored));
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser(userId)));
-        when(jwtService.generateAccessToken(userId, "jane@example.com", false)).thenReturn("new-access-token");
+        when(jwtService.generateAccessToken(userId, "jane@example.com", false, false)).thenReturn("new-access-token");
         when(jwtService.accessTokenTtlSeconds()).thenReturn(3600L);
 
         AccessTokenResponse response = service.refresh(new RefreshTokenRequest("token"));
 
         assertThat(response.accessToken()).isEqualTo("new-access-token");
         assertThat(response.expiresIn()).isEqualTo(3600L);
+    }
+
+    @Test
+    void refreshForAPartnerAccountIssuesAPartnerToken() {
+        UUID userId = UUID.randomUUID();
+        when(jwtService.parseRefreshToken("token")).thenReturn(Optional.of(userId));
+        RefreshToken stored = RefreshToken.builder().userId(userId).expiresAt(Instant.now().plusSeconds(1000)).build();
+        when(refreshTokenRepository.findByTokenHashAndRevokedFalse(TokenHasher.sha256Hex("token")))
+                .thenReturn(Optional.of(stored));
+        User partner = existingUser(userId);
+        partner.setAccountType(com.spotit.api.user.entity.AccountType.partner);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(partner));
+        when(jwtService.generateAccessToken(userId, "jane@example.com", false, true)).thenReturn("partner-access-token");
+        when(jwtService.accessTokenTtlSeconds()).thenReturn(3600L);
+
+        AccessTokenResponse response = service.refresh(new RefreshTokenRequest("token"));
+
+        assertThat(response.accessToken()).isEqualTo("partner-access-token");
     }
 
     @Test
@@ -431,10 +454,11 @@ class AuthWriteServiceImplTest {
         assertThat(response.purgeBy()).isAfter(Instant.now().plus(java.time.Duration.ofDays(29)));
         verify(userRepository).save(argThat(u -> u.getPendingDeletionAt() != null));
         verify(refreshTokenRepository).deleteByUserId(userId);
+        verify(partnerWriteService).endAllFor(userId);
     }
 
     private void stubTokenIssuance(UUID userId) {
-        when(jwtService.generateAccessToken(userId == null ? any() : eq(userId), any(), anyBoolean())).thenReturn("access-token");
+        when(jwtService.generateAccessToken(userId == null ? any() : eq(userId), any(), anyBoolean(), anyBoolean())).thenReturn("access-token");
         when(jwtService.generateRefreshToken(userId == null ? any() : eq(userId))).thenReturn("refresh-token");
         when(jwtService.accessTokenTtlSeconds()).thenReturn(3600L);
         when(jwtService.refreshTokenTtlSeconds()).thenReturn(2_592_000L);

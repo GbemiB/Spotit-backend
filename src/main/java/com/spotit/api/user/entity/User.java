@@ -37,6 +37,11 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_type", nullable = false, columnDefinition = "varchar(20) default 'owner'")
+    @Builder.Default
+    private AccountType accountType = AccountType.owner;
+
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 

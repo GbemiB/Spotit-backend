@@ -4,12 +4,14 @@ import com.spotit.api.configuration.ReminderSettings;
 import com.spotit.api.configuration.ReminderSettingsFixture;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
+import com.spotit.api.partner.repository.PartnerLinkRepository;
 import com.spotit.api.reminder.entity.PushTicket;
 import com.spotit.api.reminder.entity.ReminderDelivery;
 import com.spotit.api.reminder.entity.ReminderType;
 import com.spotit.api.reminder.push.PushMessage;
 import com.spotit.api.reminder.push.PushResult;
 import com.spotit.api.reminder.push.PushSender;
+import com.spotit.api.reminder.service.PartnerReminderPlanner;
 import com.spotit.api.reminder.service.ReminderPlanner;
 import com.spotit.api.reminder.service.ReminderPlanner.Planned;
 import com.spotit.api.reminder.service.ReminderWriteService;
@@ -53,12 +55,15 @@ class ReminderJobUnitTest {
     @Mock ReminderPlanner reminderPlanner;
     @Mock ReminderWriteService reminderWriteService;
     @Mock PushSender pushSender;
+    @Mock PartnerLinkRepository partnerLinkRepository;
+    @Mock PartnerReminderPlanner partnerReminderPlanner;
     ReminderSettings settings = ReminderSettingsFixture.defaults();
     ReminderJob job;
 
     @BeforeEach
     void setUp() {
-        job = new ReminderJob(settings, userRepository, deviceRepository, reminderPlanner, reminderWriteService, pushSender);
+        job = new ReminderJob(settings, userRepository, deviceRepository, reminderPlanner, reminderWriteService, pushSender,
+                partnerLinkRepository, partnerReminderPlanner);
         lenient().when(reminderWriteService.ticketsDue(any())).thenReturn(List.of());
         lenient().when(reminderWriteService.record(any(), any(), any(), any(), any())).thenAnswer(inv -> Optional.of(delivery(
                 inv.getArgument(0), inv.getArgument(1), inv.getArgument(2), inv.getArgument(3))));
@@ -99,7 +104,7 @@ class ReminderJobUnitTest {
     @Test
     void nothingRunsWhenTheOperatorHasSwitchedRemindersOff() {
         job = new ReminderJob(ReminderSettingsFixture.disabled(), userRepository, deviceRepository, reminderPlanner,
-                reminderWriteService, pushSender);
+                reminderWriteService, pushSender, partnerLinkRepository, partnerReminderPlanner);
 
         job.run(NOW);
 
