@@ -15,7 +15,7 @@ import com.spotit.api.partner.dto.PartnerStatusResponse;
 import com.spotit.api.partner.entity.PartnerLink;
 import com.spotit.api.partner.entity.PartnerLinkStatus;
 import com.spotit.api.partner.repository.PartnerLinkRepository;
-import com.spotit.api.user.entity.AccountType;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -116,7 +116,7 @@ public class PartnerWriteServiceImpl implements PartnerWriteService {
         link.setAcceptedAt(Instant.now());
         link.setPartnerNickname(nickname);
         partnerLinkRepository.save(link);
-        user.setAccountType(AccountType.partner);
+        user.setAccountType(AccountOwner.partner);
         user.setOnboarded(true);
         userRepository.save(user);
         return partnerReadService.getStatus(userId);

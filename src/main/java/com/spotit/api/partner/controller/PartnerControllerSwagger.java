@@ -25,7 +25,8 @@ final class PartnerControllerSwagger {
                 "partnerFirstName": null,
                 "ownerFirstName": null,
                 "nickname": null,
-                "partnerReminder": null
+                "partnerReminder": null,
+                "sharedSince": null
               }
             }
             """;
@@ -78,7 +79,8 @@ final class PartnerControllerSwagger {
                 "partnerFirstName": null,
                 "ownerFirstName": "Amaka",
                 "nickname": "Amaka",
-                "partnerReminder": true
+                "partnerReminder": true,
+                "sharedSince": "2026-10-23T09:00:00Z"
               }
             }
             """;
@@ -106,7 +108,8 @@ final class PartnerControllerSwagger {
     static final String SETTINGS_REQUEST_EXAMPLE = """
             {
               "nickname": "Amaka",
-              "partnerReminder": true
+              "partnerReminder": true,
+                "sharedSince": "2026-10-23T09:00:00Z"
             }
             """;
 

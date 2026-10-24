@@ -10,7 +10,7 @@ import com.spotit.api.partner.dto.PartnerSettingsRequest;
 import com.spotit.api.partner.service.PartnerCheckInService;
 import com.spotit.api.partner.service.PartnerReadService;
 import com.spotit.api.partner.service.PartnerWriteService;
-import com.spotit.api.user.entity.AccountType;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -65,7 +65,7 @@ class PartnerFlowTest {
         partnerWriteService.accept(partner.getId(), new AcceptInviteRequest(code.group(1).toLowerCase(), "Amaka"));
 
         User linked = userRepository.findById(partner.getId()).orElseThrow();
-        assertThat(linked.getAccountType()).isEqualTo(AccountType.partner);
+        assertThat(linked.getAccountType()).isEqualTo(AccountOwner.partner);
         assertThat(linked.isOnboarded()).isTrue();
         assertThat(partnerReadService.getStatus(owner.getId()).partnerFirstName()).isEqualTo("Tunde");
         assertThat(partnerReadService.getStatus(partner.getId()).nickname()).isEqualTo("Amaka");

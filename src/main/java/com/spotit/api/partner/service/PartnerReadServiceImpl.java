@@ -37,7 +37,7 @@ public class PartnerReadServiceImpl implements PartnerReadService {
         Optional<PartnerLink> active = partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(userId, PartnerLinkStatus.active);
         if (active.isPresent()) {
             String partnerName = userRepository.findById(active.get().getPartnerId()).map(User::getFirstName).orElse(null);
-            return PartnerStatusResponse.ownerActive(partnerName);
+            return PartnerStatusResponse.ownerActive(partnerName, active.get().getAcceptedAt());
         }
         Optional<PartnerLink> pending = partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(userId, PartnerLinkStatus.pending);
         if (pending.isPresent()) {
@@ -72,7 +72,8 @@ public class PartnerReadServiceImpl implements PartnerReadService {
                 .map(link -> PartnerStatusResponse.partnerActive(
                         userRepository.findById(link.getOwnerId()).map(User::getFirstName).orElse(null),
                         link.getPartnerNickname(),
-                        link.isPartnerReminder()))
+                        link.isPartnerReminder(),
+                        link.getAcceptedAt()))
                 .orElseGet(PartnerStatusResponse::partnerEnded);
     }
 

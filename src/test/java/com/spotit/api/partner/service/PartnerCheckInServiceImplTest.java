@@ -12,7 +12,7 @@ import com.spotit.api.partner.repository.PartnerCheckInRepository;
 import com.spotit.api.partner.repository.PartnerLinkRepository;
 import com.spotit.api.rewards.service.ChallengeReadService;
 import com.spotit.api.rewards.service.PointsWriteService;
-import com.spotit.api.user.entity.AccountType;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,7 @@ class PartnerCheckInServiceImplTest {
     UUID ownerId = UUID.randomUUID();
     LocalDate today = LocalDate.of(2026, 10, 24);
 
-    User partner(AccountType type) {
+    User partner(AccountOwner type) {
         User user = User.builder().id(partnerId).firstName("Tunde").accountType(type).points(40).streak(2).build();
         when(userRepository.findById(partnerId)).thenReturn(Optional.of(user));
         return user;
@@ -66,7 +66,7 @@ class PartnerCheckInServiceImplTest {
 
     @Test
     void todayListsTheWaysHeCanSupportHer() {
-        User user = partner(AccountType.partner);
+        User user = partner(AccountOwner.partner);
         when(userClock.today(user)).thenReturn(today);
         when(challengeReadService.getDailyLogReward()).thenReturn(10);
 
@@ -80,7 +80,7 @@ class PartnerCheckInServiceImplTest {
 
     @Test
     void todayShowsWhatHeAlreadyChose() {
-        User user = partner(AccountType.partner);
+        User user = partner(AccountOwner.partner);
         when(userClock.today(user)).thenReturn(today);
         when(partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today))
                 .thenReturn(Optional.of(PartnerCheckIn.builder().supports("2,6").build()));
@@ -93,7 +93,7 @@ class PartnerCheckInServiceImplTest {
 
     @Test
     void checkingInSavesItAndAwardsHisPoints() {
-        User user = partner(AccountType.partner);
+        User user = partner(AccountOwner.partner);
         linked();
         when(userClock.today(user)).thenReturn(today);
         when(pointsWriteService.recordCheckIn(partnerId)).thenReturn(new PointsWriteService.LogPointsResult(10, 50, 3, true));
@@ -113,7 +113,7 @@ class PartnerCheckInServiceImplTest {
 
     @Test
     void onlyOneCheckInADay() {
-        User user = partner(AccountType.partner);
+        User user = partner(AccountOwner.partner);
         linked();
         when(userClock.today(user)).thenReturn(today);
         when(partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today)).thenReturn(Optional.of(PartnerCheckIn.builder().build()));
@@ -124,20 +124,20 @@ class PartnerCheckInServiceImplTest {
 
     @Test
     void anUnknownWayIsRefused() {
-        partner(AccountType.partner);
+        partner(AccountOwner.partner);
         linked();
         assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest(List.of("flowers"))), ErrorCode.VALIDATION_ERROR);
     }
 
     @Test
     void checkingInNeedsAnActiveLink() {
-        partner(AccountType.partner);
+        partner(AccountOwner.partner);
         assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest(List.of("snacks"))), ErrorCode.NOT_FOUND);
     }
 
     @Test
     void anOwnerCannotUsePartnerCheckIns() {
-        partner(AccountType.owner);
+        partner(AccountOwner.owner);
         assertError(() -> service.getToday(partnerId), ErrorCode.NOT_FOUND);
     }
 }

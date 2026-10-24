@@ -1,22 +1,22 @@
 package com.spotit.api.user.entity;
 
-public enum AccountType {
+public enum AccountOwner {
     owner(1, "accountType.owner"),
     partner(2, "accountType.partner");
 
     private final Integer value;
     private final String code;
 
-    AccountType(Integer value, String code) {
+    AccountOwner(Integer value, String code) {
         this.value = value;
         this.code = code;
     }
 
-    public static AccountType fromInt(Integer value) {
+    public static AccountOwner fromInt(Integer value) {
         return switch (value) {
             case 1 -> owner;
             case 2 -> partner;
-            default -> throw new IllegalArgumentException("Unknown AccountType value: " + value);
+            default -> throw new IllegalArgumentException("Unknown AccountOwner value: " + value);
         };
     }
 

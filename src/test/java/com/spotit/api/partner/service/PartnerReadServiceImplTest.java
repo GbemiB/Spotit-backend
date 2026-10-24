@@ -4,7 +4,7 @@ import com.spotit.api.partner.dto.PartnerStatusResponse;
 import com.spotit.api.partner.entity.PartnerLink;
 import com.spotit.api.partner.entity.PartnerLinkStatus;
 import com.spotit.api.partner.repository.PartnerLinkRepository;
-import com.spotit.api.user.entity.AccountType;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class PartnerReadServiceImplTest {
     UUID ownerId = UUID.randomUUID();
     UUID partnerId = UUID.randomUUID();
 
-    User user(UUID id, String name, AccountType type, boolean onboarded) {
+    User user(UUID id, String name, AccountOwner type, boolean onboarded) {
         User user = User.builder().id(id).firstName(name).email(name.toLowerCase() + "@example.com")
                 .accountType(type).onboarded(onboarded).build();
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
@@ -46,7 +46,7 @@ class PartnerReadServiceImplTest {
 
     @Test
     void anOwnerWithNoInviteHasStateNone() {
-        user(ownerId, "Amaka", AccountType.owner, true);
+        user(ownerId, "Amaka", AccountOwner.owner, true);
         PartnerStatusResponse status = service.getStatus(ownerId);
         assertThat(status.role()).isEqualTo("owner");
         assertThat(status.state()).isEqualTo("none");
@@ -54,7 +54,7 @@ class PartnerReadServiceImplTest {
 
     @Test
     void anOwnerWithAPendingInviteSeesTheEmailAndExpiry() {
-        user(ownerId, "Amaka", AccountType.owner, true);
+        user(ownerId, "Amaka", AccountOwner.owner, true);
         when(partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, PartnerLinkStatus.active)).thenReturn(Optional.empty());
         Instant expires = Instant.now().plus(Duration.ofHours(30));
         when(partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, PartnerLinkStatus.pending))
@@ -69,7 +69,7 @@ class PartnerReadServiceImplTest {
 
     @Test
     void anOldInviteShowsAsExpired() {
-        user(ownerId, "Amaka", AccountType.owner, true);
+        user(ownerId, "Amaka", AccountOwner.owner, true);
         when(partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, PartnerLinkStatus.active)).thenReturn(Optional.empty());
         when(partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, PartnerLinkStatus.pending))
                 .thenReturn(Optional.of(link(PartnerLinkStatus.pending, Instant.now().minus(Duration.ofHours(1)))));
@@ -79,21 +79,24 @@ class PartnerReadServiceImplTest {
 
     @Test
     void aLinkedOwnerSeesThePartnerAndTheSharingSetting() {
-        user(ownerId, "Amaka", AccountType.owner, true);
-        user(partnerId, "Tunde", AccountType.partner, true);
-        when(partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, PartnerLinkStatus.active))
-                .thenReturn(Optional.of(link(PartnerLinkStatus.active, Instant.now())));
+        user(ownerId, "Amaka", AccountOwner.owner, true);
+        user(partnerId, "Tunde", AccountOwner.partner, true);
+        Instant accepted = Instant.parse("2026-10-23T09:00:00Z");
+        PartnerLink linked = link(PartnerLinkStatus.active, Instant.now());
+        linked.setAcceptedAt(accepted);
+        when(partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, PartnerLinkStatus.active)).thenReturn(Optional.of(linked));
 
         PartnerStatusResponse status = service.getStatus(ownerId);
 
         assertThat(status.state()).isEqualTo("active");
         assertThat(status.partnerFirstName()).isEqualTo("Tunde");
+        assertThat(status.sharedSince()).isEqualTo(accepted);
     }
 
     @Test
     void aNewAccountWithAnInviteSeesWhoInvitedThem() {
-        user(partnerId, "Tunde", AccountType.owner, false);
-        user(ownerId, "Amaka", AccountType.owner, true);
+        user(partnerId, "Tunde", AccountOwner.owner, false);
+        user(ownerId, "Amaka", AccountOwner.owner, true);
         when(partnerLinkRepository.findByInviteEmailIgnoreCaseAndStatus("tunde@example.com", PartnerLinkStatus.pending))
                 .thenReturn(List.of(link(PartnerLinkStatus.pending, Instant.now().plus(Duration.ofHours(2)))));
         when(partnerLinkRepository.findFirstByOwnerIdAndStatusOrderByCreatedAtDesc(partnerId, PartnerLinkStatus.active)).thenReturn(Optional.empty());
@@ -107,7 +110,7 @@ class PartnerReadServiceImplTest {
 
     @Test
     void anExpiredInviteIsNotShownToTheNewAccount() {
-        user(partnerId, "Tunde", AccountType.owner, false);
+        user(partnerId, "Tunde", AccountOwner.owner, false);
         when(partnerLinkRepository.findByInviteEmailIgnoreCaseAndStatus("tunde@example.com", PartnerLinkStatus.pending))
                 .thenReturn(List.of(link(PartnerLinkStatus.pending, Instant.now().minus(Duration.ofHours(2)))));
 
@@ -116,8 +119,8 @@ class PartnerReadServiceImplTest {
 
     @Test
     void aLinkedPartnerSeesTheOwnerAndTheirSettings() {
-        user(partnerId, "Tunde", AccountType.partner, true);
-        user(ownerId, "Amaka", AccountType.owner, true);
+        user(partnerId, "Tunde", AccountOwner.partner, true);
+        user(ownerId, "Amaka", AccountOwner.owner, true);
         when(partnerLinkRepository.findFirstByPartnerIdAndStatus(partnerId, PartnerLinkStatus.active))
                 .thenReturn(Optional.of(link(PartnerLinkStatus.active, Instant.now())));
 
@@ -132,7 +135,7 @@ class PartnerReadServiceImplTest {
 
     @Test
     void aPartnerWhoseSharingStoppedSeesEnded() {
-        user(partnerId, "Tunde", AccountType.partner, true);
+        user(partnerId, "Tunde", AccountOwner.partner, true);
         PartnerStatusResponse status = service.getStatus(partnerId);
         assertThat(status.role()).isEqualTo("partner");
         assertThat(status.state()).isEqualTo("ended");
@@ -140,7 +143,7 @@ class PartnerReadServiceImplTest {
 
     @Test
     void aLinkedPartnerGetsHerNameAndCycleSettings() {
-        User owner = user(ownerId, "Amaka", AccountType.owner, true);
+        User owner = user(ownerId, "Amaka", AccountOwner.owner, true);
         owner.setCycleLength(29);
         owner.setPeriodLength(4);
         owner.setLastPeriodDate(java.time.LocalDate.of(2026, 10, 6));

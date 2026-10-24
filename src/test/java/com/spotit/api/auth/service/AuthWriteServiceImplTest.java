@@ -14,6 +14,7 @@ import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.partner.service.PartnerWriteService;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -424,7 +425,7 @@ class AuthWriteServiceImplTest {
         when(refreshTokenRepository.findByTokenHashAndRevokedFalse(TokenHasher.sha256Hex("token")))
                 .thenReturn(Optional.of(stored));
         User partner = existingUser(userId);
-        partner.setAccountType(com.spotit.api.user.entity.AccountType.partner);
+        partner.setAccountType(AccountOwner.partner);
         when(userRepository.findById(userId)).thenReturn(Optional.of(partner));
         when(jwtService.generateAccessToken(userId, "jane@example.com", false, true)).thenReturn("partner-access-token");
         when(jwtService.accessTokenTtlSeconds()).thenReturn(3600L);

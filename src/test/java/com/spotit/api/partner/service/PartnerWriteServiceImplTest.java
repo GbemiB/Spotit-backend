@@ -11,7 +11,7 @@ import com.spotit.api.partner.dto.PartnerSettingsRequest;
 import com.spotit.api.partner.entity.PartnerLink;
 import com.spotit.api.partner.entity.PartnerLinkStatus;
 import com.spotit.api.partner.repository.PartnerLinkRepository;
-import com.spotit.api.user.entity.AccountType;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -54,12 +54,12 @@ class PartnerWriteServiceImplTest {
 
     User owner() {
         return User.builder().id(ownerId).firstName("Amaka").email("amaka@example.com")
-                .accountType(AccountType.owner).onboarded(true).build();
+                .accountType(AccountOwner.owner).onboarded(true).build();
     }
 
     User newcomer() {
         return User.builder().id(partnerId).firstName("Tunde").email("tunde@example.com")
-                .accountType(AccountType.owner).onboarded(false).build();
+                .accountType(AccountOwner.owner).onboarded(false).build();
     }
 
     PartnerLink pendingInvite(String code, Instant expiresAt) {
@@ -138,7 +138,7 @@ class PartnerWriteServiceImplTest {
     @Test
     void aPartnerAccountCannotInvite() {
         User partner = owner();
-        partner.setAccountType(AccountType.partner);
+        partner.setAccountType(AccountOwner.partner);
         when(userRepository.findById(ownerId)).thenReturn(Optional.of(partner));
         assertError(() -> service.invite(ownerId, new InviteRequest("tunde@example.com")), ErrorCode.PARTNER_NOT_ALLOWED);
     }
@@ -164,7 +164,7 @@ class PartnerWriteServiceImplTest {
     void inviteRefusesAPartnerLinkedToSomeoneElse() {
         ownerCanInvite();
         User linked = newcomer();
-        linked.setAccountType(AccountType.partner);
+        linked.setAccountType(AccountOwner.partner);
         when(userRepository.findByEmailIgnoreCase("tunde@example.com")).thenReturn(Optional.of(linked));
         when(partnerLinkRepository.findFirstByPartnerIdAndStatus(partnerId, PartnerLinkStatus.active)).thenReturn(Optional.of(activeLink()));
         assertError(() -> service.invite(ownerId, new InviteRequest("tunde@example.com")), ErrorCode.PARTNER_ALREADY_LINKED);
@@ -245,7 +245,7 @@ class PartnerWriteServiceImplTest {
         assertThat(invite.getPartnerId()).isEqualTo(partnerId);
         assertThat(invite.getPartnerNickname()).isEqualTo("Amaka");
         assertThat(invite.getAcceptedAt()).isNotNull();
-        assertThat(user.getAccountType()).isEqualTo(AccountType.partner);
+        assertThat(user.getAccountType()).isEqualTo(AccountOwner.partner);
         assertThat(user.isOnboarded()).isTrue();
         verify(userRepository).save(user);
         verify(partnerReadService).getStatus(partnerId);
@@ -314,7 +314,7 @@ class PartnerWriteServiceImplTest {
     @Test
     void thePartnerCanRenameAndTurnOffTheReminder() {
         User partner = newcomer();
-        partner.setAccountType(AccountType.partner);
+        partner.setAccountType(AccountOwner.partner);
         PartnerLink link = activeLink();
         when(userRepository.findById(partnerId)).thenReturn(Optional.of(partner));
         when(partnerLinkRepository.findFirstByPartnerIdAndStatus(partnerId, PartnerLinkStatus.active)).thenReturn(Optional.of(link));
@@ -368,7 +368,7 @@ class PartnerWriteServiceImplTest {
     @Test
     void stopSharingWithoutALinkIsNotFound() {
         User partner = newcomer();
-        partner.setAccountType(AccountType.partner);
+        partner.setAccountType(AccountOwner.partner);
         when(userRepository.findById(partnerId)).thenReturn(Optional.of(partner));
         assertError(() -> service.unlink(partnerId), ErrorCode.NOT_FOUND);
     }

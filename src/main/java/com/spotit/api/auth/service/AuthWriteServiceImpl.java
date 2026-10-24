@@ -18,7 +18,7 @@ import com.spotit.api.common.security.JwtService;
 import com.spotit.api.common.security.TokenHasher;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.partner.service.PartnerWriteService;
-import com.spotit.api.user.entity.AccountType;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -103,7 +103,7 @@ public class AuthWriteServiceImpl implements AuthWriteService {
                 .lastName(lead.getLastName())
                 .email(lead.getEmail())
                 .passwordHash(passwordEncoder.encode(request.password().strip()))
-                .accountType(AccountType.owner)
+                .accountType(AccountOwner.owner)
                 .emailVerified(true)
                 .cycleLength(configurationDomainService.getCycleDefaultLength())
                 .periodLength(configurationDomainService.getCycleDefaultPeriodLength())

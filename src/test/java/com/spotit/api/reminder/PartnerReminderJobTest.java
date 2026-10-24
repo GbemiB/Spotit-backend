@@ -10,7 +10,7 @@ import com.spotit.api.reminder.push.PushMessage;
 import com.spotit.api.reminder.push.PushResult;
 import com.spotit.api.reminder.push.PushSender;
 import com.spotit.api.reminder.repository.ReminderDeliveryRepository;
-import com.spotit.api.user.entity.AccountType;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.ThemePref;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
@@ -57,8 +57,8 @@ class PartnerReminderJobTest {
         partnerLinkRepository.deleteAll();
         when(pushSender.send(anyList())).thenAnswer(inv -> inv.<List<PushMessage>>getArgument(0).stream()
                 .map(message -> new PushResult(message.to(), "ticket-" + UUID.randomUUID(), null)).toList());
-        ownerId = save("Amaka", AccountType.owner, LocalDate.of(2026, 10, 5));
-        partnerId = save("Tunde", AccountType.partner, LocalDate.of(2026, 10, 2));
+        ownerId = save("Amaka", AccountOwner.owner, LocalDate.of(2026, 10, 5));
+        partnerId = save("Tunde", AccountOwner.partner, LocalDate.of(2026, 10, 2));
         deviceWriteService.register(partnerId, new RegisterDeviceRequest(PARTNER_TOKEN, "android", "Africa/Lagos"));
     }
 
@@ -68,7 +68,7 @@ class PartnerReminderJobTest {
         deviceRepository.deleteAll();
     }
 
-    UUID save(String name, AccountType type, LocalDate lastPeriod) {
+    UUID save(String name, AccountOwner type, LocalDate lastPeriod) {
         return userRepository.save(User.builder().firstName(name).lastName("Test")
                 .email(name.toLowerCase() + "-" + UUID.randomUUID() + "@example.com").passwordHash("x").emailVerified(true)
                 .onboarded(true).accountType(type).cycleLength(28).periodLength(5).lastPeriodDate(lastPeriod)

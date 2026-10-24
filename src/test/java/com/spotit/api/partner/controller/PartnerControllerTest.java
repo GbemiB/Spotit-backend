@@ -94,7 +94,7 @@ class PartnerControllerTest {
     @Test
     void acceptLinksTheCurrentUser() throws Exception {
         AcceptInviteRequest request = new AcceptInviteRequest("K7P2QX", "Amaka");
-        when(partnerWriteService.accept(USER_ID, request)).thenReturn(PartnerStatusResponse.partnerActive("Amaka", "Amaka", true));
+        when(partnerWriteService.accept(USER_ID, request)).thenReturn(PartnerStatusResponse.partnerActive("Amaka", "Amaka", true, null));
 
         mvc.perform(post("/api/v1/partner/accept").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
@@ -131,7 +131,7 @@ class PartnerControllerTest {
     @Test
     void settingsAreSaved() throws Exception {
         PartnerSettingsRequest request = new PartnerSettingsRequest("Babe", false);
-        when(partnerWriteService.updateSettings(USER_ID, request)).thenReturn(PartnerStatusResponse.partnerActive("Amaka", "Babe", false));
+        when(partnerWriteService.updateSettings(USER_ID, request)).thenReturn(PartnerStatusResponse.partnerActive("Amaka", "Babe", false, null));
 
         mvc.perform(patch("/api/v1/partner/settings").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())

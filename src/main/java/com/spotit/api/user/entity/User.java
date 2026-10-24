@@ -40,7 +40,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false, columnDefinition = "varchar(20) default 'owner'")
     @Builder.Default
-    private AccountType accountType = AccountType.owner;
+    private AccountOwner accountType = AccountOwner.owner;
 
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
