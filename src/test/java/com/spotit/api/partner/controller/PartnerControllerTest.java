@@ -165,7 +165,8 @@ class PartnerControllerTest {
     @Test
     void checkInRecordsHowHeSupportedHer() throws Exception {
         PartnerCheckInRequest request = new PartnerCheckInRequest(List.of("snacks"));
-        when(partnerCheckInService.checkIn(USER_ID, request)).thenReturn(new PartnerCheckInResponse(List.of(new com.spotit.api.partner.dto.LoveOptionView("snacks", "Tea & treats", "☕", null, null)),
+        var snacks = new com.spotit.api.partner.dto.LoveOptionView("snacks", "Tea & treats", "☕", null, null);
+        when(partnerCheckInService.checkIn(USER_ID, request)).thenReturn(new PartnerCheckInResponse(List.of(snacks),
                 true, List.of("snacks"), 10, 2, 10, 120, null, List.of(), "promise", null, 1, java.util.Map.of("promise", 1), List.of(), List.of()));
 
         mvc.perform(post("/api/v1/partner/check-in").contentType(MediaType.APPLICATION_JSON).content(json(request)))
@@ -184,7 +185,8 @@ class PartnerControllerTest {
 
     @Test
     void todaysCheckInCanBeRead() throws Exception {
-        when(partnerCheckInService.getToday(USER_ID)).thenReturn(new PartnerCheckInResponse(List.of(), false, List.of(), 10, 0, 0, 0, null, List.of(), null, null, 0, java.util.Map.of(), List.of(), List.of()));
+        when(partnerCheckInService.getToday(USER_ID)).thenReturn(new PartnerCheckInResponse(List.of(), false, List.of(), 10, 0, 0, 0, null,
+                List.of(), null, null, 0, java.util.Map.of(), List.of(), List.of()));
 
         mvc.perform(get("/api/v1/partner/check-in"))
                 .andExpect(status().isOk())
