@@ -109,7 +109,7 @@ public class PartnerLoveNotifier {
 
     static String bodyFor(LoveKind kind, List<String> labels, String note, LoveOption expression) {
         if (kind == LoveKind.expression) {
-            return "Just because ♡";
+            return "A little love for you ♡";
         }
         return bodyFor(kind == LoveKind.text ? List.of() : labels, note);
     }

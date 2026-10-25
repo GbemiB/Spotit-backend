@@ -58,7 +58,7 @@ class PartnerLoveNotifierTest {
         LoveOption hug = LoveOption.builder().id("hug").label("Hug").emoji("🤗").phrase("a hug").build();
         assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.expression, hug)).isEqualTo("Tunde sent you a hug 🤗");
         assertThat(PartnerLoveNotifier.bodyFor(LoveKind.text, List.of("Back rub"), "Proud of you", null)).isEqualTo("“Proud of you”");
-        assertThat(PartnerLoveNotifier.bodyFor(LoveKind.expression, List.of(), null, LoveOption.builder().id("kiss").label("Kiss").build())).isEqualTo("Just because ♡");
+        assertThat(PartnerLoveNotifier.bodyFor(LoveKind.expression, List.of(), null, LoveOption.builder().id("kiss").label("Kiss").build())).isEqualTo("A little love for you ♡");
     }
 
     @Test
