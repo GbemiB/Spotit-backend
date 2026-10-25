@@ -18,8 +18,9 @@ public class ReminderTypeConstraintFix {
         run("ALTER TABLE reminder_deliveries DROP CONSTRAINT IF EXISTS reminder_deliveries_type_check");
         run("ALTER TABLE reminder_deliveries DROP CONSTRAINT IF EXISTS uq_reminder_deliveries_user_type_date");
         run("ALTER TABLE partner_check_ins DROP CONSTRAINT IF EXISTS uq_partner_check_ins_partner_date");
-        run("CREATE UNIQUE INDEX IF NOT EXISTS uq_reminder_deliveries_once ON reminder_deliveries (user_id, type, for_date) "
-                + "WHERE type <> 'partner_love'");
+        run("DROP INDEX IF EXISTS uq_reminder_deliveries_once");
+        run("CREATE UNIQUE INDEX IF NOT EXISTS uq_reminder_deliveries_once_v2 ON reminder_deliveries (user_id, type, for_date) "
+                + "WHERE type NOT IN ('partner_love', 'partner_reply')");
     }
 
     private void run(String sql) {

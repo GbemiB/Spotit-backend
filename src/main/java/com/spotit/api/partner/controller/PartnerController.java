@@ -7,6 +7,8 @@ import com.spotit.api.partner.dto.AcceptInviteRequest;
 import com.spotit.api.partner.dto.InviteRequest;
 import com.spotit.api.partner.dto.PartnerCheckInRequest;
 import com.spotit.api.partner.dto.PartnerCheckInResponse;
+import com.spotit.api.partner.dto.LoveReplyRequest;
+import com.spotit.api.partner.dto.PartnerLoveItem;
 import com.spotit.api.partner.dto.PartnerLoveResponse;
 import com.spotit.api.partner.dto.PartnerProfileResponse;
 import com.spotit.api.partner.dto.PartnerSettingsRequest;
@@ -29,7 +31,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -212,5 +216,14 @@ public class PartnerController {
                                     @Parameter(description = "Range end date (inclusive)", example = "2026-10-31")
                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return partnerCheckInService.loveFor(userId, from, to);
+    }
+
+    @Operation(summary = "Reply to her partner's love", description = "For the account owner: a heart and/or a short note (up to 120 characters) "
+            + "on one of his sends. One reply per send; sending again changes it, and heart false with no note clears it. He gets a "
+            + "notification (“Amaka felt your love ♡”) and it shows on his Home card. He cannot reply to her reply.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping("/love/{id}/reply")
+    public PartnerLoveItem replyToLove(@CurrentUserId UUID userId, @PathVariable UUID id, @Valid @RequestBody LoveReplyRequest request) {
+        return partnerCheckInService.reply(userId, id, request);
     }
 }

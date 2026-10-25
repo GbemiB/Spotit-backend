@@ -73,7 +73,7 @@ class LoveOptionServiceTest {
     @Test
     void theDefaultsCoverEveryKind() {
         List<LoveOption> defaults = LoveOptionSeeder.defaults();
-        assertThat(defaults).extracting(LoveOption::getKind).contains("promise", "expression", "starter", "category");
+        assertThat(defaults).extracting(LoveOption::getKind).contains("promise", "expression", "starter", "category", "reply");
         assertThat(defaults.stream().filter(o -> o.getKind().equals("promise")).map(LoveOption::getStoredValue))
                 .containsExactlyInAnyOrder(1, 2, 3, 4, 5, 6);
     }

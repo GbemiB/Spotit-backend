@@ -18,6 +18,7 @@ public record PartnerCheckInResponse(
         int sentToday,
         Map<String, Integer> sentByKind,
         List<String> starters,
-        List<LoveOptionView> categories
+        List<LoveOptionView> categories,
+        HerReply herReply
 ) {
 }

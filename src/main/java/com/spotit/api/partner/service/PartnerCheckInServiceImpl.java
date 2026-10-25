@@ -8,7 +8,9 @@ import com.spotit.api.partner.dto.PartnerCheckInRequest;
 import com.spotit.api.partner.dto.PartnerCheckInResponse;
 import com.spotit.api.partner.dto.PartnerLoveItem;
 import com.spotit.api.partner.dto.PartnerLoveResponse;
+import com.spotit.api.partner.dto.HerReply;
 import com.spotit.api.partner.dto.LoveOptionView;
+import com.spotit.api.partner.dto.LoveReplyRequest;
 import com.spotit.api.partner.entity.PartnerCheckIn;
 import com.spotit.api.partner.entity.LoveKind;
 import com.spotit.api.partner.entity.LoveOption;
@@ -98,14 +100,55 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
                 .collect(Collectors.toMap(User::getId, user -> user.getFirstName() == null ? "" : user.getFirstName(), (a, b) -> a));
         Map<String, LoveOption> promises = loveOptionService.allOf(LoveOption.PROMISE);
         Map<String, LoveOption> expressions = loveOptionService.allOf(LoveOption.EXPRESSION);
-        return new PartnerLoveResponse(checkIns.stream().map(checkIn -> {
-            List<LoveOption> chosen = supportsOf(checkIn, promises);
-            LoveOption expression = checkIn.getExpression() == null ? null : expressions.get(checkIn.getExpression());
-            return new PartnerLoveItem(checkIn.getCheckInDate(), names.getOrDefault(checkIn.getPartnerId(), ""), kindOf(checkIn).name(),
-                    chosen.stream().map(LoveOption::getId).toList(), chosen.stream().map(LoveOption::getLabel).toList(), checkIn.getNote(),
-                    checkIn.getExpression(), expression == null ? null : expression.getLabel(), expression == null ? null : expression.getEmoji(),
-                    checkIn.getCreatedAt());
-        }).toList());
+        return new PartnerLoveResponse(checkIns.stream()
+                .map(checkIn -> item(checkIn, names.getOrDefault(checkIn.getPartnerId(), ""), promises, expressions))
+                .toList(),
+                loveOptionService.active(LoveOption.REPLY).stream().map(LoveOptionView::label).toList());
+    }
+
+    @Override
+    @Transactional
+    public PartnerLoveItem reply(UUID ownerId, UUID checkInId, LoveReplyRequest request) {
+        PartnerCheckIn checkIn = partnerCheckInRepository.findById(checkInId)
+                .filter(c -> ownerId.equals(c.getOwnerId()))
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.LOVE_NOT_FOUND));
+        String note = request.note() == null || request.note().isBlank() ? null : request.note().strip();
+        boolean changed = request.heart() != Boolean.TRUE.equals(checkIn.getReplyHeart()) || !java.util.Objects.equals(note, checkIn.getReplyNote());
+        boolean replying = request.heart() || note != null;
+        checkIn.setReplyHeart(replying ? request.heart() : null);
+        checkIn.setReplyNote(note);
+        checkIn.setRepliedAt(replying ? java.time.Instant.now() : null);
+        partnerCheckInRepository.save(checkIn);
+        Map<String, LoveOption> expressions = loveOptionService.allOf(LoveOption.EXPRESSION);
+        LoveOption expression = checkIn.getExpression() == null ? null : expressions.get(checkIn.getExpression());
+        User partner = userRepository.findById(checkIn.getPartnerId()).orElse(null);
+        if (replying && changed && partner != null) {
+            userRepository.findById(ownerId)
+                    .ifPresent(owner -> partnerLoveNotifier.notifyPartner(partner, owner, kindOf(checkIn), expression, request.heart(), note));
+        }
+        return item(checkIn, partner == null || partner.getFirstName() == null ? "" : partner.getFirstName(),
+                loveOptionService.allOf(LoveOption.PROMISE), expressions);
+    }
+
+    private PartnerLoveItem item(PartnerCheckIn checkIn, String partnerName, Map<String, LoveOption> promises, Map<String, LoveOption> expressions) {
+        List<LoveOption> chosen = supportsOf(checkIn, promises);
+        LoveOption expression = checkIn.getExpression() == null ? null : expressions.get(checkIn.getExpression());
+        return new PartnerLoveItem(checkIn.getId(), checkIn.getCheckInDate(), partnerName, kindOf(checkIn).name(),
+                chosen.stream().map(LoveOption::getId).toList(), chosen.stream().map(LoveOption::getLabel).toList(), checkIn.getNote(),
+                checkIn.getExpression(), expression == null ? null : expression.getLabel(), expression == null ? null : expression.getEmoji(),
+                checkIn.getCreatedAt(), Boolean.TRUE.equals(checkIn.getReplyHeart()), checkIn.getReplyNote());
+    }
+
+    private HerReply herReply(List<PartnerCheckIn> today, UUID ownerId) {
+        PartnerCheckIn latest = today.stream().filter(c -> c.getRepliedAt() != null)
+                .max(java.util.Comparator.comparing(PartnerCheckIn::getRepliedAt)).orElse(null);
+        if (latest == null) {
+            return null;
+        }
+        String name = userRepository.findById(ownerId == null ? latest.getOwnerId() : ownerId).map(User::getFirstName).orElse("");
+        LoveOption expression = latest.getExpression() == null ? null : loveOptionService.allOf(LoveOption.EXPRESSION).get(latest.getExpression());
+        return new HerReply(name, Boolean.TRUE.equals(latest.getReplyHeart()), latest.getReplyNote(),
+                PartnerLoveNotifier.aboutFor(kindOf(latest), expression), latest.getRepliedAt());
     }
 
     private PartnerCheckInResponse response(List<PartnerCheckIn> today, PartnerCheckIn last, int streak, int pointsAwarded, long balance) {
@@ -121,7 +164,7 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
                 loveOptionService.active(LoveOption.EXPRESSION), last == null ? null : kindOf(last).name(),
                 last == null ? null : last.getExpression(), today.size(), byKind,
                 loveOptionService.active(LoveOption.STARTER).stream().map(LoveOptionView::label).toList(),
-                loveOptionService.active(LoveOption.CATEGORY));
+                loveOptionService.active(LoveOption.CATEGORY), herReply(today, null));
     }
 
     private static LoveKind kindOf(String requested, List<LoveOption> supports, String note, LoveOption expression) {

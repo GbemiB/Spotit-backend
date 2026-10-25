@@ -56,12 +56,54 @@ public class PartnerLoveNotifier {
         String pushTitle = grouped ? moreTitleFor(partner) : title;
         String pushBody = grouped ? (sentToday - SEPARATE_PUSHES) + " more today" : body;
         String collapseId = grouped ? "partner-love-" + owner.getId() + "-" + day : null;
-        List<PushMessage> messages = deviceRepository.findByUserId(owner.getId()).stream()
+        push(owner.getId(), pushTitle, pushBody, ReminderType.partner_love, delivery.get().getId().toString(), collapseId);
+    }
+
+    public void notifyPartner(User partner, User owner, LoveKind kind, LoveOption expression, boolean heart, String note) {
+        String name = owner.getFirstName() == null || owner.getFirstName().isBlank() ? "Your partner" : owner.getFirstName().strip();
+        String title = name + " felt your love ♡";
+        String about = "on " + aboutFor(kind, expression);
+        String body = note == null ? cut(capitalise(about)) : cut("“" + note + "” – " + about);
+        Instant now = Instant.now();
+        ReminderDelivery delivery;
+        try {
+            delivery = reminderWriteService.recordEvery(partner.getId(), ReminderType.partner_reply, userClock.today(partner), title, body, now);
+        } catch (RuntimeException e) {
+            log.warn("Could not record partner reply for {}: {}", partner.getId(), e.getMessage());
+            return;
+        }
+        if (!partner.isNotifPartnerLoveOn()) {
+            return;
+        }
+        push(partner.getId(), title, body, ReminderType.partner_reply, delivery.getId().toString(), null);
+    }
+
+    static String aboutFor(LoveKind kind, LoveOption expression) {
+        return switch (kind) {
+            case promise -> "your promise";
+            case text -> "your message";
+            case expression -> {
+                String phrase = expression == null ? "love" : phraseOf(expression);
+                String yours = phrase.startsWith("a ") ? "your " + phrase.substring(2) : "your " + phrase;
+                yield expression != null && expression.getEmoji() != null ? yours + " " + expression.getEmoji() : yours;
+            }
+        };
+    }
+
+    private static String capitalise(String value) {
+        return value.isEmpty() ? value : Character.toUpperCase(value.charAt(0)) + value.substring(1);
+    }
+
+    private static String cut(String body) {
+        return body.length() > BODY_MAX ? body.substring(0, BODY_MAX - 1) + "…" : body;
+    }
+
+    private void push(java.util.UUID userId, String title, String body, ReminderType type, String deliveryId, String collapseId) {
+        List<PushMessage> messages = deviceRepository.findByUserId(userId).stream()
                 .map(Device::getPushToken)
                 .filter(PartnerLoveNotifier::isExpoToken)
-                .map(token -> new PushMessage(token, pushTitle, pushBody, Map.of(
-                        "type", ReminderType.partner_love.name(), "screen", ReminderType.partner_love.getScreen(),
-                        "id", delivery.get().getId().toString()), collapseId))
+                .map(token -> new PushMessage(token, title, body, Map.of(
+                        "type", type.name(), "screen", type.getScreen(), "id", deliveryId), collapseId))
                 .toList();
         if (messages.isEmpty()) {
             return;
@@ -70,7 +112,7 @@ public class PartnerLoveNotifier {
             try {
                 reminderWriteService.applySendResults(pushSender.send(messages), Instant.now());
             } catch (RuntimeException e) {
-                log.warn("Could not push partner love to {}: {}", owner.getId(), e.getMessage());
+                log.warn("Could not push {} to {}: {}", type, userId, e.getMessage());
             }
         };
         if (TransactionSynchronizationManager.isSynchronizationActive()) {

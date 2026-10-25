@@ -22,6 +22,7 @@ public class LoveOption {
     public static final String EXPRESSION = "expression";
     public static final String STARTER = "starter";
     public static final String CATEGORY = "category";
+    public static final String REPLY = "reply";
 
     @Id
     @Column(length = 40)

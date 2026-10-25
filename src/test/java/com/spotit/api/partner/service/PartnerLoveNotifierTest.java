@@ -132,4 +132,28 @@ class PartnerLoveNotifierTest {
         assertThat(sent.getValue().get(0).title()).isEqualTo("Tunde sent you a message");
         assertThat(sent.getValue().get(0).collapseId()).isNull();
     }
+
+    @Test
+    void heIsToldWhenSheReplies() {
+        User owner = User.builder().id(ownerId).firstName("Amaka").build();
+        User him = User.builder().id(partner.getId()).firstName("Tunde").build();
+        when(userClock.today(him)).thenReturn(today);
+        when(reminderWriteService.recordEvery(eq(him.getId()), eq(ReminderType.partner_reply), eq(today), eq("Amaka felt your love ♡"),
+                eq("“That made my day” – on your hug 🤗"), any()))
+                .thenReturn(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_reply).build());
+        when(deviceRepository.findByUserId(him.getId())).thenReturn(List.of(Device.builder().userId(him.getId()).pushToken("ExponentPushToken[x]").build()));
+        LoveOption hug = LoveOption.builder().id("hug").label("Hug").emoji("🤗").phrase("a hug").build();
+
+        notifier.notifyPartner(him, owner, LoveKind.expression, hug, true, "That made my day");
+
+        verify(pushSender).send(anyList());
+    }
+
+    @Test
+    void aHeartAloneReadsNaturally() {
+        assertThat(PartnerLoveNotifier.aboutFor(LoveKind.promise, null)).isEqualTo("your promise");
+        assertThat(PartnerLoveNotifier.aboutFor(LoveKind.text, null)).isEqualTo("your message");
+        assertThat(PartnerLoveNotifier.aboutFor(LoveKind.expression, LoveOption.builder().id("love").label("Love you").emoji("❤️")
+                .phrase("“Love you”").build())).isEqualTo("your “Love you” ❤️");
+    }
 }

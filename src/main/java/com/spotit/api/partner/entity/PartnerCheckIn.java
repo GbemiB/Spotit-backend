@@ -46,6 +46,15 @@ public class PartnerCheckIn {
     @Column(length = 20)
     private String expression;
 
+    @Column(name = "reply_heart")
+    private Boolean replyHeart;
+
+    @Column(name = "reply_note", length = 120)
+    private String replyNote;
+
+    @Column(name = "replied_at")
+    private Instant repliedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

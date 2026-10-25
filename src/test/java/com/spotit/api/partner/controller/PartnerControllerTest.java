@@ -167,7 +167,7 @@ class PartnerControllerTest {
         PartnerCheckInRequest request = new PartnerCheckInRequest(List.of("snacks"));
         var snacks = new com.spotit.api.partner.dto.LoveOptionView("snacks", "Tea & treats", "☕", null, null);
         when(partnerCheckInService.checkIn(USER_ID, request)).thenReturn(new PartnerCheckInResponse(List.of(snacks),
-                true, List.of("snacks"), 10, 2, 10, 120, null, List.of(), "promise", null, 1, java.util.Map.of("promise", 1), List.of(), List.of()));
+                true, List.of("snacks"), 10, 2, 10, 120, null, List.of(), "promise", null, 1, java.util.Map.of("promise", 1), List.of(), List.of(), null));
 
         mvc.perform(post("/api/v1/partner/check-in").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isOk())
@@ -186,10 +186,32 @@ class PartnerControllerTest {
     @Test
     void todaysCheckInCanBeRead() throws Exception {
         when(partnerCheckInService.getToday(USER_ID)).thenReturn(new PartnerCheckInResponse(List.of(), false, List.of(), 10, 0, 0, 0, null,
-                List.of(), null, null, 0, java.util.Map.of(), List.of(), List.of()));
+                List.of(), null, null, 0, java.util.Map.of(), List.of(), List.of(), null));
 
         mvc.perform(get("/api/v1/partner/check-in"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.checkedInToday").value(false));
+    }
+
+    @Test
+    void sheCanReplyToHisLove() throws Exception {
+        java.util.UUID id = java.util.UUID.randomUUID();
+        com.spotit.api.partner.dto.LoveReplyRequest request = new com.spotit.api.partner.dto.LoveReplyRequest(true, "That made my day");
+        when(partnerCheckInService.reply(USER_ID, id, request)).thenReturn(new com.spotit.api.partner.dto.PartnerLoveItem(id,
+                LocalDate.of(2026, 10, 26), "Tunde", "expression", List.of(), List.of(), null, "hug", "Hug", "🤗", null, true, "That made my day"));
+
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/partner/love/" + id + "/reply")
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.replyNote").value("That made my day"))
+                .andExpect(jsonPath("$.data.replyHeart").value(true));
+    }
+
+    @Test
+    void aReplyNoteIsShort() throws Exception {
+        com.spotit.api.partner.dto.LoveReplyRequest request = new com.spotit.api.partner.dto.LoveReplyRequest(false, "x".repeat(121));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/partner/love/" + java.util.UUID.randomUUID() + "/reply")
+                        .contentType(MediaType.APPLICATION_JSON).content(json(request)))
+                .andExpect(status().isUnprocessableEntity());
     }
 }

@@ -33,6 +33,7 @@ public final class ErrorMessage {
     public static final String PARTNER_LINK_NOT_FOUND = "You're not sharing with a partner.";
     public static final String PARTNER_NICKNAME_BLANK = "Please enter a name.";
     public static final String PARTNER_ALREADY_CHECKED_IN = "You've already checked in today. Come back tomorrow.";
+    public static final String LOVE_NOT_FOUND = "That love note was not found.";
     public static final String LOVE_OPTION_EXISTS = "A love option with that id already exists.";
     public static final String LOVE_OPTION_NOT_FOUND = "Love option not found.";
     public static final String PARTNER_NOTHING_TO_SEND = "Pick something you did or write a note.";

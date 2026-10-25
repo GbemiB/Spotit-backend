@@ -19,11 +19,14 @@ public class LoveOptionSeeder {
 
     @EventListener(ApplicationReadyEvent.class)
     public void seed() {
-        if (loveOptionRepository.count() > 0) {
+        List<LoveOption> missing = defaults().stream()
+                .filter(option -> loveOptionRepository.findByKindOrderBySortOrderAsc(option.getKind()).isEmpty())
+                .toList();
+        if (missing.isEmpty()) {
             return;
         }
-        loveOptionRepository.saveAll(defaults());
-        log.info("Seeded the default love options.");
+        loveOptionRepository.saveAll(missing);
+        log.info("Seeded {} default love option(s).", missing.size());
     }
 
     static List<LoveOption> defaults() {
@@ -44,6 +47,10 @@ public class LoveOptionSeeder {
         all.add(simple(LoveOption.STARTER, "starter_thinking", "Thinking of you", null, 2));
         all.add(simple(LoveOption.STARTER, "starter_got_this", "You’ve got this", null, 3));
         all.add(simple(LoveOption.STARTER, "starter_here", "I’m here for you", null, 4));
+        all.add(simple(LoveOption.REPLY, "reply_thank_you", "Thank you, love ♡", null, 1));
+        all.add(simple(LoveOption.REPLY, "reply_made_my_day", "That made my day 🌸", null, 2));
+        all.add(simple(LoveOption.REPLY, "reply_cared_for", "I feel so cared for 🥹", null, 3));
+        all.add(simple(LoveOption.REPLY, "reply_favourite", "You’re my favourite ❤️", null, 4));
         all.add(simple(LoveOption.CATEGORY, "promise", "Make a promise", "Do something for her today", 1));
         all.add(simple(LoveOption.CATEGORY, "text", "Send a text", "Say something sweet", 2));
         all.add(simple(LoveOption.CATEGORY, "expression", "Send an expression", "A hug, a kiss, a smile", 3));

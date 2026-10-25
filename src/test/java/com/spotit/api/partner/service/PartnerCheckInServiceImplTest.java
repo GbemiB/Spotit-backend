@@ -282,4 +282,85 @@ class PartnerCheckInServiceImplTest {
                 PartnerCheckIn.builder().partnerId(partnerId).ownerId(ownerId).checkInDate(today).kind("promise").supports("7,2").build()));
         assertThat(service.loveFor(ownerId, from, today).items().get(0).labels()).containsExactly("Foot rub", "Tea & treats");
     }
+
+    @Test
+    void sheRepliesWithAHeartAndANoteAndHeIsTold() {
+        UUID id = UUID.randomUUID();
+        PartnerCheckIn checkIn = PartnerCheckIn.builder().id(id).partnerId(partnerId).ownerId(ownerId).checkInDate(today)
+                .kind("expression").supports("").expression("hug").build();
+        when(partnerCheckInRepository.findById(id)).thenReturn(Optional.of(checkIn));
+        User him = User.builder().id(partnerId).firstName("Tunde").build();
+        User her = User.builder().id(ownerId).firstName("Amaka").build();
+        when(userRepository.findById(partnerId)).thenReturn(Optional.of(him));
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(her));
+
+        var item = service.reply(ownerId, id, new com.spotit.api.partner.dto.LoveReplyRequest(true, "  That made my day  "));
+
+        assertThat(item.replyHeart()).isTrue();
+        assertThat(item.replyNote()).isEqualTo("That made my day");
+        assertThat(item.expressionEmoji()).isEqualTo("🤗");
+        assertThat(checkIn.getRepliedAt()).isNotNull();
+        verify(partnerLoveNotifier).notifyPartner(org.mockito.ArgumentMatchers.eq(him), org.mockito.ArgumentMatchers.eq(her),
+                org.mockito.ArgumentMatchers.eq(com.spotit.api.partner.entity.LoveKind.expression), any(), org.mockito.ArgumentMatchers.eq(true),
+                org.mockito.ArgumentMatchers.eq("That made my day"));
+    }
+
+    @Test
+    void sendingTheSameReplyAgainDoesNotNotifyTwice() {
+        UUID id = UUID.randomUUID();
+        PartnerCheckIn checkIn = PartnerCheckIn.builder().id(id).partnerId(partnerId).ownerId(ownerId).checkInDate(today)
+                .kind("text").supports("").note("Hi").replyHeart(true).replyNote("Thanks").repliedAt(java.time.Instant.now()).build();
+        when(partnerCheckInRepository.findById(id)).thenReturn(Optional.of(checkIn));
+        when(userRepository.findById(partnerId)).thenReturn(Optional.of(User.builder().id(partnerId).firstName("Tunde").build()));
+
+        service.reply(ownerId, id, new com.spotit.api.partner.dto.LoveReplyRequest(true, "Thanks"));
+
+        verify(partnerLoveNotifier, never()).notifyPartner(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(), any());
+    }
+
+    @Test
+    void clearingTheReplyRemovesIt() {
+        UUID id = UUID.randomUUID();
+        PartnerCheckIn checkIn = PartnerCheckIn.builder().id(id).partnerId(partnerId).ownerId(ownerId).checkInDate(today)
+                .kind("text").supports("").note("Hi").replyHeart(true).repliedAt(java.time.Instant.now()).build();
+        when(partnerCheckInRepository.findById(id)).thenReturn(Optional.of(checkIn));
+
+        var item = service.reply(ownerId, id, new com.spotit.api.partner.dto.LoveReplyRequest(false, " "));
+
+        assertThat(item.replyHeart()).isFalse();
+        assertThat(checkIn.getRepliedAt()).isNull();
+        verify(partnerLoveNotifier, never()).notifyPartner(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(), any());
+    }
+
+    @Test
+    void sheCannotReplyToSomeoneElsesLove() {
+        UUID id = UUID.randomUUID();
+        when(partnerCheckInRepository.findById(id)).thenReturn(Optional.of(PartnerCheckIn.builder().id(id).ownerId(UUID.randomUUID()).build()));
+        assertError(() -> service.reply(ownerId, id, new com.spotit.api.partner.dto.LoveReplyRequest(true, null)), ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void heSeesHerLatestReplyToday() {
+        User user = partner(AccountOwner.partner);
+        when(userClock.today(user)).thenReturn(today);
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(User.builder().id(ownerId).firstName("Amaka").build()));
+        when(partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today)).thenReturn(List.of(
+                PartnerCheckIn.builder().ownerId(ownerId).kind("promise").supports("2").replyHeart(true)
+                        .repliedAt(java.time.Instant.parse("2026-10-24T08:00:00Z")).build(),
+                PartnerCheckIn.builder().ownerId(ownerId).kind("expression").supports("").expression("hug").replyHeart(true)
+                        .replyNote("That made my day").repliedAt(java.time.Instant.parse("2026-10-24T09:00:00Z")).build()));
+
+        var reply = service.getToday(partnerId).herReply();
+
+        assertThat(reply.name()).isEqualTo("Amaka");
+        assertThat(reply.note()).isEqualTo("That made my day");
+        assertThat(reply.about()).isEqualTo("your hug 🤗");
+    }
+
+    @Test
+    void herLoveListCarriesQuickReplies() {
+        LocalDate from = LocalDate.of(2026, 10, 1);
+        when(partnerCheckInRepository.findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAscCreatedAtAsc(ownerId, from, today)).thenReturn(List.of());
+        assertThat(service.loveFor(ownerId, from, today).quickReplies()).contains("That made my day 🌸");
+    }
 }

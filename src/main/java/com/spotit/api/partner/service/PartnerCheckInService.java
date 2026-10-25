@@ -13,4 +13,6 @@ public interface PartnerCheckInService {
     PartnerCheckInResponse checkIn(UUID partnerId, PartnerCheckInRequest request);
 
     PartnerLoveResponse loveFor(UUID ownerId, LocalDate from, LocalDate to);
+
+    com.spotit.api.partner.dto.PartnerLoveItem reply(UUID ownerId, UUID checkInId, com.spotit.api.partner.dto.LoveReplyRequest request);
 }

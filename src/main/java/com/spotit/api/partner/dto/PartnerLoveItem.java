@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record PartnerLoveItem(
+        java.util.UUID id,
         LocalDate date,
         String partnerName,
         String kind,
@@ -14,6 +15,8 @@ public record PartnerLoveItem(
         String expression,
         String expressionLabel,
         String expressionEmoji,
-        Instant sentAt
+        Instant sentAt,
+        boolean replyHeart,
+        String replyNote
 ) {
 }
