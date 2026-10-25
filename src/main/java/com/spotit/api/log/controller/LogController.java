@@ -11,6 +11,7 @@ import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
 import com.spotit.api.log.dto.LogTemplateResponse;
 import com.spotit.api.log.dto.LogsRangeResponse;
+import com.spotit.api.log.dto.RemovePeriodResponse;
 import com.spotit.api.log.dto.SaveLogRequest;
 import com.spotit.api.log.dto.SaveLogResponse;
 import com.spotit.api.log.entity.FlowIntensity;
@@ -144,5 +145,22 @@ public class LogController {
                                       @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         logWriteService.deleteLog(userId, date);
         return new MessageResponse("Entry deleted.");
+    }
+
+    @Operation(summary = LogControllerSwagger.REMOVE_PERIOD_SUMMARY, description = LogControllerSwagger.REMOVE_PERIOD_DESCRIPTION,
+            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Period removed.", content = @Content(
+                    schema = @Schema(implementation = RemovePeriodResponse.class),
+                    examples = @ExampleObject(value = LogControllerSwagger.REMOVE_PERIOD_200_EXAMPLE))),
+            @ApiResponse(responseCode = "404", description = "No logged period on that day.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = LogControllerSwagger.REMOVE_PERIOD_404_EXAMPLE)))
+    })
+    @DeleteMapping("/period/{date}")
+    public RemovePeriodResponse removePeriod(@CurrentUserId UUID userId,
+                                             @Parameter(description = "Any day of the period (ISO-8601)", example = "2026-10-07")
+                                             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return logWriteService.removePeriod(userId, date);
     }
 }

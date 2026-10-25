@@ -2,6 +2,7 @@ package com.spotit.api.log.service;
 
 import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
+import com.spotit.api.log.dto.RemovePeriodResponse;
 import com.spotit.api.log.dto.SaveLogRequest;
 import com.spotit.api.log.dto.SaveLogResponse;
 
@@ -14,4 +15,6 @@ public interface LogWriteService {
     LogPeriodResponse logPeriod(UUID userId, LogPeriodRequest request);
 
     void deleteLog(UUID userId, LocalDate date);
+
+    RemovePeriodResponse removePeriod(UUID userId, LocalDate date);
 }

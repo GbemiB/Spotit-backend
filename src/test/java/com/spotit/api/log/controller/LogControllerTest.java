@@ -4,6 +4,7 @@ import com.spotit.api.log.dto.LogEntryResponse;
 import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
 import com.spotit.api.log.dto.LogsRangeResponse;
+import com.spotit.api.log.dto.RemovePeriodResponse;
 import com.spotit.api.log.dto.SaveLogRequest;
 import com.spotit.api.log.dto.SaveLogResponse;
 import com.spotit.api.log.service.LogReadService;
@@ -171,5 +172,17 @@ class LogControllerTest {
                 .andExpect(jsonPath("$.message").value("Entry deleted."));
 
         verify(logWriteService).deleteLog(USER_ID, date);
+    }
+
+    @Test
+    void removePeriodClearsThatPeriod() throws Exception {
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        when(logWriteService.removePeriod(USER_ID, oct7)).thenReturn(new RemovePeriodResponse(LocalDate.of(2026, 9, 12), LocalDate.of(2026, 9, 1),
+                List.of(LogEntryResponse.empty(oct7))));
+
+        mvc.perform(delete("/api/v1/logs/period/2026-10-07"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.lastPeriodDate").value("2026-09-12"))
+                .andExpect(jsonPath("$.data.clearedEntries[0].date").value("2026-10-07"));
     }
 }

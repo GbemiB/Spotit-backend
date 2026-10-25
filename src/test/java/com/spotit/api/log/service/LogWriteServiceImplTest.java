@@ -421,4 +421,138 @@ class LogWriteServiceImplTest {
 
         assertThat(user.getTrackingStartDate()).isEqualTo(LocalDate.of(2026, 7, 1));
     }
+
+    private CycleLog flowDay(LocalDate d) {
+        return CycleLog.builder().userId(userId).logDate(d).flow(com.spotit.api.log.entity.FlowIntensity.medium).build();
+    }
+
+    private List<CycleLog> flowDays(LocalDate from, int days) {
+        return java.util.stream.IntStream.range(0, days).mapToObj(i -> flowDay(from.plusDays(i))).toList();
+    }
+
+    private void stubPeriodSave() {
+        when(cycleLogRepository.save(any(CycleLog.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(cycleLogRepository.findByUserIdAndLogDate(any(), any())).thenReturn(Optional.empty());
+        when(pointsWriteService.recordPeriodLog(any())).thenReturn(new PointsWriteService.LogPointsResult(10, 110, 1, true));
+    }
+
+    @Test
+    void movingAPeriodFarAwayReplacesItInsteadOfAddingASecondOne() {
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        LocalDate oct20 = LocalDate.of(2026, 10, 20);
+        List<CycleLog> old = flowDays(oct7, 5);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(oct7, 28)));
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(old);
+        stubPeriodSave();
+
+        LogPeriodRequest request = new LogPeriodRequest(oct20, oct20.plusDays(4), null, "medium", null, List.of(), null, false, oct7);
+        LogPeriodResponse response = service.logPeriod(userId, request);
+
+        old.forEach(day -> verify(cycleLogRepository).delete(day));
+        assertThat(response.clearedEntries()).extracting(com.spotit.api.log.dto.LogEntryResponse::date)
+                .containsExactlyInAnyOrder(oct7, oct7.plusDays(1), oct7.plusDays(2), oct7.plusDays(3), oct7.plusDays(4));
+        assertThat(response.lastPeriodDate()).isEqualTo(oct20);
+    }
+
+    @Test
+    void movingThePeriodEarlierMovesTheLastPeriodBackToo() {
+        LocalDate oct20 = LocalDate.of(2026, 10, 20);
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(oct20, 28)));
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(flowDays(oct20, 5));
+        stubPeriodSave();
+
+        LogPeriodRequest request = new LogPeriodRequest(oct7, oct7.plusDays(4), null, "medium", null, List.of(), null, false, oct20);
+        LogPeriodResponse response = service.logPeriod(userId, request);
+
+        assertThat(response.lastPeriodDate()).isEqualTo(oct7);
+        assertThat(response.clearedEntries()).hasSize(5);
+    }
+
+    @Test
+    void movingAPeriodKeepsOtherPeriods() {
+        LocalDate sep12 = LocalDate.of(2026, 9, 12);
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        LocalDate oct20 = LocalDate.of(2026, 10, 20);
+        List<CycleLog> september = flowDays(sep12, 5);
+        List<CycleLog> all = new java.util.ArrayList<>(september);
+        all.addAll(flowDays(oct7, 5));
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(oct7, 28)));
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(all);
+        stubPeriodSave();
+
+        LogPeriodRequest request = new LogPeriodRequest(oct20, oct20.plusDays(4), null, "medium", null, List.of(), null, false, oct7);
+        LogPeriodResponse response = service.logPeriod(userId, request);
+
+        september.forEach(day -> verify(cycleLogRepository, never()).delete(day));
+        assertThat(response.clearedEntries()).hasSize(5);
+        assertThat(response.lastPeriodDate()).isEqualTo(oct20);
+    }
+
+    @Test
+    void movingTheOnboardingPeriodWithNoLoggedDaysJustLogsTheNewOne() {
+        LocalDate oct21 = LocalDate.of(2026, 10, 21);
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(oct21, 28)));
+        stubPeriodSave();
+
+        LogPeriodRequest request = new LogPeriodRequest(oct7, oct7.plusDays(4), null, "medium", null, List.of(), null, false, oct21);
+        LogPeriodResponse response = service.logPeriod(userId, request);
+
+        assertThat(response.clearedEntries()).isEmpty();
+        assertThat(response.lastPeriodDate()).isEqualTo(oct7);
+    }
+
+    @Test
+    void removingAPeriodClearsItsDaysAndFallsBackToThePreviousPeriod() {
+        LocalDate sep12 = LocalDate.of(2026, 9, 12);
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        List<CycleLog> october = flowDays(oct7, 5);
+        CycleLog withMood = CycleLog.builder().userId(userId).logDate(oct7.plusDays(5))
+                .flow(com.spotit.api.log.entity.FlowIntensity.light).mood(com.spotit.api.log.entity.MoodType.calm).build();
+        List<CycleLog> all = new java.util.ArrayList<>(flowDays(sep12, 5));
+        all.addAll(october);
+        all.add(withMood);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(oct7, 28)));
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(all);
+
+        var response = service.removePeriod(userId, oct7.plusDays(2));
+
+        october.forEach(day -> verify(cycleLogRepository).delete(day));
+        verify(cycleLogRepository).save(withMood);
+        assertThat(withMood.getFlow()).isNull();
+        assertThat(response.clearedEntries()).hasSize(6);
+        assertThat(response.lastPeriodDate()).isEqualTo(sep12);
+    }
+
+    @Test
+    void removingTheOnlyPeriodClearsTheLastPeriod() {
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(oct7, 28)));
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(flowDays(oct7, 5));
+
+        assertThat(service.removePeriod(userId, oct7).lastPeriodDate()).isNull();
+    }
+
+    @Test
+    void removingAnOlderPeriodKeepsTheLastPeriod() {
+        LocalDate sep12 = LocalDate.of(2026, 9, 12);
+        LocalDate oct7 = LocalDate.of(2026, 10, 7);
+        List<CycleLog> all = new java.util.ArrayList<>(flowDays(sep12, 5));
+        all.addAll(flowDays(oct7, 5));
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(oct7, 28)));
+        when(cycleLogRepository.findByUserIdAndFlowIsNotNull(userId)).thenReturn(all);
+
+        assertThat(service.removePeriod(userId, sep12).lastPeriodDate()).isEqualTo(oct7);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void removingADayWithNoPeriodIsNotFound() {
+        when(userRepository.findByIdForUpdate(userId)).thenReturn(Optional.of(userWith(date, 28)));
+
+        assertThatThrownBy(() -> service.removePeriod(userId, date))
+                .isInstanceOf(ApiException.class)
+                .satisfies(e -> assertThat(((ApiException) e).getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
+    }
 }

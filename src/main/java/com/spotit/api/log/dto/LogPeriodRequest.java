@@ -16,6 +16,11 @@ public record LogPeriodRequest(
         List<@Pattern(regexp = "cramps|headache|dizziness|bloating|tender|pelvicpain|fatigue|nausea|backpain|jointpain|acne|moodswings|insomnia" +
                 "|anxiety|discharge|sweating") String> symptoms,
         String notes,
-        boolean intimate
+        boolean intimate,
+        LocalDate replaceStart
 ) {
+    public LogPeriodRequest(LocalDate startDate, LocalDate endDate, LocalDate detailDate, String flow, String mood,
+                            List<String> symptoms, String notes, boolean intimate) {
+        this(startDate, endDate, detailDate, flow, mood, symptoms, notes, intimate, null);
+    }
 }

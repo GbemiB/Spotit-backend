@@ -87,7 +87,10 @@ final class LogControllerSwagger {
             + "caller is describing a different day in the range, e.g. logging from the last day of a period), and resyncs the account's "
             + "lastPeriodDate so cycle/fertile/ovulation predictions reflect this period going forward. If this edit moves or shrinks a previously "
             + "logged period, days that fall outside the new range but were part of the old one have their stale flow cleared (or the row deleted "
-            + "outright if it had no other data) — clearedEntries reports each one so the caller can fix its own cached day-log state to match.";
+            + "outright if it had no other data) — clearedEntries reports each one so the caller can fix its own cached day-log state to match. "
+            + "Pass replaceStart (any day of an already logged period, or the account's lastPeriodDate) when the caller is moving that period "
+            + "rather than adding a new one: every flow day of that period outside the new range is cleared too, and lastPeriodDate follows the "
+            + "moved period.";
     static final String LOG_PERIOD_REQUEST_EXAMPLE = """
             {
               "startDate": "2026-07-10",
@@ -97,7 +100,8 @@ final class LogControllerSwagger {
               "mood": "calm",
               "symptoms": ["cramps", "fatigue"],
               "notes": "Felt okay today.",
-              "intimate": false
+              "intimate": false,
+              "replaceStart": null
             }
             """;
     static final String LOG_PERIOD_200_EXAMPLE = """
@@ -194,6 +198,31 @@ final class LogControllerSwagger {
               "code": 200,
               "message": "Entry deleted.",
               "data": null
+            }
+            """;
+
+    static final String REMOVE_PERIOD_SUMMARY = "Remove a logged period";
+    static final String REMOVE_PERIOD_DESCRIPTION = "Clears the flow from every day of the logged period that contains the given date (days "
+            + "with no other data are deleted) and, when that period was the account's lastPeriodDate, moves lastPeriodDate to the start of the "
+            + "latest remaining period, or null if none is left. clearedEntries reports each changed day.";
+    static final String REMOVE_PERIOD_200_EXAMPLE = """
+            {
+              "code": 200,
+              "message": "OK",
+              "data": {
+                "lastPeriodDate": "2026-09-12",
+                "trackingStartDate": "2026-09-01",
+                "clearedEntries": [
+                  { "date": "2026-10-07", "flow": null, "mood": null, "symptoms": [], "notes": null, "intimate": false }
+                ]
+              }
+            }
+            """;
+    static final String REMOVE_PERIOD_404_EXAMPLE = """
+            {
+              "code": 404,
+              "message": "No logged period on that day.",
+              "data": { "errorCode": "not_found" }
             }
             """;
 }
