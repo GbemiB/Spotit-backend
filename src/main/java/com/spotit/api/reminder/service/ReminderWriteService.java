@@ -17,6 +17,8 @@ public interface ReminderWriteService {
 
     Optional<ReminderDelivery> record(UUID userId, ReminderType type, LocalDate forDate, String title, String body, Instant now);
 
+    long countFor(UUID userId, ReminderType type, LocalDate forDate);
+
     ReminderDelivery recordEvery(UUID userId, ReminderType type, LocalDate forDate, String title, String body, Instant now);
 
     void markAllRead(UUID userId);

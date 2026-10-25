@@ -91,4 +91,44 @@ class PartnerLoveNotifierTest {
 
         verify(pushSender, never()).send(anyList());
     }
+
+    @Test
+    void afterThreeSendsHerPhoneGetsOneUpdatingNotification() {
+        User owner = User.builder().id(ownerId).build();
+        when(userClock.today(owner)).thenReturn(today);
+        when(reminderWriteService.recordEvery(eq(ownerId), eq(ReminderType.partner_love), eq(today), any(), any(), any()))
+                .thenReturn(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build());
+        when(reminderWriteService.countFor(ownerId, ReminderType.partner_love, today)).thenReturn(5L);
+        when(deviceRepository.findByUserId(ownerId)).thenReturn(List.of(Device.builder().userId(ownerId).pushToken("ExponentPushToken[abc]").build()));
+
+        notifier.notifyOwner(owner, partner, LoveKind.promise, List.of("Back rub"), null, null);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<PushMessage>> sent = ArgumentCaptor.forClass(List.class);
+        verify(pushSender).send(sent.capture());
+        PushMessage message = sent.getValue().get(0);
+        assertThat(message.title()).isEqualTo("Tunde sent you more love ♡");
+        assertThat(message.body()).isEqualTo("2 more today");
+        assertThat(message.collapseId()).isEqualTo("partner-love-" + ownerId + "-" + today);
+        verify(reminderWriteService).recordEvery(eq(ownerId), eq(ReminderType.partner_love), eq(today), eq("A promise from Tunde ♡"),
+                eq("Back rub"), any());
+    }
+
+    @Test
+    void theFirstThreeAreSeparate() {
+        User owner = User.builder().id(ownerId).build();
+        when(userClock.today(owner)).thenReturn(today);
+        when(reminderWriteService.recordEvery(eq(ownerId), eq(ReminderType.partner_love), eq(today), any(), any(), any()))
+                .thenReturn(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build());
+        when(reminderWriteService.countFor(ownerId, ReminderType.partner_love, today)).thenReturn(3L);
+        when(deviceRepository.findByUserId(ownerId)).thenReturn(List.of(Device.builder().userId(ownerId).pushToken("ExponentPushToken[abc]").build()));
+
+        notifier.notifyOwner(owner, partner, LoveKind.text, List.of(), "Proud of you", null);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<PushMessage>> sent = ArgumentCaptor.forClass(List.class);
+        verify(pushSender).send(sent.capture());
+        assertThat(sent.getValue().get(0).title()).isEqualTo("Tunde sent you a message");
+        assertThat(sent.getValue().get(0).collapseId()).isNull();
+    }
 }

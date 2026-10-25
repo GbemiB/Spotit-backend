@@ -49,6 +49,12 @@ public class ReminderWriteServiceImpl implements ReminderWriteService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public long countFor(UUID userId, ReminderType type, LocalDate forDate) {
+        return reminderDeliveryRepository.countByUserIdAndTypeAndForDate(userId, type, forDate);
+    }
+
+    @Override
     @Transactional
     public ReminderDelivery recordEvery(UUID userId, ReminderType type, LocalDate forDate, String title, String body, Instant now) {
         return reminderDeliveryRepository.saveAndFlush(ReminderDelivery.builder()

@@ -18,6 +18,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +28,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PartnerLoveNotifier {
     static final int BODY_MAX = 300;
+    static final int SEPARATE_PUSHES = 3;
 
     private final ReminderWriteService reminderWriteService;
     private final DeviceRepository deviceRepository;
@@ -37,9 +39,12 @@ public class PartnerLoveNotifier {
         String title = titleFor(partner, kind, expression);
         String body = bodyFor(kind, labels, note, expression);
         Instant now = Instant.now();
+        LocalDate day = userClock.today(owner);
         Optional<ReminderDelivery> delivery;
+        long sentToday;
         try {
-            delivery = Optional.of(reminderWriteService.recordEvery(owner.getId(), ReminderType.partner_love, userClock.today(owner), title, body, now));
+            delivery = Optional.of(reminderWriteService.recordEvery(owner.getId(), ReminderType.partner_love, day, title, body, now));
+            sentToday = reminderWriteService.countFor(owner.getId(), ReminderType.partner_love, day);
         } catch (RuntimeException e) {
             log.warn("Could not record partner love for {}: {}", owner.getId(), e.getMessage());
             return;
@@ -47,12 +52,16 @@ public class PartnerLoveNotifier {
         if (!owner.isNotifPartnerLoveOn()) {
             return;
         }
+        boolean grouped = sentToday > SEPARATE_PUSHES;
+        String pushTitle = grouped ? moreTitleFor(partner) : title;
+        String pushBody = grouped ? (sentToday - SEPARATE_PUSHES) + " more today" : body;
+        String collapseId = grouped ? "partner-love-" + owner.getId() + "-" + day : null;
         List<PushMessage> messages = deviceRepository.findByUserId(owner.getId()).stream()
                 .map(Device::getPushToken)
                 .filter(PartnerLoveNotifier::isExpoToken)
-                .map(token -> new PushMessage(token, title, body, Map.of(
+                .map(token -> new PushMessage(token, pushTitle, pushBody, Map.of(
                         "type", ReminderType.partner_love.name(), "screen", ReminderType.partner_love.getScreen(),
-                        "id", delivery.get().getId().toString())))
+                        "id", delivery.get().getId().toString()), collapseId))
                 .toList();
         if (messages.isEmpty()) {
             return;
@@ -74,6 +83,11 @@ public class PartnerLoveNotifier {
         } else {
             send.run();
         }
+    }
+
+    static String moreTitleFor(User partner) {
+        String name = partner.getFirstName() == null ? "" : partner.getFirstName().strip();
+        return (name.isEmpty() ? "Your partner" : name) + " sent you more love ♡";
     }
 
     static String titleFor(User partner, LoveKind kind, LoveOption expression) {

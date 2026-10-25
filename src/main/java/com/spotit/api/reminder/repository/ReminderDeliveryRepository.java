@@ -19,6 +19,8 @@ public interface ReminderDeliveryRepository extends JpaRepository<ReminderDelive
 
     long countByUserIdAndReadFalse(UUID userId);
 
+    long countByUserIdAndTypeAndForDate(UUID userId, ReminderType type, LocalDate forDate);
+
     @Modifying
     @Query("update ReminderDelivery d set d.read = true where d.userId = :userId and d.read = false")
     int markAllRead(@Param("userId") UUID userId);
