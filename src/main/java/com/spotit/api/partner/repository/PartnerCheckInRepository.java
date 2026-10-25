@@ -12,6 +12,10 @@ public interface PartnerCheckInRepository extends JpaRepository<PartnerCheckIn, 
 
     List<PartnerCheckIn> findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAscCreatedAtAsc(UUID ownerId, LocalDate from, LocalDate to);
 
+    @org.springframework.data.jpa.repository.Query(
+            "select c.partnerId, max(c.createdAt) from PartnerCheckIn c where c.partnerId in :ids group by c.partnerId")
+    List<Object[]> findLatestByPartnerIds(@org.springframework.data.repository.query.Param("ids") List<UUID> ids);
+
     void deleteByPartnerId(UUID partnerId);
 
     void deleteByOwnerId(UUID ownerId);

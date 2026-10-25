@@ -54,6 +54,8 @@ public interface ConfigurationDomainService {
 
     String getAppStoreUrlAndroid();
 
+    String getAppSupportEmail();
+
     String getAppStoreUrlIos();
 
     List<GlobalConfigurationResponse> listAll();

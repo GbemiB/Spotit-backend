@@ -30,6 +30,7 @@ public final class PropertyNames {
     public static final String APP_MIN_BUILD_ANDROID = "app-min-build-android";
     public static final String APP_MIN_BUILD_IOS = "app-min-build-ios";
     public static final String APP_STORE_URL_ANDROID = "app-store-url-android";
+    public static final String APP_SUPPORT_EMAIL = "app-support-email";
     public static final String APP_STORE_URL_IOS = "app-store-url-ios";
 
     public static final String GROUP_SECURITY = "security";

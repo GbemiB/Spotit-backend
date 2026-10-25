@@ -88,6 +88,9 @@ public class GlobalConfig {
     @Column(name = "app_store_url_android")
     private String appStoreUrlAndroid;
 
+    @Column(name = "app_support_email")
+    private String appSupportEmail;
+
     @Column(name = "app_store_url_ios")
     private String appStoreUrlIos;
 

@@ -167,6 +167,11 @@ public class ConfigPropertyCatalog {
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getAppStoreUrlAndroid(),
                 (c, v) -> c.global().setAppStoreUrlAndroid((String) v)));
+        list.add(new Property(PropertyNames.APP_SUPPORT_EMAIL, PropertyNames.GROUP_APP,
+                "Email address the app’s Contact support row opens; unset uses spotitinternational@gmail.com",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getAppSupportEmail(),
+                (c, v) -> c.global().setAppSupportEmail((String) v)));
         list.add(new Property(PropertyNames.APP_STORE_URL_IOS, PropertyNames.GROUP_APP,
                 "Store page the iOS update screen opens; unset hides the update button on iOS",
                 Kind.STRING, Section.GLOBAL, false, false,

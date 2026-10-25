@@ -25,6 +25,7 @@ public final class ConfigDefaults {
     public static final long LOG_MAX_PERIOD_RANGE_DAYS = 14L;
     public static final long REWARDS_HISTORY_PAGE_SIZE = 20L;
     public static final long CONTENT_FEED_DEFAULT_LIMIT = 10L;
+    public static final String APP_SUPPORT_EMAIL = "spotitinternational@gmail.com";
     public static final String APP_STORE_URL_ANDROID = "https://play.google.com/store/apps/details?id=com.spotit.app";
 
 }

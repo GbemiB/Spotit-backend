@@ -118,6 +118,9 @@ public class PartnerWriteServiceImpl implements PartnerWriteService {
         partnerLinkRepository.save(link);
         user.setAccountType(AccountOwner.partner);
         user.setOnboarded(true);
+        if (user.getOnboardedAt() == null) {
+            user.setOnboardedAt(Instant.now());
+        }
         userRepository.save(user);
         return partnerReadService.getStatus(userId);
     }

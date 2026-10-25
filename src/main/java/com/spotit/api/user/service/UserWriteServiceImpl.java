@@ -140,6 +140,9 @@ public class UserWriteServiceImpl implements UserWriteService {
             user.setPeriodLength(request.periodLength());
         }
         user.setOnboarded(true);
+        if (user.getOnboardedAt() == null) {
+            user.setOnboardedAt(Instant.now());
+        }
         userRepository.save(user);
         return new OnboardingResponse(true, user.getCycleLength(), user.getPeriodLength(), user.getGoal().name());
     }

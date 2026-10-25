@@ -47,7 +47,9 @@ public class SecurityConfig {
             "/terms.html",
             "/delete-account.html",
             "/actuator/health",
-            "/api/v1/app/version-policy"
+            "/api/v1/app/version-policy",
+            "/api/v1/app/crashes",
+            "/api/v1/app/support"
     };
 
     private static final String ADMIN_PATHS = "/api/v1/config/**";

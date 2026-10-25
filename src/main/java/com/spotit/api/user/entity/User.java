@@ -120,6 +120,12 @@ public class User {
     @Column(name = "pending_deletion_at")
     private Instant pendingDeletionAt;
 
+    @Column(name = "last_active_at")
+    private Instant lastActiveAt;
+
+    @Column(name = "onboarded_at")
+    private Instant onboardedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

@@ -276,6 +276,13 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
+    public String getAppSupportEmail() {
+        String value = loadGlobal().getAppSupportEmail();
+        return value == null || value.isBlank() ? ConfigDefaults.APP_SUPPORT_EMAIL : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public String getAppStoreUrlAndroid() {
         String value = loadGlobal().getAppStoreUrlAndroid();
         return value == null || value.isBlank() ? ConfigDefaults.APP_STORE_URL_ANDROID : value;

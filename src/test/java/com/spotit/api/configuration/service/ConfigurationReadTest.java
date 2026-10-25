@@ -79,6 +79,7 @@ class ConfigurationReadTest {
         assertThat(service.getAppMinBuildIos()).isZero();
         assertThat(service.getAppStoreUrlAndroid()).isEqualTo("https://play.google.com/store/apps/details?id=com.spotit.app");
         assertThat(service.getAppStoreUrlIos()).isNull();
+        assertThat(service.getAppSupportEmail()).isEqualTo("spotitinternational@gmail.com");
     }
 
     @Test
@@ -87,19 +88,21 @@ class ConfigurationReadTest {
                 .id(GlobalConfig.SINGLETON_ID)
                 .appMinBuildAndroid(14L).appMinBuildIos(3L)
                 .appStoreUrlAndroid("market://details?id=com.spotit.app").appStoreUrlIos("https://apps.apple.com/app/id1")
+                .appSupportEmail(" help@spotit.app ")
                 .build()));
 
         assertThat(service.getAppMinBuildAndroid()).isEqualTo(14);
         assertThat(service.getAppMinBuildIos()).isEqualTo(3);
         assertThat(service.getAppStoreUrlAndroid()).isEqualTo("market://details?id=com.spotit.app");
         assertThat(service.getAppStoreUrlIos()).isEqualTo("https://apps.apple.com/app/id1");
+        assertThat(service.getAppSupportEmail()).isEqualTo("help@spotit.app");
     }
 
     @Test
     void appSettingsAreListedInTheirOwnGroup() {
         assertThat(service.listByGroup(PropertyNames.GROUP_APP)).extracting(GlobalConfigurationResponse::name)
                 .containsExactlyInAnyOrder(PropertyNames.APP_MIN_BUILD_ANDROID, PropertyNames.APP_MIN_BUILD_IOS,
-                        PropertyNames.APP_STORE_URL_ANDROID, PropertyNames.APP_STORE_URL_IOS);
+                        PropertyNames.APP_STORE_URL_ANDROID, PropertyNames.APP_STORE_URL_IOS, PropertyNames.APP_SUPPORT_EMAIL);
     }
 
     @Test
