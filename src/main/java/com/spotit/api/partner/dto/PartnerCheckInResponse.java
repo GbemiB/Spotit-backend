@@ -11,6 +11,11 @@ public record PartnerCheckInResponse(
         int reward,
         int streak,
         int pointsAwarded,
-        long newBalance
+        long newBalance,
+        String note
 ) {
+    public PartnerCheckInResponse(List<EnumOption> options, boolean checkedInToday, List<String> supports, int reward, int streak,
+                                  int pointsAwarded, long newBalance) {
+        this(options, checkedInToday, supports, reward, streak, pointsAwarded, newBalance, null);
+    }
 }

@@ -33,6 +33,7 @@ public final class ErrorMessage {
     public static final String PARTNER_LINK_NOT_FOUND = "You're not sharing with a partner.";
     public static final String PARTNER_NICKNAME_BLANK = "Please enter a name.";
     public static final String PARTNER_ALREADY_CHECKED_IN = "You've already checked in today. Come back tomorrow.";
+    public static final String PARTNER_NOTHING_TO_SEND = "Pick something you did or write a note.";
     public static final String PARTNER_UNKNOWN_SUPPORT = "Please choose from the listed ways you supported her.";
 
     public static final String MONTH_OUT_OF_RANGE = "month must be between 1 and 12.";

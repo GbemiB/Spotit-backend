@@ -149,7 +149,8 @@ final class PartnerControllerSwagger {
             + "Builds his own streak. Needs an active link.";
     static final String CHECK_IN_REQUEST_EXAMPLE = """
             {
-              "supports": ["checked_in", "snacks"]
+              "supports": ["checked_in", "snacks"],
+              "note": "Proud of you today."
             }
             """;
     static final String CHECK_IN_200_EXAMPLE = """
@@ -179,6 +180,23 @@ final class PartnerControllerSwagger {
               "code": 404,
               "message": "You're not sharing with a partner.",
               "data": { "errorCode": "not_found" }
+            }
+            """;
+
+    static final String LOVE_SUMMARY = "Her partner's check-ins";
+    static final String LOVE_DESCRIPTION = "For the account owner: each day in the range her partner checked in, with what he did (ids and labels) "
+            + "and his optional note. Each check-in also lands in her notification inbox as partner_love, and is pushed to her phone unless "
+            + "she turned off partnerLove in her notification settings.";
+    static final String LOVE_200_EXAMPLE = """
+            {
+              "code": 200,
+              "message": "OK",
+              "data": {
+                "items": [
+                  { "date": "2026-10-24", "partnerName": "Tunde", "supports": ["listened", "snacks"],
+                    "labels": ["Listened", "Tea & treats"], "note": "Proud of you today." }
+                ]
+              }
             }
             """;
 }

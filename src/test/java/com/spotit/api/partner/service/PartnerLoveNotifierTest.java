@@ -1,0 +1,89 @@
+package com.spotit.api.partner.service;
+
+import com.spotit.api.common.time.UserClock;
+import com.spotit.api.device.entity.Device;
+import com.spotit.api.device.repository.DeviceRepository;
+import com.spotit.api.reminder.entity.ReminderDelivery;
+import com.spotit.api.reminder.entity.ReminderType;
+import com.spotit.api.reminder.push.PushMessage;
+import com.spotit.api.reminder.push.PushSender;
+import com.spotit.api.reminder.service.ReminderWriteService;
+import com.spotit.api.user.entity.User;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class PartnerLoveNotifierTest {
+    @Mock ReminderWriteService reminderWriteService;
+    @Mock DeviceRepository deviceRepository;
+    @Mock PushSender pushSender;
+    @Mock UserClock userClock;
+    @InjectMocks PartnerLoveNotifier notifier;
+
+    UUID ownerId = UUID.randomUUID();
+    LocalDate today = LocalDate.of(2026, 10, 25);
+    User partner = User.builder().id(UUID.randomUUID()).firstName("Tunde").build();
+
+    @Test
+    void bodyJoinsWhatHeDidAndHisNote() {
+        assertThat(PartnerLoveNotifier.bodyFor(List.of("Listened", "Tea & treats"), "Proud of you"))
+                .isEqualTo("Listened · Tea & treats — “Proud of you”");
+        assertThat(PartnerLoveNotifier.bodyFor(List.of("Back rub"), null)).isEqualTo("Back rub");
+        assertThat(PartnerLoveNotifier.bodyFor(List.of(), "Thinking of you")).isEqualTo("“Thinking of you”");
+    }
+
+    @Test
+    void titleUsesHisName() {
+        assertThat(PartnerLoveNotifier.titleFor(partner)).isEqualTo("Love from Tunde");
+        assertThat(PartnerLoveNotifier.titleFor(User.builder().build())).isEqualTo("Love from your partner");
+    }
+
+    @Test
+    void itLandsInHerInboxAndOnHerPhone() {
+        User owner = User.builder().id(ownerId).build();
+        when(userClock.today(owner)).thenReturn(today);
+        when(reminderWriteService.record(eq(ownerId), eq(ReminderType.partner_love), eq(today), eq("Love from Tunde"), eq("Listened"), any()))
+                .thenReturn(Optional.of(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build()));
+        when(deviceRepository.findByUserId(ownerId)).thenReturn(List.of(
+                Device.builder().userId(ownerId).pushToken("ExponentPushToken[abc]").build(),
+                Device.builder().userId(ownerId).pushToken(null).build()));
+
+        notifier.notifyOwner(owner, partner, List.of("Listened"), null);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<PushMessage>> sent = ArgumentCaptor.forClass(List.class);
+        verify(pushSender).send(sent.capture());
+        assertThat(sent.getValue()).hasSize(1);
+        assertThat(sent.getValue().get(0).title()).isEqualTo("Love from Tunde");
+        assertThat(sent.getValue().get(0).data()).containsEntry("screen", "home");
+    }
+
+    @Test
+    void sheCanTurnThePushOffButKeepsTheInbox() {
+        User owner = User.builder().id(ownerId).notifPartnerLove(false).build();
+        when(userClock.today(owner)).thenReturn(today);
+        when(reminderWriteService.record(eq(ownerId), eq(ReminderType.partner_love), eq(today), any(), any(), any()))
+                .thenReturn(Optional.of(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build()));
+
+        notifier.notifyOwner(owner, partner, List.of("Listened"), null);
+
+        verify(pushSender, never()).send(anyList());
+    }
+}

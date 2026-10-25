@@ -7,6 +7,7 @@ import com.spotit.api.partner.dto.AcceptInviteRequest;
 import com.spotit.api.partner.dto.InviteRequest;
 import com.spotit.api.partner.dto.PartnerCheckInRequest;
 import com.spotit.api.partner.dto.PartnerCheckInResponse;
+import com.spotit.api.partner.dto.PartnerLoveResponse;
 import com.spotit.api.partner.dto.PartnerProfileResponse;
 import com.spotit.api.partner.dto.PartnerSettingsRequest;
 import com.spotit.api.partner.dto.PartnerStatusResponse;
@@ -14,6 +15,7 @@ import com.spotit.api.partner.service.PartnerCheckInService;
 import com.spotit.api.partner.service.PartnerReadService;
 import com.spotit.api.partner.service.PartnerWriteService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,14 +25,17 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Tag(name = "Partner", description = "Invite a partner who sees her Home, Calendar, Insights and daily logs read-only, and earns his own points.")
@@ -191,5 +196,21 @@ public class PartnerController {
     @PostMapping("/check-in")
     public PartnerCheckInResponse checkIn(@CurrentUserId UUID userId, @Valid @RequestBody PartnerCheckInRequest request) {
         return partnerCheckInService.checkIn(userId, request);
+    }
+
+    @Operation(summary = PartnerControllerSwagger.LOVE_SUMMARY, description = PartnerControllerSwagger.LOVE_DESCRIPTION,
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Her partner's check-ins in the range.", content = @Content(
+                    schema = @Schema(implementation = PartnerLoveResponse.class),
+                    examples = @ExampleObject(value = PartnerControllerSwagger.LOVE_200_EXAMPLE)))
+    })
+    @GetMapping("/love")
+    public PartnerLoveResponse love(@CurrentUserId UUID userId,
+                                    @Parameter(description = "Range start date (inclusive)", example = "2026-10-01")
+                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+                                    @Parameter(description = "Range end date (inclusive)", example = "2026-10-31")
+                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return partnerCheckInService.loveFor(userId, from, to);
     }
 }

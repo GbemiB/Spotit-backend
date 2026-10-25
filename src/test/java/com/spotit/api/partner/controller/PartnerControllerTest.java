@@ -176,8 +176,9 @@ class PartnerControllerTest {
     }
 
     @Test
-    void checkInNeedsAtLeastOneWay() throws Exception {
-        mvc.perform(post("/api/v1/partner/check-in").contentType(MediaType.APPLICATION_JSON).content(json(new PartnerCheckInRequest(List.of()))))
+    void aNoteLongerThan200CharactersIsRefused() throws Exception {
+        PartnerCheckInRequest request = new PartnerCheckInRequest(List.of("snacks"), "x".repeat(201));
+        mvc.perform(post("/api/v1/partner/check-in").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isUnprocessableEntity());
         verifyNoInteractions(partnerCheckInService);
     }

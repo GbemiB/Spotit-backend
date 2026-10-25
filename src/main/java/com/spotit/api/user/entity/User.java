@@ -81,6 +81,9 @@ public class User {
     @Column(name = "notif_digest", nullable = false)
     private boolean notifDigest;
 
+    @Column(name = "notif_partner_love")
+    private Boolean notifPartnerLove;
+
     @Column(name = "period_days_before", length = 40)
     private String periodDaysBefore;
 
@@ -133,5 +136,9 @@ public class User {
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    public boolean isNotifPartnerLoveOn() {
+        return !Boolean.FALSE.equals(notifPartnerLove);
     }
 }

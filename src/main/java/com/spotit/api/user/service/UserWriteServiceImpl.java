@@ -94,6 +94,9 @@ public class UserWriteServiceImpl implements UserWriteService {
         if (request.digest() != null) {
             user.setNotifDigest(request.digest());
         }
+        if (request.partnerLove() != null) {
+            user.setNotifPartnerLove(request.partnerLove());
+        }
         ReminderSettings settings = reminderSettings;
         if (request.periodDaysBefore() != null) {
             if (request.periodDaysBefore().isEmpty()) {

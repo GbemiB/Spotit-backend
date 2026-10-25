@@ -15,6 +15,8 @@ import java.util.UUID;
 public interface ReminderWriteService {
     Optional<ReminderDelivery> record(UUID userId, ReminderType type, LocalDate forDate, String body, Instant now);
 
+    Optional<ReminderDelivery> record(UUID userId, ReminderType type, LocalDate forDate, String title, String body, Instant now);
+
     void markAllRead(UUID userId);
 
     void applySendResults(List<PushResult> results, Instant now);

@@ -42,6 +42,7 @@ class PartnerCheckInServiceImplTest {
     @Mock PointsWriteService pointsWriteService;
     @Mock ChallengeReadService challengeReadService;
     @Mock UserClock userClock;
+    @Mock PartnerLoveNotifier partnerLoveNotifier;
     @InjectMocks PartnerCheckInServiceImpl service;
 
     UUID partnerId = UUID.randomUUID();
@@ -73,7 +74,7 @@ class PartnerCheckInServiceImplTest {
         PartnerCheckInResponse response = service.getToday(partnerId);
 
         assertThat(response.checkedInToday()).isFalse();
-        assertThat(response.options()).extracting("label").contains("Checked in on her", "Brought her snacks", "Listened to her");
+        assertThat(response.options()).extracting("label").containsExactly("Checked on her", "Tea & treats", "Back rub", "Chores", "Us time", "Listened");
         assertThat(response.reward()).isEqualTo(10);
         assertThat(response.streak()).isEqualTo(2);
     }
@@ -139,5 +140,66 @@ class PartnerCheckInServiceImplTest {
     void anOwnerCannotUsePartnerCheckIns() {
         partner(AccountOwner.owner);
         assertError(() -> service.getToday(partnerId), ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void checkingInWithANoteSavesItAndTellsHer() {
+        User user = partner(AccountOwner.partner);
+        linked();
+        User owner = User.builder().id(ownerId).firstName("Amaka").build();
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(userClock.today(user)).thenReturn(today);
+        when(pointsWriteService.recordCheckIn(partnerId)).thenReturn(new PointsWriteService.LogPointsResult(10, 50, 3, true));
+
+        PartnerCheckInResponse response = service.checkIn(partnerId, new PartnerCheckInRequest(List.of("listened", "snacks"), "  Proud of you  "));
+
+        ArgumentCaptor<PartnerCheckIn> saved = ArgumentCaptor.forClass(PartnerCheckIn.class);
+        verify(partnerCheckInRepository).save(saved.capture());
+        assertThat(saved.getValue().getNote()).isEqualTo("Proud of you");
+        assertThat(response.note()).isEqualTo("Proud of you");
+        verify(partnerLoveNotifier).notifyOwner(owner, user, List.of("Listened", "Tea & treats"), "Proud of you");
+    }
+
+    @Test
+    void aNoteAloneIsEnough() {
+        User user = partner(AccountOwner.partner);
+        linked();
+        when(userClock.today(user)).thenReturn(today);
+        when(pointsWriteService.recordCheckIn(partnerId)).thenReturn(new PointsWriteService.LogPointsResult(10, 50, 3, true));
+
+        PartnerCheckInResponse response = service.checkIn(partnerId, new PartnerCheckInRequest(List.of(), "Thinking of you"));
+
+        assertThat(response.supports()).isEmpty();
+        assertThat(response.note()).isEqualTo("Thinking of you");
+    }
+
+    @Test
+    void nothingToSendIsRefused() {
+        partner(AccountOwner.partner);
+        linked();
+        assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest(List.of(), "   ")), ErrorCode.VALIDATION_ERROR);
+        verify(partnerCheckInRepository, never()).save(any());
+    }
+
+    @Test
+    void sheSeesHisCheckInsWithLabelsAndNotes() {
+        LocalDate from = LocalDate.of(2026, 10, 1);
+        LocalDate to = LocalDate.of(2026, 10, 31);
+        when(partnerCheckInRepository.findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAsc(ownerId, from, to)).thenReturn(List.of(
+                PartnerCheckIn.builder().partnerId(partnerId).ownerId(ownerId).checkInDate(today).supports("6,2").note("Proud of you").build()));
+        when(userRepository.findAllById(List.of(partnerId))).thenReturn(List.of(User.builder().id(partnerId).firstName("Tunde").build()));
+
+        var items = service.loveFor(ownerId, from, to).items();
+
+        assertThat(items).hasSize(1);
+        assertThat(items.get(0).partnerName()).isEqualTo("Tunde");
+        assertThat(items.get(0).supports()).containsExactly("listened", "snacks");
+        assertThat(items.get(0).labels()).containsExactly("Listened", "Tea & treats");
+        assertThat(items.get(0).note()).isEqualTo("Proud of you");
+    }
+
+    @Test
+    void aBackwardsRangeIsRefused() {
+        assertError(() -> service.loveFor(ownerId, today, today.minusDays(1)), ErrorCode.VALIDATION_ERROR);
     }
 }

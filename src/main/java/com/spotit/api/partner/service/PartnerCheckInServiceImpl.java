@@ -8,6 +8,8 @@ import com.spotit.api.common.time.UserClock;
 import com.spotit.api.log.dto.EnumOption;
 import com.spotit.api.partner.dto.PartnerCheckInRequest;
 import com.spotit.api.partner.dto.PartnerCheckInResponse;
+import com.spotit.api.partner.dto.PartnerLoveItem;
+import com.spotit.api.partner.dto.PartnerLoveResponse;
 import com.spotit.api.partner.entity.PartnerCheckIn;
 import com.spotit.api.partner.entity.PartnerLink;
 import com.spotit.api.partner.entity.PartnerLinkStatus;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,6 +45,7 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
     private final PointsWriteService pointsWriteService;
     private final ChallengeReadService challengeReadService;
     private final UserClock userClock;
+    private final PartnerLoveNotifier partnerLoveNotifier;
 
     @Override
     @Transactional(readOnly = true)
@@ -49,7 +53,7 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
         User partner = requirePartner(partnerId);
         Optional<PartnerCheckIn> today = partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, userClock.today(partner));
         return new PartnerCheckInResponse(OPTIONS, today.isPresent(), today.map(PartnerCheckInServiceImpl::supportsOf).orElse(List.of()),
-                challengeReadService.getDailyLogReward(), partner.getStreak(), 0, partner.getPoints());
+                challengeReadService.getDailyLogReward(), partner.getStreak(), 0, partner.getPoints(), today.map(PartnerCheckIn::getNote).orElse(null));
     }
 
     @Override
@@ -58,7 +62,11 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
         User partner = requirePartner(partnerId);
         PartnerLink link = partnerLinkRepository.findFirstByPartnerIdAndStatus(partnerId, PartnerLinkStatus.active)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PARTNER_LINK_NOT_FOUND));
-        List<SupportType> supports = parse(request.supports());
+        List<SupportType> supports = parse(request.supports() == null ? List.of() : request.supports());
+        String note = request.note() == null || request.note().isBlank() ? null : request.note().strip();
+        if (supports.isEmpty() && note == null) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PARTNER_NOTHING_TO_SEND);
+        }
         LocalDate today = userClock.today(partner);
         if (partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today).isPresent()) {
             throw new ApiException(ErrorCode.ALREADY_CLAIMED, ErrorMessage.PARTNER_ALREADY_CHECKED_IN);
@@ -68,10 +76,33 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
                 .ownerId(link.getOwnerId())
                 .checkInDate(today)
                 .supports(supports.stream().map(type -> String.valueOf(type.getValue())).collect(Collectors.joining(",")))
+                .note(note)
                 .build());
         PointsWriteService.LogPointsResult points = pointsWriteService.recordCheckIn(partnerId);
+        userRepository.findById(link.getOwnerId())
+                .ifPresent(owner -> partnerLoveNotifier.notifyOwner(owner, partner, labelsOf(supports.stream().map(SupportType::name).toList()), note));
         return new PartnerCheckInResponse(OPTIONS, true, supports.stream().map(SupportType::name).toList(),
-                challengeReadService.getDailyLogReward(), points.streak(), points.pointsAwarded(), points.newBalance());
+                challengeReadService.getDailyLogReward(), points.streak(), points.pointsAwarded(), points.newBalance(), note);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PartnerLoveResponse loveFor(UUID ownerId, LocalDate from, LocalDate to) {
+        if (from.isAfter(to)) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.INVALID_DATE_RANGE);
+        }
+        List<PartnerCheckIn> checkIns = partnerCheckInRepository.findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAsc(ownerId, from, to);
+        Map<UUID, String> names = userRepository.findAllById(checkIns.stream().map(PartnerCheckIn::getPartnerId).distinct().toList()).stream()
+                .collect(Collectors.toMap(User::getId, user -> user.getFirstName() == null ? "" : user.getFirstName(), (a, b) -> a));
+        return new PartnerLoveResponse(checkIns.stream().map(checkIn -> {
+            List<String> ids = supportsOf(checkIn);
+            return new PartnerLoveItem(checkIn.getCheckInDate(), names.getOrDefault(checkIn.getPartnerId(), ""), ids, labelsOf(ids), checkIn.getNote());
+        }).toList());
+    }
+
+    private static List<String> labelsOf(List<String> ids) {
+        Map<String, String> labels = OPTIONS.stream().collect(Collectors.toMap(EnumOption::id, EnumOption::label, (a, b) -> a));
+        return ids.stream().map(id -> labels.getOrDefault(id, id)).toList();
     }
 
     private static List<SupportType> parse(List<String> ids) {
