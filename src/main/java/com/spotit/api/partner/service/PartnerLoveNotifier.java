@@ -3,8 +3,8 @@ package com.spotit.api.partner.service;
 import com.spotit.api.common.time.UserClock;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
-import com.spotit.api.partner.entity.ExpressionType;
 import com.spotit.api.partner.entity.LoveKind;
+import com.spotit.api.partner.entity.LoveOption;
 import com.spotit.api.reminder.entity.ReminderDelivery;
 import com.spotit.api.reminder.entity.ReminderType;
 import com.spotit.api.reminder.push.PushMessage;
@@ -33,7 +33,7 @@ public class PartnerLoveNotifier {
     private final PushSender pushSender;
     private final UserClock userClock;
 
-    public void notifyOwner(User owner, User partner, LoveKind kind, List<String> labels, String note, ExpressionType expression) {
+    public void notifyOwner(User owner, User partner, LoveKind kind, List<String> labels, String note, LoveOption expression) {
         String title = titleFor(partner, kind, expression);
         String body = bodyFor(kind, labels, note, expression);
         Instant now = Instant.now();
@@ -76,17 +76,24 @@ public class PartnerLoveNotifier {
         }
     }
 
-    static String titleFor(User partner, LoveKind kind, ExpressionType expression) {
+    static String titleFor(User partner, LoveKind kind, LoveOption expression) {
         String name = partner.getFirstName() == null ? "" : partner.getFirstName().strip();
         String who = name.isEmpty() ? "Your partner" : name;
         return switch (kind) {
             case promise -> name.isEmpty() ? ReminderType.partner_love.getTitle() : "A promise from " + name + " ♡";
             case text -> who + " sent you a message";
-            case expression -> who + " sent you " + expression.getPhrase() + " " + expression.getEmoji();
+            case expression -> who + " sent you " + phraseOf(expression) + (expression.getEmoji() == null ? "" : " " + expression.getEmoji());
         };
     }
 
-    static String bodyFor(LoveKind kind, List<String> labels, String note, ExpressionType expression) {
+    static String phraseOf(LoveOption expression) {
+        if (expression.getPhrase() != null && !expression.getPhrase().isBlank()) {
+            return expression.getPhrase();
+        }
+        return "“" + expression.getLabel() + "”";
+    }
+
+    static String bodyFor(LoveKind kind, List<String> labels, String note, LoveOption expression) {
         if (kind == LoveKind.expression) {
             return "Just because ♡";
         }

@@ -3,7 +3,7 @@ package com.spotit.api.partner.service;
 import com.spotit.api.common.time.UserClock;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
-import com.spotit.api.partner.entity.ExpressionType;
+import com.spotit.api.partner.entity.LoveOption;
 import com.spotit.api.partner.entity.LoveKind;
 import com.spotit.api.reminder.entity.ReminderDelivery;
 import com.spotit.api.reminder.entity.ReminderType;
@@ -55,9 +55,9 @@ class PartnerLoveNotifierTest {
         assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.promise, null)).isEqualTo("A promise from Tunde ♡");
         assertThat(PartnerLoveNotifier.titleFor(User.builder().build(), LoveKind.promise, null)).isEqualTo("A promise from your partner");
         assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.text, null)).isEqualTo("Tunde sent you a message");
-        assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.expression, ExpressionType.hug)).isEqualTo("Tunde sent you a hug 🤗");
+        assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.expression, LoveOption.builder().id("hug").label("Hug").emoji("🤗").phrase("a hug").build())).isEqualTo("Tunde sent you a hug 🤗");
         assertThat(PartnerLoveNotifier.bodyFor(LoveKind.text, List.of("Back rub"), "Proud of you", null)).isEqualTo("“Proud of you”");
-        assertThat(PartnerLoveNotifier.bodyFor(LoveKind.expression, List.of(), null, ExpressionType.kiss)).isEqualTo("Just because ♡");
+        assertThat(PartnerLoveNotifier.bodyFor(LoveKind.expression, List.of(), null, LoveOption.builder().id("kiss").label("Kiss").build())).isEqualTo("Just because ♡");
     }
 
     @Test

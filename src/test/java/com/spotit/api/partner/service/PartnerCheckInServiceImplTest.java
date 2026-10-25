@@ -18,7 +18,6 @@ import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -43,7 +42,8 @@ class PartnerCheckInServiceImplTest {
     @Mock ChallengeReadService challengeReadService;
     @Mock UserClock userClock;
     @Mock PartnerLoveNotifier partnerLoveNotifier;
-    @InjectMocks PartnerCheckInServiceImpl service;
+    @Mock com.spotit.api.partner.repository.LoveOptionRepository loveOptionRepository;
+    PartnerCheckInServiceImpl service;
 
     UUID partnerId = UUID.randomUUID();
     UUID ownerId = UUID.randomUUID();
@@ -56,8 +56,17 @@ class PartnerCheckInServiceImplTest {
     }
 
     @org.junit.jupiter.api.BeforeEach
-    void savedReturnsWhatWasSaved() {
+    void setUp() {
         org.mockito.Mockito.lenient().when(partnerCheckInRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        List<com.spotit.api.partner.entity.LoveOption> defaults = LoveOptionSeeder.defaults();
+        org.mockito.Mockito.lenient().when(loveOptionRepository.findByKindAndActiveTrueOrderBySortOrderAsc(any()))
+                .thenAnswer(inv -> defaults.stream().filter(o -> o.getKind().equals(inv.getArgument(0))).toList());
+        org.mockito.Mockito.lenient().when(loveOptionRepository.findByKindOrderBySortOrderAsc(any()))
+                .thenAnswer(inv -> defaults.stream().filter(o -> o.getKind().equals(inv.getArgument(0))).toList());
+        org.mockito.Mockito.lenient().when(loveOptionRepository.findById(any()))
+                .thenAnswer(inv -> defaults.stream().filter(o -> o.getId().equals(inv.getArgument(0))).findFirst());
+        service = new PartnerCheckInServiceImpl(partnerCheckInRepository, partnerLinkRepository, userRepository, pointsWriteService,
+                challengeReadService, userClock, partnerLoveNotifier, new LoveOptionService(loveOptionRepository));
     }
 
     void linked() {
@@ -79,7 +88,7 @@ class PartnerCheckInServiceImplTest {
         PartnerCheckInResponse response = service.getToday(partnerId);
 
         assertThat(response.checkedInToday()).isFalse();
-        assertThat(response.options()).extracting("label").containsExactly("Check on her", "Tea & treats", "Back rub", "Do the chores", "Us time", "Listen to her");
+        assertThat(response.options()).extracting("label").containsExactly("Check on her", "Listen to her", "Tea & treats", "Back rub", "Do the chores", "Us time");
         assertThat(response.reward()).isEqualTo(10);
         assertThat(response.streak()).isEqualTo(2);
     }
@@ -241,5 +250,36 @@ class PartnerCheckInServiceImplTest {
     @Test
     void aBackwardsRangeIsRefused() {
         assertError(() -> service.loveFor(ownerId, today, today.minusDays(1)), ErrorCode.VALIDATION_ERROR);
+    }
+
+    @Test
+    void theStartersAndCategoriesComeFromTheDatabase() {
+        User user = partner(AccountOwner.partner);
+        when(userClock.today(user)).thenReturn(today);
+
+        PartnerCheckInResponse response = service.getToday(partnerId);
+
+        assertThat(response.starters()).containsExactly("Proud of you", "Thinking of you", "You’ve got this", "I’m here for you");
+        assertThat(response.categories()).extracting("id").containsExactly("promise", "text", "expression");
+        assertThat(response.expressions()).extracting("emoji").startsWith("🤗", "😘");
+    }
+
+    @Test
+    void aSwitchedOffOptionCannotBeSentButStillShowsInHerHistory() {
+        partner(AccountOwner.partner);
+        linked();
+        com.spotit.api.partner.entity.LoveOption off = com.spotit.api.partner.entity.LoveOption.builder().id("foot_rub").kind("promise")
+                .label("Foot rub").storedValue(7).active(false).build();
+        when(loveOptionRepository.findById("foot_rub")).thenReturn(Optional.of(off));
+        assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest(List.of("foot_rub"))), ErrorCode.VALIDATION_ERROR);
+
+        List<com.spotit.api.partner.entity.LoveOption> withOff = new java.util.ArrayList<>(LoveOptionSeeder.defaults().stream()
+                .filter(o -> o.getKind().equals("promise")).toList());
+        withOff.add(off);
+        when(loveOptionRepository.findByKindOrderBySortOrderAsc("promise")).thenReturn(withOff);
+        LocalDate from = LocalDate.of(2026, 10, 1);
+        when(partnerCheckInRepository.findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAscCreatedAtAsc(ownerId, from, today)).thenReturn(List.of(
+                PartnerCheckIn.builder().partnerId(partnerId).ownerId(ownerId).checkInDate(today).kind("promise").supports("7,2").build()));
+        assertThat(service.loveFor(ownerId, from, today).items().get(0).labels()).containsExactly("Foot rub", "Tea & treats");
     }
 }

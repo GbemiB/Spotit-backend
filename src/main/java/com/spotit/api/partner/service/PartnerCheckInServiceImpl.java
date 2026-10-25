@@ -3,19 +3,17 @@ package com.spotit.api.partner.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.exception.ErrorMessage;
-import com.spotit.api.common.i18n.EnumMessages;
 import com.spotit.api.common.time.UserClock;
-import com.spotit.api.log.dto.EnumOption;
 import com.spotit.api.partner.dto.PartnerCheckInRequest;
 import com.spotit.api.partner.dto.PartnerCheckInResponse;
 import com.spotit.api.partner.dto.PartnerLoveItem;
 import com.spotit.api.partner.dto.PartnerLoveResponse;
+import com.spotit.api.partner.dto.LoveOptionView;
 import com.spotit.api.partner.entity.PartnerCheckIn;
-import com.spotit.api.partner.entity.ExpressionType;
 import com.spotit.api.partner.entity.LoveKind;
+import com.spotit.api.partner.entity.LoveOption;
 import com.spotit.api.partner.entity.PartnerLink;
 import com.spotit.api.partner.entity.PartnerLinkStatus;
-import com.spotit.api.partner.entity.SupportType;
 import com.spotit.api.partner.repository.PartnerCheckInRepository;
 import com.spotit.api.partner.repository.PartnerLinkRepository;
 import com.spotit.api.rewards.service.ChallengeReadService;
@@ -38,13 +36,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PartnerCheckInServiceImpl implements PartnerCheckInService {
-    private static final List<EnumOption> OPTIONS = Arrays.stream(SupportType.values())
-            .map(type -> new EnumOption(type.name(), EnumMessages.resolve(type.getCode())))
-            .toList();
-    private static final List<EnumOption> EXPRESSIONS = Arrays.stream(ExpressionType.values())
-            .map(type -> new EnumOption(type.name(), EnumMessages.resolve(type.getCode())))
-            .toList();
-
     private final PartnerCheckInRepository partnerCheckInRepository;
     private final PartnerLinkRepository partnerLinkRepository;
     private final UserRepository userRepository;
@@ -52,6 +43,7 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
     private final ChallengeReadService challengeReadService;
     private final UserClock userClock;
     private final PartnerLoveNotifier partnerLoveNotifier;
+    private final LoveOptionService loveOptionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -68,9 +60,9 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
         User partner = requirePartner(partnerId);
         PartnerLink link = partnerLinkRepository.findFirstByPartnerIdAndStatus(partnerId, PartnerLinkStatus.active)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PARTNER_LINK_NOT_FOUND));
-        List<SupportType> supports = parse(request.supports() == null ? List.of() : request.supports());
+        List<LoveOption> supports = parseSupports(request.supports() == null ? List.of() : request.supports());
         String note = request.note() == null || request.note().isBlank() ? null : request.note().strip();
-        ExpressionType expression = parseExpression(request.expression());
+        LoveOption expression = parseExpression(request.expression());
         LoveKind kind = kindOf(request.kind(), supports, note, expression);
         LocalDate today = userClock.today(partner);
         PartnerCheckIn saved = partnerCheckInRepository.save(PartnerCheckIn.builder()
@@ -79,13 +71,15 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
                 .checkInDate(today)
                 .kind(kind.name())
                 .supports(kind == LoveKind.promise
-                        ? supports.stream().map(type -> String.valueOf(type.getValue())).collect(Collectors.joining(",")) : "")
+                        ? supports.stream().map(o -> String.valueOf(o.getStoredValue())).collect(Collectors.joining(",")) : "")
                 .note(kind == LoveKind.expression ? null : note)
-                .expression(kind == LoveKind.expression ? expression.name() : null)
+                .expression(kind == LoveKind.expression ? expression.getId() : null)
                 .build());
         PointsWriteService.LogPointsResult points = pointsWriteService.recordCheckIn(partnerId);
+        List<String> labels = kind == LoveKind.promise ? supports.stream().map(LoveOption::getLabel).toList() : List.of();
         userRepository.findById(link.getOwnerId())
-                .ifPresent(owner -> partnerLoveNotifier.notifyOwner(owner, partner, kind, labelsOf(supportsOf(saved)), saved.getNote(), expression));
+                .ifPresent(owner -> partnerLoveNotifier.notifyOwner(owner, partner, kind, labels, saved.getNote(),
+                        kind == LoveKind.expression ? expression : null));
         List<PartnerCheckIn> sentToday = new ArrayList<>(partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today));
         if (sentToday.stream().noneMatch(c -> c == saved)) {
             sentToday.add(saved);
@@ -102,12 +96,14 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
         List<PartnerCheckIn> checkIns = partnerCheckInRepository.findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAscCreatedAtAsc(ownerId, from, to);
         Map<UUID, String> names = userRepository.findAllById(checkIns.stream().map(PartnerCheckIn::getPartnerId).distinct().toList()).stream()
                 .collect(Collectors.toMap(User::getId, user -> user.getFirstName() == null ? "" : user.getFirstName(), (a, b) -> a));
+        Map<String, LoveOption> promises = loveOptionService.allOf(LoveOption.PROMISE);
+        Map<String, LoveOption> expressions = loveOptionService.allOf(LoveOption.EXPRESSION);
         return new PartnerLoveResponse(checkIns.stream().map(checkIn -> {
-            List<String> ids = supportsOf(checkIn);
-            ExpressionType expression = expressionOf(checkIn);
-            return new PartnerLoveItem(checkIn.getCheckInDate(), names.getOrDefault(checkIn.getPartnerId(), ""), kindOf(checkIn).name(), ids,
-                    labelsOf(ids), checkIn.getNote(), expression == null ? null : expression.name(),
-                    expression == null ? null : EnumMessages.resolve(expression.getCode()), expression == null ? null : expression.getEmoji(),
+            List<LoveOption> chosen = supportsOf(checkIn, promises);
+            LoveOption expression = checkIn.getExpression() == null ? null : expressions.get(checkIn.getExpression());
+            return new PartnerLoveItem(checkIn.getCheckInDate(), names.getOrDefault(checkIn.getPartnerId(), ""), kindOf(checkIn).name(),
+                    chosen.stream().map(LoveOption::getId).toList(), chosen.stream().map(LoveOption::getLabel).toList(), checkIn.getNote(),
+                    checkIn.getExpression(), expression == null ? null : expression.getLabel(), expression == null ? null : expression.getEmoji(),
                     checkIn.getCreatedAt());
         }).toList());
     }
@@ -118,13 +114,17 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
             byKind.put(kind.name(), 0);
         }
         today.forEach(checkIn -> byKind.merge(kindOf(checkIn).name(), 1, Integer::sum));
-        ExpressionType expression = last == null ? null : expressionOf(last);
-        return new PartnerCheckInResponse(OPTIONS, !today.isEmpty(), last == null ? List.of() : supportsOf(last),
-                challengeReadService.getDailyLogReward(), streak, pointsAwarded, balance, last == null ? null : last.getNote(), EXPRESSIONS,
-                last == null ? null : kindOf(last).name(), expression == null ? null : expression.name(), today.size(), byKind);
+        Map<String, LoveOption> promises = loveOptionService.allOf(LoveOption.PROMISE);
+        List<String> lastSupports = last == null ? List.of() : supportsOf(last, promises).stream().map(LoveOption::getId).toList();
+        return new PartnerCheckInResponse(loveOptionService.active(LoveOption.PROMISE), !today.isEmpty(), lastSupports,
+                challengeReadService.getDailyLogReward(), streak, pointsAwarded, balance, last == null ? null : last.getNote(),
+                loveOptionService.active(LoveOption.EXPRESSION), last == null ? null : kindOf(last).name(),
+                last == null ? null : last.getExpression(), today.size(), byKind,
+                loveOptionService.active(LoveOption.STARTER).stream().map(LoveOptionView::label).toList(),
+                loveOptionService.active(LoveOption.CATEGORY));
     }
 
-    private static LoveKind kindOf(String requested, List<SupportType> supports, String note, ExpressionType expression) {
+    private static LoveKind kindOf(String requested, List<LoveOption> supports, String note, LoveOption expression) {
         if (requested == null) {
             if (supports.isEmpty() && note == null) {
                 throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PARTNER_NOTHING_TO_SEND);
@@ -150,41 +150,31 @@ public class PartnerCheckInServiceImpl implements PartnerCheckInService {
         return checkIn.getSupports() == null || checkIn.getSupports().isBlank() ? LoveKind.text : LoveKind.promise;
     }
 
-    private static ExpressionType expressionOf(PartnerCheckIn checkIn) {
-        return checkIn.getExpression() == null ? null : ExpressionType.valueOf(checkIn.getExpression());
-    }
-
-    private static ExpressionType parseExpression(String value) {
+    private LoveOption parseExpression(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        try {
-            return ExpressionType.valueOf(value.strip());
-        } catch (IllegalArgumentException e) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PARTNER_UNKNOWN_SUPPORT);
-        }
+        return loveOptionService.activeOption(LoveOption.EXPRESSION, value.strip())
+                .orElseThrow(() -> new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PARTNER_UNKNOWN_SUPPORT));
     }
 
-    private static List<String> labelsOf(List<String> ids) {
-        Map<String, String> labels = OPTIONS.stream().collect(Collectors.toMap(EnumOption::id, EnumOption::label, (a, b) -> a));
-        return ids.stream().map(id -> labels.getOrDefault(id, id)).toList();
+    private List<LoveOption> parseSupports(List<String> ids) {
+        return ids.stream().map(String::strip).distinct()
+                .map(id -> loveOptionService.activeOption(LoveOption.PROMISE, id)
+                        .orElseThrow(() -> new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PARTNER_UNKNOWN_SUPPORT)))
+                .toList();
     }
 
-    private static List<SupportType> parse(List<String> ids) {
-        try {
-            return ids.stream().map(String::strip).distinct().map(SupportType::valueOf).toList();
-        } catch (IllegalArgumentException e) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PARTNER_UNKNOWN_SUPPORT);
-        }
-    }
-
-    private static List<String> supportsOf(PartnerCheckIn checkIn) {
-        if (checkIn.getSupports() == null) {
+    private static List<LoveOption> supportsOf(PartnerCheckIn checkIn, Map<String, LoveOption> promises) {
+        if (checkIn.getSupports() == null || checkIn.getSupports().isBlank()) {
             return List.of();
         }
+        Map<Integer, LoveOption> byValue = promises.values().stream().filter(o -> o.getStoredValue() != null)
+                .collect(Collectors.toMap(LoveOption::getStoredValue, o -> o, (a, b) -> a));
         return Arrays.stream(checkIn.getSupports().split(","))
                 .filter(value -> !value.isBlank())
-                .map(value -> SupportType.fromInt(Integer.valueOf(value)).name())
+                .map(value -> byValue.get(Integer.valueOf(value.strip())))
+                .filter(java.util.Objects::nonNull)
                 .toList();
     }
 

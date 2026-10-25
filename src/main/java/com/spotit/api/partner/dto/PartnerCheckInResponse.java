@@ -1,12 +1,10 @@
 package com.spotit.api.partner.dto;
 
-import com.spotit.api.log.dto.EnumOption;
-
 import java.util.List;
 import java.util.Map;
 
 public record PartnerCheckInResponse(
-        List<EnumOption> options,
+        List<LoveOptionView> options,
         boolean checkedInToday,
         List<String> supports,
         int reward,
@@ -14,10 +12,12 @@ public record PartnerCheckInResponse(
         int pointsAwarded,
         long newBalance,
         String note,
-        List<EnumOption> expressions,
+        List<LoveOptionView> expressions,
         String kind,
         String expression,
         int sentToday,
-        Map<String, Integer> sentByKind
+        Map<String, Integer> sentByKind,
+        List<String> starters,
+        List<LoveOptionView> categories
 ) {
 }
