@@ -76,7 +76,7 @@ public class PartnerLoveNotifier {
 
     static String titleFor(User partner) {
         String name = partner.getFirstName() == null ? "" : partner.getFirstName().strip();
-        return name.isEmpty() ? ReminderType.partner_love.getTitle() : "Love from " + name;
+        return name.isEmpty() ? ReminderType.partner_love.getTitle() : "A promise from " + name + " ♡";
     }
 
     static String bodyFor(List<String> labels, String note) {

@@ -43,35 +43,35 @@ class PartnerLoveNotifierTest {
 
     @Test
     void bodyJoinsWhatHeDidAndHisNote() {
-        assertThat(PartnerLoveNotifier.bodyFor(List.of("Listened", "Tea & treats"), "Proud of you"))
-                .isEqualTo("Listened · Tea & treats — “Proud of you”");
+        assertThat(PartnerLoveNotifier.bodyFor(List.of("Listen to her", "Tea & treats"), "Proud of you"))
+                .isEqualTo("Listen to her · Tea & treats — “Proud of you”");
         assertThat(PartnerLoveNotifier.bodyFor(List.of("Back rub"), null)).isEqualTo("Back rub");
         assertThat(PartnerLoveNotifier.bodyFor(List.of(), "Thinking of you")).isEqualTo("“Thinking of you”");
     }
 
     @Test
     void titleUsesHisName() {
-        assertThat(PartnerLoveNotifier.titleFor(partner)).isEqualTo("Love from Tunde");
-        assertThat(PartnerLoveNotifier.titleFor(User.builder().build())).isEqualTo("Love from your partner");
+        assertThat(PartnerLoveNotifier.titleFor(partner)).isEqualTo("A promise from Tunde ♡");
+        assertThat(PartnerLoveNotifier.titleFor(User.builder().build())).isEqualTo("A promise from your partner");
     }
 
     @Test
     void itLandsInHerInboxAndOnHerPhone() {
         User owner = User.builder().id(ownerId).build();
         when(userClock.today(owner)).thenReturn(today);
-        when(reminderWriteService.record(eq(ownerId), eq(ReminderType.partner_love), eq(today), eq("Love from Tunde"), eq("Listened"), any()))
+        when(reminderWriteService.record(eq(ownerId), eq(ReminderType.partner_love), eq(today), eq("A promise from Tunde ♡"), eq("Listen to her"), any()))
                 .thenReturn(Optional.of(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build()));
         when(deviceRepository.findByUserId(ownerId)).thenReturn(List.of(
                 Device.builder().userId(ownerId).pushToken("ExponentPushToken[abc]").build(),
                 Device.builder().userId(ownerId).pushToken(null).build()));
 
-        notifier.notifyOwner(owner, partner, List.of("Listened"), null);
+        notifier.notifyOwner(owner, partner, List.of("Listen to her"), null);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<PushMessage>> sent = ArgumentCaptor.forClass(List.class);
         verify(pushSender).send(sent.capture());
         assertThat(sent.getValue()).hasSize(1);
-        assertThat(sent.getValue().get(0).title()).isEqualTo("Love from Tunde");
+        assertThat(sent.getValue().get(0).title()).isEqualTo("A promise from Tunde ♡");
         assertThat(sent.getValue().get(0).data()).containsEntry("screen", "home");
     }
 
@@ -82,7 +82,7 @@ class PartnerLoveNotifierTest {
         when(reminderWriteService.record(eq(ownerId), eq(ReminderType.partner_love), eq(today), any(), any(), any()))
                 .thenReturn(Optional.of(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build()));
 
-        notifier.notifyOwner(owner, partner, List.of("Listened"), null);
+        notifier.notifyOwner(owner, partner, List.of("Listen to her"), null);
 
         verify(pushSender, never()).send(anyList());
     }

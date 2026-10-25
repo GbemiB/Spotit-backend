@@ -74,7 +74,7 @@ class PartnerCheckInServiceImplTest {
         PartnerCheckInResponse response = service.getToday(partnerId);
 
         assertThat(response.checkedInToday()).isFalse();
-        assertThat(response.options()).extracting("label").containsExactly("Checked on her", "Tea & treats", "Back rub", "Chores", "Us time", "Listened");
+        assertThat(response.options()).extracting("label").containsExactly("Check on her", "Tea & treats", "Back rub", "Do the chores", "Us time", "Listen to her");
         assertThat(response.reward()).isEqualTo(10);
         assertThat(response.streak()).isEqualTo(2);
     }
@@ -157,7 +157,7 @@ class PartnerCheckInServiceImplTest {
         verify(partnerCheckInRepository).save(saved.capture());
         assertThat(saved.getValue().getNote()).isEqualTo("Proud of you");
         assertThat(response.note()).isEqualTo("Proud of you");
-        verify(partnerLoveNotifier).notifyOwner(owner, user, List.of("Listened", "Tea & treats"), "Proud of you");
+        verify(partnerLoveNotifier).notifyOwner(owner, user, List.of("Listen to her", "Tea & treats"), "Proud of you");
     }
 
     @Test
@@ -194,7 +194,7 @@ class PartnerCheckInServiceImplTest {
         assertThat(items).hasSize(1);
         assertThat(items.get(0).partnerName()).isEqualTo("Tunde");
         assertThat(items.get(0).supports()).containsExactly("listened", "snacks");
-        assertThat(items.get(0).labels()).containsExactly("Listened", "Tea & treats");
+        assertThat(items.get(0).labels()).containsExactly("Listen to her", "Tea & treats");
         assertThat(items.get(0).note()).isEqualTo("Proud of you");
     }
 

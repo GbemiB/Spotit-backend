@@ -194,7 +194,7 @@ final class PartnerControllerSwagger {
               "data": {
                 "items": [
                   { "date": "2026-10-24", "partnerName": "Tunde", "supports": ["listened", "snacks"],
-                    "labels": ["Listened", "Tea & treats"], "note": "Proud of you today." }
+                    "labels": ["Listen to her", "Tea & treats"], "note": "Proud of you today." }
                 ]
               }
             }

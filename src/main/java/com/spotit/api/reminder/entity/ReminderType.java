@@ -8,7 +8,7 @@ public enum ReminderType {
     log_nudge("Daily log", "calendar"),
     weekly_digest("Your week", "insights"),
     partner_period_upcoming("Period reminder", "partner"),
-    partner_love("Love from your partner", "home");
+    partner_love("A promise from your partner", "home");
 
     private final String title;
     private final String screen;
