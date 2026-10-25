@@ -50,6 +50,13 @@ public class ReminderWriteServiceImpl implements ReminderWriteService {
 
     @Override
     @Transactional
+    public ReminderDelivery recordEvery(UUID userId, ReminderType type, LocalDate forDate, String title, String body, Instant now) {
+        return reminderDeliveryRepository.saveAndFlush(ReminderDelivery.builder()
+                .userId(userId).type(type).forDate(forDate).title(title).body(body).sentAt(now).build());
+    }
+
+    @Override
+    @Transactional
     public void markAllRead(UUID userId) {
         reminderDeliveryRepository.markAllRead(userId);
     }

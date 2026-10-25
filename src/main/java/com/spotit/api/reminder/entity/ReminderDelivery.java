@@ -13,8 +13,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "reminder_deliveries",
-        uniqueConstraints = @UniqueConstraint(name = "uq_reminder_deliveries_user_type_date", columnNames = {"user_id", "type", "for_date"}))
+@Table(name = "reminder_deliveries")
 @Getter
 @Setter
 @NoArgsConstructor

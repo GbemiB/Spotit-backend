@@ -80,8 +80,11 @@ class PartnerFlowTest {
         assertThat(checkIn.pointsAwarded()).isPositive();
         assertThat(checkIn.streak()).isEqualTo(1);
         assertThat(partnerCheckInService.getToday(partner.getId()).supports()).containsExactly("checked_in", "snacks");
-        assertThatThrownBy(() -> partnerCheckInService.checkIn(partner.getId(), new PartnerCheckInRequest(java.util.List.of("listened"))))
-                .isInstanceOf(ApiException.class);
+        var again = partnerCheckInService.checkIn(partner.getId(), new PartnerCheckInRequest("expression", null, null, "hug"));
+        assertThat(again.pointsAwarded()).isZero();
+        assertThat(again.sentToday()).isEqualTo(2);
+        assertThat(partnerCheckInService.loveFor(owner.getId(), java.time.LocalDate.now().minusDays(2), java.time.LocalDate.now().plusDays(2)).items())
+                .extracting("kind").containsExactly("promise", "expression");
 
         partnerWriteService.unlink(partner.getId());
         assertThat(partnerReadService.getStatus(partner.getId()).state()).isEqualTo("ended");

@@ -3,6 +3,8 @@ package com.spotit.api.partner.service;
 import com.spotit.api.common.time.UserClock;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
+import com.spotit.api.partner.entity.ExpressionType;
+import com.spotit.api.partner.entity.LoveKind;
 import com.spotit.api.reminder.entity.ReminderDelivery;
 import com.spotit.api.reminder.entity.ReminderType;
 import com.spotit.api.reminder.push.PushMessage;
@@ -18,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,21 +52,25 @@ class PartnerLoveNotifierTest {
 
     @Test
     void titleUsesHisName() {
-        assertThat(PartnerLoveNotifier.titleFor(partner)).isEqualTo("A promise from Tunde ♡");
-        assertThat(PartnerLoveNotifier.titleFor(User.builder().build())).isEqualTo("A promise from your partner");
+        assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.promise, null)).isEqualTo("A promise from Tunde ♡");
+        assertThat(PartnerLoveNotifier.titleFor(User.builder().build(), LoveKind.promise, null)).isEqualTo("A promise from your partner");
+        assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.text, null)).isEqualTo("Tunde sent you a message");
+        assertThat(PartnerLoveNotifier.titleFor(partner, LoveKind.expression, ExpressionType.hug)).isEqualTo("Tunde sent you a hug 🤗");
+        assertThat(PartnerLoveNotifier.bodyFor(LoveKind.text, List.of("Back rub"), "Proud of you", null)).isEqualTo("“Proud of you”");
+        assertThat(PartnerLoveNotifier.bodyFor(LoveKind.expression, List.of(), null, ExpressionType.kiss)).isEqualTo("Just because ♡");
     }
 
     @Test
     void itLandsInHerInboxAndOnHerPhone() {
         User owner = User.builder().id(ownerId).build();
         when(userClock.today(owner)).thenReturn(today);
-        when(reminderWriteService.record(eq(ownerId), eq(ReminderType.partner_love), eq(today), eq("A promise from Tunde ♡"), eq("Listen to her"), any()))
-                .thenReturn(Optional.of(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build()));
+        when(reminderWriteService.recordEvery(eq(ownerId), eq(ReminderType.partner_love), eq(today), eq("A promise from Tunde ♡"), eq("Listen to her"), any()))
+                .thenReturn(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build());
         when(deviceRepository.findByUserId(ownerId)).thenReturn(List.of(
                 Device.builder().userId(ownerId).pushToken("ExponentPushToken[abc]").build(),
                 Device.builder().userId(ownerId).pushToken(null).build()));
 
-        notifier.notifyOwner(owner, partner, List.of("Listen to her"), null);
+        notifier.notifyOwner(owner, partner, LoveKind.promise, List.of("Listen to her"), null, null);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<PushMessage>> sent = ArgumentCaptor.forClass(List.class);
@@ -79,10 +84,10 @@ class PartnerLoveNotifierTest {
     void sheCanTurnThePushOffButKeepsTheInbox() {
         User owner = User.builder().id(ownerId).notifPartnerLove(false).build();
         when(userClock.today(owner)).thenReturn(today);
-        when(reminderWriteService.record(eq(ownerId), eq(ReminderType.partner_love), eq(today), any(), any(), any()))
-                .thenReturn(Optional.of(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build()));
+        when(reminderWriteService.recordEvery(eq(ownerId), eq(ReminderType.partner_love), eq(today), any(), any(), any()))
+                .thenReturn(ReminderDelivery.builder().id(UUID.randomUUID()).type(ReminderType.partner_love).build());
 
-        notifier.notifyOwner(owner, partner, List.of("Listen to her"), null);
+        notifier.notifyOwner(owner, partner, LoveKind.promise, List.of("Listen to her"), null, null);
 
         verify(pushSender, never()).send(anyList());
     }

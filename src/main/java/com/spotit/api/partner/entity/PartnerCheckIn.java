@@ -13,8 +13,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "partner_check_ins",
-        uniqueConstraints = @UniqueConstraint(name = "uq_partner_check_ins_partner_date", columnNames = {"partner_id", "check_in_date"}))
+@Table(name = "partner_check_ins")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,6 +39,12 @@ public class PartnerCheckIn {
 
     @Column(length = 200)
     private String note;
+
+    @Column(length = 12)
+    private String kind;
+
+    @Column(length = 20)
+    private String expression;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

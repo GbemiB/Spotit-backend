@@ -14,11 +14,19 @@ public class ReminderTypeConstraintFix {
     private final JdbcTemplate jdbcTemplate;
 
     @EventListener(ApplicationReadyEvent.class)
-    public void dropStaleTypeCheck() {
+    public void fixSchema() {
+        run("ALTER TABLE reminder_deliveries DROP CONSTRAINT IF EXISTS reminder_deliveries_type_check");
+        run("ALTER TABLE reminder_deliveries DROP CONSTRAINT IF EXISTS uq_reminder_deliveries_user_type_date");
+        run("ALTER TABLE partner_check_ins DROP CONSTRAINT IF EXISTS uq_partner_check_ins_partner_date");
+        run("CREATE UNIQUE INDEX IF NOT EXISTS uq_reminder_deliveries_once ON reminder_deliveries (user_id, type, for_date) "
+                + "WHERE type <> 'partner_love'");
+    }
+
+    private void run(String sql) {
         try {
-            jdbcTemplate.execute("ALTER TABLE reminder_deliveries DROP CONSTRAINT IF EXISTS reminder_deliveries_type_check");
+            jdbcTemplate.execute(sql);
         } catch (RuntimeException e) {
-            log.warn("Could not drop reminder_deliveries_type_check: {}", e.getMessage());
+            log.warn("Schema fix skipped ({}): {}", sql, e.getMessage());
         }
     }
 }

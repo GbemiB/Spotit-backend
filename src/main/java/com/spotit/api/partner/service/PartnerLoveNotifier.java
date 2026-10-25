@@ -3,6 +3,8 @@ package com.spotit.api.partner.service;
 import com.spotit.api.common.time.UserClock;
 import com.spotit.api.device.entity.Device;
 import com.spotit.api.device.repository.DeviceRepository;
+import com.spotit.api.partner.entity.ExpressionType;
+import com.spotit.api.partner.entity.LoveKind;
 import com.spotit.api.reminder.entity.ReminderDelivery;
 import com.spotit.api.reminder.entity.ReminderType;
 import com.spotit.api.reminder.push.PushMessage;
@@ -31,18 +33,18 @@ public class PartnerLoveNotifier {
     private final PushSender pushSender;
     private final UserClock userClock;
 
-    public void notifyOwner(User owner, User partner, List<String> labels, String note) {
-        String title = titleFor(partner);
-        String body = bodyFor(labels, note);
+    public void notifyOwner(User owner, User partner, LoveKind kind, List<String> labels, String note, ExpressionType expression) {
+        String title = titleFor(partner, kind, expression);
+        String body = bodyFor(kind, labels, note, expression);
         Instant now = Instant.now();
         Optional<ReminderDelivery> delivery;
         try {
-            delivery = reminderWriteService.record(owner.getId(), ReminderType.partner_love, userClock.today(owner), title, body, now);
+            delivery = Optional.of(reminderWriteService.recordEvery(owner.getId(), ReminderType.partner_love, userClock.today(owner), title, body, now));
         } catch (RuntimeException e) {
             log.warn("Could not record partner love for {}: {}", owner.getId(), e.getMessage());
             return;
         }
-        if (delivery.isEmpty() || !owner.isNotifPartnerLoveOn()) {
+        if (!owner.isNotifPartnerLoveOn()) {
             return;
         }
         List<PushMessage> messages = deviceRepository.findByUserId(owner.getId()).stream()
@@ -74,9 +76,21 @@ public class PartnerLoveNotifier {
         }
     }
 
-    static String titleFor(User partner) {
+    static String titleFor(User partner, LoveKind kind, ExpressionType expression) {
         String name = partner.getFirstName() == null ? "" : partner.getFirstName().strip();
-        return name.isEmpty() ? ReminderType.partner_love.getTitle() : "A promise from " + name + " ♡";
+        String who = name.isEmpty() ? "Your partner" : name;
+        return switch (kind) {
+            case promise -> name.isEmpty() ? ReminderType.partner_love.getTitle() : "A promise from " + name + " ♡";
+            case text -> who + " sent you a message";
+            case expression -> who + " sent you " + expression.getPhrase() + " " + expression.getEmoji();
+        };
+    }
+
+    static String bodyFor(LoveKind kind, List<String> labels, String note, ExpressionType expression) {
+        if (kind == LoveKind.expression) {
+            return "Just because ♡";
+        }
+        return bodyFor(kind == LoveKind.text ? List.of() : labels, note);
     }
 
     static String bodyFor(List<String> labels, String note) {

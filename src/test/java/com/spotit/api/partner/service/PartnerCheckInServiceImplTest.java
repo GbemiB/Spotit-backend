@@ -55,6 +55,11 @@ class PartnerCheckInServiceImplTest {
         return user;
     }
 
+    @org.junit.jupiter.api.BeforeEach
+    void savedReturnsWhatWasSaved() {
+        org.mockito.Mockito.lenient().when(partnerCheckInRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    }
+
     void linked() {
         when(partnerLinkRepository.findFirstByPartnerIdAndStatus(partnerId, PartnerLinkStatus.active))
                 .thenReturn(Optional.of(PartnerLink.builder().ownerId(ownerId).partnerId(partnerId).build()));
@@ -84,7 +89,7 @@ class PartnerCheckInServiceImplTest {
         User user = partner(AccountOwner.partner);
         when(userClock.today(user)).thenReturn(today);
         when(partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today))
-                .thenReturn(Optional.of(PartnerCheckIn.builder().supports("2,6").build()));
+                .thenReturn(List.of(PartnerCheckIn.builder().supports("2,6").build()));
 
         PartnerCheckInResponse response = service.getToday(partnerId);
 
@@ -113,14 +118,48 @@ class PartnerCheckInServiceImplTest {
     }
 
     @Test
-    void onlyOneCheckInADay() {
+    void heCanSendAgainTheSameDay() {
         User user = partner(AccountOwner.partner);
         linked();
         when(userClock.today(user)).thenReturn(today);
-        when(partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today)).thenReturn(Optional.of(PartnerCheckIn.builder().build()));
+        when(partnerCheckInRepository.findByPartnerIdAndCheckInDate(partnerId, today)).thenReturn(List.of(
+                PartnerCheckIn.builder().kind("promise").supports("2").build(),
+                PartnerCheckIn.builder().kind("text").supports("").note("Hi").build()));
+        when(pointsWriteService.recordCheckIn(partnerId)).thenReturn(new PointsWriteService.LogPointsResult(0, 50, 3, false));
 
-        assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest(List.of("snacks"))), ErrorCode.ALREADY_CLAIMED);
-        verify(pointsWriteService, never()).recordCheckIn(any());
+        PartnerCheckInResponse response = service.checkIn(partnerId, new PartnerCheckInRequest("expression", null, null, "hug"));
+
+        assertThat(response.pointsAwarded()).isZero();
+        assertThat(response.kind()).isEqualTo("expression");
+        assertThat(response.expression()).isEqualTo("hug");
+        assertThat(response.sentToday()).isEqualTo(3);
+        assertThat(response.sentByKind()).containsEntry("promise", 1).containsEntry("text", 1).containsEntry("expression", 1);
+    }
+
+    @Test
+    void eachKindNeedsItsOwnContent() {
+        partner(AccountOwner.partner);
+        linked();
+        assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest("promise", List.of(), "hi", null)), ErrorCode.VALIDATION_ERROR);
+        assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest("text", List.of("snacks"), " ", null)), ErrorCode.VALIDATION_ERROR);
+        assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest("expression", null, null, null)), ErrorCode.VALIDATION_ERROR);
+        assertError(() -> service.checkIn(partnerId, new PartnerCheckInRequest("expression", null, null, "wink")), ErrorCode.VALIDATION_ERROR);
+    }
+
+    @Test
+    void aTextKeepsOnlyTheMessage() {
+        User user = partner(AccountOwner.partner);
+        linked();
+        when(userClock.today(user)).thenReturn(today);
+        when(pointsWriteService.recordCheckIn(partnerId)).thenReturn(new PointsWriteService.LogPointsResult(10, 50, 3, true));
+
+        service.checkIn(partnerId, new PartnerCheckInRequest("text", List.of("snacks"), "Proud of you", null));
+
+        ArgumentCaptor<PartnerCheckIn> saved = ArgumentCaptor.forClass(PartnerCheckIn.class);
+        verify(partnerCheckInRepository).save(saved.capture());
+        assertThat(saved.getValue().getKind()).isEqualTo("text");
+        assertThat(saved.getValue().getSupports()).isEmpty();
+        assertThat(saved.getValue().getNote()).isEqualTo("Proud of you");
     }
 
     @Test
@@ -157,7 +196,8 @@ class PartnerCheckInServiceImplTest {
         verify(partnerCheckInRepository).save(saved.capture());
         assertThat(saved.getValue().getNote()).isEqualTo("Proud of you");
         assertThat(response.note()).isEqualTo("Proud of you");
-        verify(partnerLoveNotifier).notifyOwner(owner, user, List.of("Listen to her", "Tea & treats"), "Proud of you");
+        verify(partnerLoveNotifier).notifyOwner(owner, user, com.spotit.api.partner.entity.LoveKind.promise, List.of("Listen to her", "Tea & treats"),
+                "Proud of you", null);
     }
 
     @Test
@@ -185,7 +225,7 @@ class PartnerCheckInServiceImplTest {
     void sheSeesHisCheckInsWithLabelsAndNotes() {
         LocalDate from = LocalDate.of(2026, 10, 1);
         LocalDate to = LocalDate.of(2026, 10, 31);
-        when(partnerCheckInRepository.findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAsc(ownerId, from, to)).thenReturn(List.of(
+        when(partnerCheckInRepository.findByOwnerIdAndCheckInDateBetweenOrderByCheckInDateAscCreatedAtAsc(ownerId, from, to)).thenReturn(List.of(
                 PartnerCheckIn.builder().partnerId(partnerId).ownerId(ownerId).checkInDate(today).supports("6,2").note("Proud of you").build()));
         when(userRepository.findAllById(List.of(partnerId))).thenReturn(List.of(User.builder().id(partnerId).firstName("Tunde").build()));
 

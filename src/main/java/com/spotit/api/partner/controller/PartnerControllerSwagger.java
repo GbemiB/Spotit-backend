@@ -145,12 +145,16 @@ final class PartnerControllerSwagger {
     static final String CHECK_IN_GET_SUMMARY = "Partner: today's check-in";
     static final String CHECK_IN_GET_DESCRIPTION = "The ways he can say he supported her, whether he has checked in today, the reward and his streak.";
     static final String CHECK_IN_POST_SUMMARY = "Partner: check in for today";
-    static final String CHECK_IN_POST_DESCRIPTION = "Records how he supported her today and awards his SpotPoints, once a day in his time zone. "
-            + "Builds his own streak. Needs an active link.";
+    static final String CHECK_IN_POST_DESCRIPTION = "Sends her a promise, a text or an expression. He can send any number of times a day: kind is "
+            + "promise (supports, optional note), text (note) or expression (hug, kiss, love, thinking, strong, here); a request without kind is "
+            + "read as a promise, or a text when only a note is given. Only the first send each day (his time zone) earns SpotPoints and builds "
+            + "his streak. Each send notifies her and lands in her inbox. Needs an active link.";
     static final String CHECK_IN_REQUEST_EXAMPLE = """
             {
+              "kind": "promise",
               "supports": ["checked_in", "snacks"],
-              "note": "Proud of you today."
+              "note": "Proud of you today.",
+              "expression": null
             }
             """;
     static final String CHECK_IN_200_EXAMPLE = """
