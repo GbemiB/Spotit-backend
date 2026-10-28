@@ -214,11 +214,14 @@ class PointsWriteServiceImplTest {
 
     @Test
     void adjustAppliesAPositiveOrNegativeDeltaToTheBalance() {
-        userWith(500, 0, 0, null);
+        User user = userWith(500, 0, 0, null);
 
         long newBalance = service.adjust(userId, -200, "🎁", "Redeemed something");
+        service.adjust(userId, 50, "🏆", "Won something");
 
         assertThat(newBalance).isEqualTo(300);
+        assertThat(user.getPointsSpent()).isEqualTo(200L);
+        assertThat(user.getLifetimePoints()).isEqualTo(550);
         verify(pointsHistoryRepository).save(argThat(entry ->
                 entry.getDelta() == -200 && entry.getLabel().equals("Redeemed something")));
     }

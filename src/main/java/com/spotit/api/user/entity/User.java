@@ -93,6 +93,9 @@ public class User {
     @Column(nullable = false)
     private long points;
 
+    @Column(name = "points_spent")
+    private Long pointsSpent;
+
     @Column(nullable = false)
     private int streak;
 
@@ -146,5 +149,9 @@ public class User {
 
     public boolean isNotifPartnerLoveOn() {
         return !Boolean.FALSE.equals(notifPartnerLove);
+    }
+
+    public long getLifetimePoints() {
+        return points + (pointsSpent == null ? 0 : pointsSpent);
     }
 }

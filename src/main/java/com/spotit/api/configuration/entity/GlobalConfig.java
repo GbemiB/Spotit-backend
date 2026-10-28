@@ -43,6 +43,15 @@ public class GlobalConfig {
     @Column(name = "points_watch_ad", nullable = false)
     private long pointsWatchAd;
 
+    @Column(name = "quiz_rounds", nullable = false, columnDefinition = "bigint default 5")
+    private long quizRounds;
+
+    @Column(name = "quiz_lives", nullable = false, columnDefinition = "bigint default 3")
+    private long quizLives;
+
+    @Column(name = "quiz_hint_cost", nullable = false, columnDefinition = "bigint default 5")
+    private long quizHintCost;
+
     @Column(name = "account_purge_grace_days", nullable = false)
     private long accountPurgeGraceDays;
 

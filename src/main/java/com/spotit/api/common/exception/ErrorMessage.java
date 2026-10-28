@@ -57,6 +57,21 @@ public final class ErrorMessage {
     public static final String PRODUCT_NOT_FOUND = "Product not found.";
     public static final String PREMIUM_REQUIRED = "This item requires Premium.";
     public static final String INSUFFICIENT_POINTS = "Not enough SpotPoints yet.";
+    public static final String QUIZ_GROUP_NOT_FOUND = "Quiz group not found.";
+    public static final String QUIZ_TOPIC_NOT_FOUND = "Quiz topic not found.";
+    public static final String QUIZ_LEVEL_NOT_FOUND = "Quiz level not found.";
+    public static final String QUIZ_QUESTION_NOT_FOUND = "Quiz question not found.";
+    public static final String QUIZ_ATTEMPT_NOT_FOUND = "Quiz game not found.";
+    public static final String QUIZ_TOPIC_AGE_LOCKED = "This topic opens at 18.";
+    public static final String QUIZ_LEVEL_LOCKED = "Clear the level before this one first.";
+    public static final String QUIZ_LEVEL_NOT_READY = "This level has no questions yet.";
+    public static final String QUIZ_GAME_OVER = "This game has already finished.";
+    public static final String QUIZ_WRONG_ROUND = "That round is not being played now.";
+    public static final String QUIZ_HINT_USED = "You already used a hint this round.";
+    public static final String QUIZ_NEW_ITEM_INCOMPLETE = "A new item needs every required field.";
+    public static final String QUIZ_BAD_ANSWER = "answer must be myth or fact.";
+    public static final String QUIZ_UNKNOWN_GROUP = "No quiz group with that id.";
+    public static final String QUIZ_UNKNOWN_TOPIC = "No quiz topic with that id.";
 
     public static final String CONTENT_ITEM_NOT_FOUND = "Content item not found.";
 

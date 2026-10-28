@@ -73,6 +73,15 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getPointsWatchAd() == 0) {
             global.setPointsWatchAd(ConfigDefaults.POINTS_WATCH_AD);
         }
+        if (global.getQuizRounds() == 0) {
+            global.setQuizRounds(ConfigDefaults.QUIZ_ROUNDS);
+        }
+        if (global.getQuizLives() == 0) {
+            global.setQuizLives(ConfigDefaults.QUIZ_LIVES);
+        }
+        if (global.getQuizHintCost() == 0) {
+            global.setQuizHintCost(ConfigDefaults.QUIZ_HINT_COST);
+        }
         if (global.getAccountPurgeGraceDays() == 0) {
             global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
         }
@@ -186,6 +195,24 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getPointsWatchAd() {
         return (int) loadGlobal().getPointsWatchAd();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizRounds() {
+        return (int) loadGlobal().getQuizRounds();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizLives() {
+        return (int) loadGlobal().getQuizLives();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizHintCost() {
+        return (int) loadGlobal().getQuizHintCost();
     }
 
     @Override

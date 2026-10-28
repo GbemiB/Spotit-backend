@@ -204,6 +204,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         user.setNotifDailyLog(true);
         user.setNotifDigest(false);
         user.setPoints(0);
+        user.setPointsSpent(0L);
         user.setStreak(0);
         user.setLongestStreak(0);
         user.setLastLogDate(null);

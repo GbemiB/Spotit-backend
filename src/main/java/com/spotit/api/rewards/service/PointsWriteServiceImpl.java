@@ -139,6 +139,9 @@ public class PointsWriteServiceImpl implements PointsWriteService {
     public long adjust(UUID userId, int delta, String icon, String label) {
         User user = requireUserForUpdate(userId);
         user.setPoints(user.getPoints() + delta);
+        if (delta < 0) {
+            user.setPointsSpent((user.getPointsSpent() == null ? 0 : user.getPointsSpent()) - delta);
+        }
         userRepository.save(user);
         recordHistory(userId, icon, label, delta, userClock.today(user));
         return user.getPoints();

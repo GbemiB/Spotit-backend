@@ -24,6 +24,12 @@ public interface ConfigurationDomainService {
 
     int getPointsWatchAd();
 
+    int getQuizRounds();
+
+    int getQuizLives();
+
+    int getQuizHintCost();
+
     long getAccountPurgeGraceDays();
 
     int getBadgeKnowYourBodyThreshold();

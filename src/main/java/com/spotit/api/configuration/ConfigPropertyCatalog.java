@@ -96,6 +96,18 @@ public class ConfigPropertyCatalog {
                 "Points awarded for watching a rewarded ad", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPointsWatchAd(),
                 (c, v) -> c.global().setPointsWatchAd((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_ROUNDS, PropertyNames.GROUP_QUIZ,
+                "Rounds (questions) in one Know Yourself quiz level", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizRounds(),
+                (c, v) -> c.global().setQuizRounds((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_LIVES, PropertyNames.GROUP_QUIZ,
+                "Hearts a player starts each quiz level with", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizLives(),
+                (c, v) -> c.global().setQuizLives((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_HINT_COST, PropertyNames.GROUP_QUIZ,
+                "SpotPoints charged for one quiz hint", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizHintCost(),
+                (c, v) -> c.global().setQuizHintCost((Long) v)));
         list.add(new Property(PropertyNames.CYCLE_DEFAULT_LENGTH, PropertyNames.GROUP_CYCLE,
                 "Default cycle length assumed until a user has logged enough data", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getCycleDefaultLength(),

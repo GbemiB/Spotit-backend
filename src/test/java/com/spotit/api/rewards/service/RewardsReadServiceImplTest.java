@@ -56,7 +56,20 @@ class RewardsReadServiceImplTest {
                 new LevelUtil.LevelDef("Blush", 0, 500), new LevelUtil.LevelDef("Petal", 500, 2000), new LevelUtil.LevelDef("Rosé", 2000, 5000)));
 
         assertThat(service.getSummary(userId)).isEqualTo(new RewardsSummaryResponse(
-                620, "Petal", new RewardsSummaryResponse.LevelRange(500, 2000), "Rosé", 1380L, 4, 9));
+                620, "Petal", new RewardsSummaryResponse.LevelRange(500, 2000), "Rosé", 1380L, 4, 9, 620));
+    }
+
+    @Test
+    void spendingPointsNeverLowersTheLevel() {
+        when(userRepository.findById(userId)).thenReturn(Optional.of(User.builder().id(userId).points(100).pointsSpent(520L).build()));
+        when(levelDefinitionService.getLevelDefs()).thenReturn(List.of(
+                new LevelUtil.LevelDef("Blush", 0, 500), new LevelUtil.LevelDef("Petal", 500, 2000)));
+
+        var summary = service.getSummary(userId);
+
+        assertThat(summary.points()).isEqualTo(100);
+        assertThat(summary.level()).isEqualTo("Petal");
+        assertThat(summary.lifetimePoints()).isEqualTo(620);
     }
 
     @Test

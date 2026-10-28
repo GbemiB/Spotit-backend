@@ -78,7 +78,7 @@ class RewardsControllerTest {
     @Test
     void summaryReturnsPointsAndLevel() throws Exception {
         when(rewardsReadService.getSummary(USER_ID)).thenReturn(new RewardsSummaryResponse(
-                620, "Petal", new RewardsSummaryResponse.LevelRange(500, 2000), "Rosé", 1380L, 4, 9));
+                620, "Petal", new RewardsSummaryResponse.LevelRange(500, 2000), "Rosé", 1380L, 4, 9, 620));
 
         mvc.perform(get("/api/v1/rewards/summary"))
                 .andExpect(status().isOk())

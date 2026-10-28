@@ -14,6 +14,9 @@ public final class PropertyNames {
     public static final String CYCLE_DEFAULT_PERIOD_LENGTH = "cycle-default-period-length";
     public static final String POINTS_DAILY_CLAIM = "points-daily-claim";
     public static final String POINTS_WATCH_AD = "points-watch-ad";
+    public static final String QUIZ_ROUNDS = "quiz-rounds";
+    public static final String QUIZ_LIVES = "quiz-lives";
+    public static final String QUIZ_HINT_COST = "quiz-hint-cost";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";
     public static final String BADGE_KNOW_YOUR_BODY_THRESHOLD = "badge-know-your-body-threshold";
@@ -44,6 +47,7 @@ public final class PropertyNames {
     public static final String GROUP_REWARDS = "rewards";
     public static final String GROUP_CONTENT = "content";
     public static final String GROUP_APP = "app";
+    public static final String GROUP_QUIZ = "quiz";
 
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";
