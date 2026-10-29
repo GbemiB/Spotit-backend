@@ -27,25 +27,14 @@ class QuizContentScriptTest {
     @Autowired QuizQuestionRepository questionRepository;
 
     @Test
-    void bothBatchesLoadAsDraftsAndCanBeRunTwice() throws Exception {
+    void theScriptLoadsTenTopicsFiveLevelsAndFiveHundredDraftsAndCanBeRunTwice() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself_batch1.sql"));
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself_batch1.sql"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself.sql"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself.sql"));
         }
 
         assertThat(groupRepository.count()).isEqualTo(7);
         assertThat(topicRepository.count()).isEqualTo(31);
-        assertThat(topicRepository.findByActiveTrueOrderBySortOrderAsc()).hasSize(8);
-        assertThat(levelRepository.count()).isEqualTo(24);
-        assertThat(questionRepository.count()).isEqualTo(192);
-        assertThat(questionRepository.findByStatusOrderByTopicIdAscLevelNumberAscIdAsc(QuizQuestion.DRAFT)).hasSize(192);
-        assertThat(questionRepository.countReady()).isEmpty();
-
-        try (Connection connection = dataSource.getConnection()) {
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself_batch2.sql"));
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself_batch2.sql"));
-        }
-
         assertThat(topicRepository.findByActiveTrueOrderBySortOrderAsc()).hasSize(10)
                 .extracting("name").contains("Inside My Cycle", "Sleep, Cycle, Repeat");
         assertThat(levelRepository.count()).isEqualTo(50);
@@ -54,5 +43,6 @@ class QuizContentScriptTest {
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 1)).get().extracting("lives").isNull();
         assertThat(questionRepository.count()).isEqualTo(500);
         assertThat(questionRepository.findByStatusOrderByTopicIdAscLevelNumberAscIdAsc(QuizQuestion.DRAFT)).hasSize(500);
+        assertThat(questionRepository.countReady()).isEmpty();
     }
 }
