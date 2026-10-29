@@ -27,7 +27,7 @@ class QuizContentScriptTest {
     @Autowired QuizQuestionRepository questionRepository;
 
     @Test
-    void theScriptLoadsTenTopicsFiveLevelsAndFiveHundredDraftsAndCanBeRunTwice() throws Exception {
+    void theScriptLoadsTenTopicsFiveLevelsAndFiveHundredApprovedQuestionsAndCanBeRunTwice() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself.sql"));
             ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/quiz/know_yourself.sql"));
@@ -42,7 +42,7 @@ class QuizContentScriptTest {
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 5)).get().extracting("cost", "lives").containsExactly(40, 1);
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 1)).get().extracting("lives").isNull();
         assertThat(questionRepository.count()).isEqualTo(500);
-        assertThat(questionRepository.findByStatusOrderByTopicIdAscLevelNumberAscIdAsc(QuizQuestion.DRAFT)).hasSize(500);
-        assertThat(questionRepository.countReady()).isEmpty();
+        assertThat(questionRepository.findByStatusOrderByTopicIdAscLevelNumberAscIdAsc(QuizQuestion.APPROVED)).hasSize(500);
+        assertThat(questionRepository.countReady()).hasSize(50);
     }
 }
