@@ -139,7 +139,7 @@ public class QuizPlayService {
         int current = QuizRules.currentLevel(cleared, levels.size());
         List<LevelView> views = levels.stream().map(l -> new LevelView(l.getNumber(), l.getName(), l.getCost(),
                 QuizRules.levelState(l.getNumber(), current, cleared.contains(l.getNumber())),
-                stars(player.of(topicId).get(l.getNumber())), content.isReady(topicId, l.getNumber(), rounds))).toList();
+                stars(player.of(topicId).get(l.getNumber())), content.isReady(topicId, l.getNumber(), rounds), livesFor(l))).toList();
         return new QuizTopicDetail(card(topic, content, player, rounds), player.user().getPoints(), views);
     }
 
@@ -175,11 +175,11 @@ public class QuizPlayService {
         List<QuizSeen> seen = seenRepository.findByUserIdAndQuestionIdIn(userId, pool.stream().map(QuizQuestion::getId).toList());
         List<QuizQuestion> picked = QuizRules.pickQuestions(pool, seen, rounds, RANDOM);
         markSeen(userId, picked, seen);
-        int lives = config.getQuizLives();
+        int lives = livesFor(level);
         QuizAttempt attempt = attemptRepository.save(QuizAttempt.builder()
                 .userId(userId).topicId(topic.getId()).levelNumber(level.getNumber())
                 .questionIds(picked.stream().map(QuizQuestion::getId).collect(Collectors.joining(",")))
-                .round(0).lives(lives).hintRound(-1).spSpent(level.getCost())
+                .round(0).lives(lives).startLives(lives).hintRound(-1).spSpent(level.getCost())
                 .status(QuizAttempt.PLAYING).playedOn(player.today()).startedAt(Instant.now())
                 .build());
         QuizLevelResult result = player.of(topic.getId()).get(level.getNumber());
@@ -235,7 +235,7 @@ public class QuizPlayService {
             finish(attempt, QuizAttempt.OUT);
         } else if (round + 1 >= attempt.questionIdList().size()) {
             finish(attempt, QuizAttempt.CLEARED);
-            stars = QuizRules.starsFor(attempt.getLives(), config.getQuizLives());
+            stars = QuizRules.starsFor(attempt.getLives(), attempt.getStartLives() != null ? attempt.getStartLives() : config.getQuizLives());
             nextLevel = recordClear(userId, attempt, stars);
         } else {
             attempt.setRound(round + 1);
@@ -243,6 +243,10 @@ public class QuizPlayService {
         attemptRepository.save(attempt);
         return new AnswerResponse(round, right, question.getAnswer(), question.getExplanation(), question.getFunFact(), attempt.getLives(),
                 attempt.getStreak(), attempt.getBestStreak(), attempt.getCorrect(), attempt.getStatus(), stars, nextLevel);
+    }
+
+    private int livesFor(QuizLevel level) {
+        return level.getLives() != null && level.getLives() > 0 ? level.getLives() : config.getQuizLives();
     }
 
     private Integer recordClear(UUID userId, QuizAttempt attempt, int stars) {

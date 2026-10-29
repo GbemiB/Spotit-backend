@@ -48,6 +48,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -225,6 +226,33 @@ class QuizPlayServiceTest {
 
         assertThat(start.balance()).isEqualTo(70);
         assertThat(start.spSpent()).isEqualTo(30);
+        assertThat(start.lives()).isEqualTo(3);
+    }
+
+    @Test
+    void aHardLevelCanStartWithFewerHearts() {
+        cleared("my-cycle", 1, 3);
+        QuizLevel hard = level("my-cycle", 2, 30);
+        hard.setLives(1);
+        when(levelRepository.findByActiveTrueOrderByTopicIdAscNumberAsc()).thenReturn(List.of(level("my-cycle", 1, 0), hard));
+        when(pointsWriteService.adjust(userId, -30, QuizPlayService.SPEND_ICON, "Quiz: My Cycle level 2")).thenReturn(70L);
+
+        assertThat(service.topic(userId, "my-cycle").levels()).extracting("lives").containsExactly(3, 1);
+        StartQuizResponse start = service.start(userId, new StartQuizRequest("my-cycle", 2));
+
+        assertThat(start.lives()).isEqualTo(1);
+        verify(attemptRepository).save(argThat(a -> a.getStartLives() == 1 && a.getLives() == 1));
+    }
+
+    @Test
+    void clearingWithEveryHeartLeftOnAOneHeartLevelGivesThreeStars() {
+        QuizAttempt a = attempt("q1,q2", 1, 1);
+        a.setStartLives(1);
+        when(resultRepository.findByUserIdAndTopicIdAndLevelNumber(userId, "my-cycle", 1)).thenReturn(Optional.empty());
+
+        AnswerResponse answer = service.answer(userId, a.getId(), new AnswerRequest(1, "fact"));
+
+        assertThat(answer.stars()).isEqualTo(3);
     }
 
     @Test

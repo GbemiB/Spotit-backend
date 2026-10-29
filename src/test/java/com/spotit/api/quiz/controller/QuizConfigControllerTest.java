@@ -42,7 +42,7 @@ class QuizConfigControllerTest {
     void listsAndSavesEveryKind() throws Exception {
         QuizGroupAdmin group = new QuizGroupAdmin("body", "Body basics", "pink", 1, true);
         QuizTopicAdmin topic = new QuizTopicAdmin("my-cycle", "My Cycle", "body", 13, 1, true);
-        QuizLevelAdmin level = new QuizLevelAdmin("my-cycle", 1, "Your period basics", 0, true);
+        QuizLevelAdmin level = new QuizLevelAdmin("my-cycle", 1, "Your period basics", 0, true, null);
         QuizQuestionAdmin question = new QuizQuestionAdmin("q1", "my-cycle", 1, "Stress can delay a period.", "fact", null, "Because", null,
                 null, "draft", null, true, null);
         when(quizAdminService.groups()).thenReturn(List.of(group));

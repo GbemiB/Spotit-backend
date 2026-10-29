@@ -108,17 +108,21 @@ class QuizAdminServiceTest {
 
     @Test
     void levelsBelongToATopic() {
-        QuizLevelAdmin created = service.saveLevel("my-cycle", 4, new QuizLevelAdmin(null, null, "When you ovulate", 30, null));
+        QuizLevelAdmin created = service.saveLevel("my-cycle", 4, new QuizLevelAdmin(null, null, "When you ovulate", 30, null, null));
         assertThat(created.cost()).isEqualTo(30);
         assertThat(created.number()).isEqualTo(4);
 
         QuizLevel existing = QuizLevel.builder().topicId("my-cycle").number(4).name("Old").cost(30).active(true).build();
         when(levelRepository.findByTopicIdAndNumber("my-cycle", 4)).thenReturn(Optional.of(existing));
-        QuizLevelAdmin patched = service.saveLevel("my-cycle", 4, new QuizLevelAdmin(null, null, null, -5, false));
+        QuizLevelAdmin patched = service.saveLevel("my-cycle", 4, new QuizLevelAdmin(null, null, null, -5, false, 2));
         assertThat(patched.cost()).isZero();
         assertThat(patched.active()).isFalse();
+        assertThat(patched.lives()).isEqualTo(2);
+        assertThat(service.saveLevel("my-cycle", 4, new QuizLevelAdmin(null, null, null, null, null, 0)).lives()).isNull();
+        assertThat(patched.lives()).isEqualTo(2);
+        assertThat(service.saveLevel("my-cycle", 4, new QuizLevelAdmin(null, null, null, null, null, 0)).lives()).isNull();
 
-        assertThatThrownBy(() -> service.saveLevel("nope", 1, new QuizLevelAdmin(null, null, "x", 0, null)))
+        assertThatThrownBy(() -> service.saveLevel("nope", 1, new QuizLevelAdmin(null, null, "x", 0, null, null)))
                 .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 

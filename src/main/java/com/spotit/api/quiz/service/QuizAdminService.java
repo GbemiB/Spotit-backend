@@ -130,6 +130,9 @@ public class QuizAdminService {
         if (body.active() != null) {
             level.setActive(body.active());
         }
+        if (body.lives() != null) {
+            level.setLives(body.lives() > 0 ? body.lives() : null);
+        }
         return QuizLevelAdmin.of(levelRepository.save(level));
     }
 

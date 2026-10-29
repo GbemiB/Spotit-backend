@@ -39,4 +39,7 @@ public class QuizLevel {
 
     @Column(nullable = false)
     private boolean active;
+
+    @Column
+    private Integer lives;
 }

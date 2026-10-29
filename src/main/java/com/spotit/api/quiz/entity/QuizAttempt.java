@@ -52,6 +52,9 @@ public class QuizAttempt {
     @Column(nullable = false)
     private int lives;
 
+    @Column(name = "start_lives")
+    private Integer startLives;
+
     @Column(nullable = false)
     private int correct;
 
