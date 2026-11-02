@@ -11,6 +11,7 @@ public record QuizHomeResponse(
         int rounds,
         int lives,
         int hintCost,
-        SpotlightInvite invite
+        SpotlightInvite invite,
+        List<ChallengeCard> challenges
 ) {
 }

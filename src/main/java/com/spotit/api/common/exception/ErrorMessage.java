@@ -72,6 +72,7 @@ public final class ErrorMessage {
     public static final String QUIZ_BAD_ANSWER = "answer must be myth or fact.";
     public static final String QUIZ_UNKNOWN_GROUP = "No quiz group with that id.";
     public static final String QUIZ_ICON_TOO_LONG = "Topic icon names can be at most 30 characters.";
+    public static final String QUIZ_BAD_CHALLENGE = "Challenge kind must be quiz or game, and status live or soon.";
     public static final String QUIZ_UNKNOWN_TOPIC = "No quiz topic with that id.";
 
     public static final String CONTENT_ITEM_NOT_FOUND = "Content item not found.";

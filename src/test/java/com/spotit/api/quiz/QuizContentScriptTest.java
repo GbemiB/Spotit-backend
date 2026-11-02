@@ -5,6 +5,7 @@ import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
 import com.spotit.api.quiz.repository.QuizRankRepository;
+import com.spotit.api.quiz.repository.QuizChallengeRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ class QuizContentScriptTest {
     @Autowired QuizLevelRepository levelRepository;
     @Autowired QuizQuestionRepository questionRepository;
     @Autowired QuizRankRepository rankRepository;
+    @Autowired QuizChallengeRepository challengeRepository;
 
     @Test
     void theScriptLoadsTenTopicsFiveLevelsAndFiveHundredApprovedQuestionsAndCanBeRunTwice() throws Exception {
@@ -36,6 +38,8 @@ class QuizContentScriptTest {
         }
 
         assertThat(groupRepository.count()).isEqualTo(7);
+        assertThat(challengeRepository.findByActiveTrueOrderBySortOrderAsc()).extracting("id").containsExactly("know-yourself", "pad-factory",
+                "pad-bank-run", "give-day", "grow-a-maker", "clinic-shift");
         assertThat(rankRepository.findByActiveTrueOrderByMinStarsAsc()).extracting("minStars").containsExactly(0, 15, 45, 90);
         assertThat(topicRepository.count()).isEqualTo(31);
         assertThat(topicRepository.findByActiveTrueOrderBySortOrderAsc()).hasSize(10)

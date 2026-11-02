@@ -2,6 +2,7 @@ package com.spotit.api.quiz.controller;
 
 import com.spotit.api.quiz.dto.ApproveQuestionRequest;
 import com.spotit.api.quiz.dto.QuizAdminPage;
+import com.spotit.api.quiz.dto.QuizChallengeAdmin;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
@@ -48,6 +49,10 @@ class QuizConfigControllerTest {
         QuizQuestionAdmin question = new QuizQuestionAdmin("q1", "my-cycle", 1, "Stress can delay a period.", "fact", null, "Because", null,
                 null, "draft", null, true, null);
         QuizRankAdmin rank = new QuizRankAdmin("explorer", "Explorer", 15, true);
+        QuizChallengeAdmin challenge = new QuizChallengeAdmin("pad-factory", "game", "Pad Factory", "Design pads", "pad", "pink", 10, true, 13,
+                "soon", 2, true);
+        when(quizAdminService.challenges(null, null)).thenReturn(new QuizAdminPage<>(List.of(challenge), 0, 50, 1));
+        when(quizAdminService.saveChallenge(eq("pad-factory"), any())).thenReturn(challenge);
         when(quizAdminService.ranks(null, null)).thenReturn(new QuizAdminPage<>(List.of(rank), 0, 50, 1));
         when(quizAdminService.saveRank(eq("explorer"), any())).thenReturn(rank);
         when(quizAdminService.groups(null, null)).thenReturn(new QuizAdminPage<>(List.of(group), 0, 50, 1));
@@ -60,6 +65,9 @@ class QuizConfigControllerTest {
         when(quizAdminService.saveQuestion(eq("q1"), any())).thenReturn(question);
         when(quizAdminService.approve("q1", "Dr Ada")).thenReturn(question);
 
+        mvc.perform(get("/api/v1/config/quiz/challenges")).andExpect(jsonPath("$.data.items[0].cost").value(10));
+        mvc.perform(put("/api/v1/config/quiz/challenges/pad-factory").contentType(MediaType.APPLICATION_JSON).content(json(challenge)))
+                .andExpect(status().isOk());
         mvc.perform(get("/api/v1/config/quiz/ranks")).andExpect(jsonPath("$.data.items[0].minStars").value(15));
         mvc.perform(put("/api/v1/config/quiz/ranks/explorer").contentType(MediaType.APPLICATION_JSON).content(json(rank))).andExpect(status().isOk());
         mvc.perform(get("/api/v1/config/quiz/groups")).andExpect(jsonPath("$.data.items[0].id").value("body"));

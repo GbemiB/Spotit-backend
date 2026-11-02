@@ -7,16 +7,19 @@ import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
 import com.spotit.api.quiz.dto.QuizRankAdmin;
+import com.spotit.api.quiz.dto.QuizChallengeAdmin;
 import com.spotit.api.quiz.dto.QuizTopicAdmin;
 import com.spotit.api.quiz.entity.QuizGroup;
 import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizQuestion;
 import com.spotit.api.quiz.entity.QuizRank;
+import com.spotit.api.quiz.entity.QuizChallenge;
 import com.spotit.api.quiz.entity.QuizTopic;
 import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
 import com.spotit.api.quiz.repository.QuizRankRepository;
+import com.spotit.api.quiz.repository.QuizChallengeRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +46,7 @@ class QuizAdminServiceTest {
     @Mock QuizLevelRepository levelRepository;
     @Mock QuizQuestionRepository questionRepository;
     @Mock QuizRankRepository rankRepository;
+    @Mock QuizChallengeRepository challengeRepository;
     @Mock ConfigurationDomainService config;
     @InjectMocks QuizAdminService service;
 
@@ -54,6 +58,7 @@ class QuizAdminServiceTest {
         when(questionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(rankRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(config.getQuizAdminPageSize()).thenReturn(50);
+        when(challengeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(groupRepository.existsById("body")).thenReturn(true);
         when(topicRepository.existsById("my-cycle")).thenReturn(true);
     }
@@ -206,5 +211,32 @@ class QuizAdminServiceTest {
 
         assertThatThrownBy(() -> service.saveRank("new", new QuizRankAdmin(null, "New", null, null)))
                 .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+    }
+
+    @Test
+    void challengesCanBeListedAddedRepricedAndChecked() {
+        when(challengeRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(QuizChallenge.builder().id("know-yourself").kind("quiz")
+                .name("Know Yourself").tone("pink").minAge(13).status("live").sortOrder(1).active(true).build()));
+        assertThat(service.challenges(null, null).items()).extracting("id").containsExactly("know-yourself");
+
+        QuizChallengeAdmin created = service.saveChallenge("pad-factory", new QuizChallengeAdmin(null, " Game ", " Pad Factory ", " Design pads ",
+                "pad", "pink", 10, true, 13, null, 2, null));
+        assertThat(created).extracting("kind", "name", "blurb", "cost", "costFrom", "status", "active")
+                .containsExactly("game", "Pad Factory", "Design pads", 10, true, "soon", true);
+
+        QuizChallenge existing = QuizChallenge.builder().id("pad-factory").kind("game").name("Pad Factory").icon("pad").tone("pink").cost(10)
+                .minAge(13).status("soon").sortOrder(2).active(true).build();
+        when(challengeRepository.findById("pad-factory")).thenReturn(Optional.of(existing));
+        QuizChallengeAdmin repriced = service.saveChallenge("pad-factory", new QuizChallengeAdmin(null, null, null, null, " ", "peach", -4,
+                false, 10, "LIVE", null, false));
+        assertThat(repriced).extracting("cost", "costFrom", "status", "minAge", "icon", "tone", "active")
+                .containsExactly(0, false, "live", 13, null, "peach", false);
+
+        assertThatThrownBy(() -> service.saveChallenge("pad-factory", new QuizChallengeAdmin(null, "board", null, null, null, null, null, null,
+                null, null, null, null))).isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+        assertThatThrownBy(() -> service.saveChallenge("pad-factory", new QuizChallengeAdmin(null, null, null, null, null, null, null, null,
+                null, "later", null, null))).isInstanceOf(ApiException.class);
+        assertThatThrownBy(() -> service.saveChallenge("new", new QuizChallengeAdmin(null, "game", null, null, null, null, null, null, null,
+                null, null, null))).isInstanceOf(ApiException.class);
     }
 }

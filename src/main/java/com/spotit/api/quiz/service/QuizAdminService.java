@@ -5,11 +5,13 @@ import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.quiz.dto.QuizAdminPage;
+import com.spotit.api.quiz.dto.QuizChallengeAdmin;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
 import com.spotit.api.quiz.dto.QuizRankAdmin;
 import com.spotit.api.quiz.dto.QuizTopicAdmin;
+import com.spotit.api.quiz.entity.QuizChallenge;
 import com.spotit.api.quiz.entity.QuizGroup;
 import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizQuestion;
@@ -18,6 +20,7 @@ import com.spotit.api.quiz.entity.QuizTopic;
 import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
+import com.spotit.api.quiz.repository.QuizChallengeRepository;
 import com.spotit.api.quiz.repository.QuizRankRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -32,11 +36,14 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class QuizAdminService {
     private static final int ICON_MAX_LENGTH = 30;
+    private static final int MIN_AGE = 13;
+    private static final int NEW_SORT_ORDER = 100;
     private final QuizGroupRepository groupRepository;
     private final QuizTopicRepository topicRepository;
     private final QuizLevelRepository levelRepository;
     private final QuizQuestionRepository questionRepository;
     private final QuizRankRepository rankRepository;
+    private final QuizChallengeRepository challengeRepository;
     private final ConfigurationDomainService config;
 
     @Transactional(readOnly = true)
@@ -74,6 +81,63 @@ public class QuizAdminService {
     @Transactional(readOnly = true)
     public QuizAdminPage<QuizRankAdmin> ranks(Integer page, Integer size) {
         return paged(rankRepository.findAllByOrderByMinStarsAsc().stream().map(QuizRankAdmin::of).toList(), page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public QuizAdminPage<QuizChallengeAdmin> challenges(Integer page, Integer size) {
+        return paged(challengeRepository.findAllByOrderBySortOrderAsc().stream().map(QuizChallengeAdmin::of).toList(), page, size);
+    }
+
+    @Transactional
+    public QuizChallengeAdmin saveChallenge(String id, QuizChallengeAdmin body) {
+        QuizChallenge challenge = challengeRepository.findById(id).orElse(null);
+        if (challenge == null) {
+            requireAll(body.kind(), body.name());
+            challenge = QuizChallenge.builder().id(id).tone("pink").minAge(MIN_AGE).status(QuizChallenge.SOON).sortOrder(NEW_SORT_ORDER)
+                    .active(true).build();
+        }
+        if (body.kind() != null) {
+            challenge.setKind(oneOf(body.kind(), QuizChallenge.QUIZ, QuizChallenge.GAME));
+        }
+        if (body.status() != null) {
+            challenge.setStatus(oneOf(body.status(), QuizChallenge.LIVE, QuizChallenge.SOON));
+        }
+        if (body.name() != null) {
+            challenge.setName(body.name().strip());
+        }
+        if (body.blurb() != null) {
+            challenge.setBlurb(body.blurb().strip());
+        }
+        if (body.icon() != null) {
+            challenge.setIcon(body.icon().isBlank() ? null : body.icon().strip());
+        }
+        if (body.tone() != null) {
+            challenge.setTone(body.tone());
+        }
+        if (body.cost() != null) {
+            challenge.setCost(Math.max(0, body.cost()));
+        }
+        if (body.costFrom() != null) {
+            challenge.setCostFrom(body.costFrom());
+        }
+        if (body.minAge() != null) {
+            challenge.setMinAge(Math.max(MIN_AGE, body.minAge()));
+        }
+        if (body.sortOrder() != null) {
+            challenge.setSortOrder(body.sortOrder());
+        }
+        if (body.active() != null) {
+            challenge.setActive(body.active());
+        }
+        return QuizChallengeAdmin.of(challengeRepository.save(challenge));
+    }
+
+    private static String oneOf(String value, String a, String b) {
+        String v = value.strip().toLowerCase(Locale.ROOT);
+        if (!v.equals(a) && !v.equals(b)) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.QUIZ_BAD_CHALLENGE);
+        }
+        return v;
     }
 
     private <T> QuizAdminPage<T> paged(List<T> all, Integer page, Integer size) {

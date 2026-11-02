@@ -14,6 +14,7 @@ import com.spotit.api.quiz.dto.SpotlightInvite;
 import com.spotit.api.quiz.dto.StartQuizRequest;
 import com.spotit.api.quiz.dto.StartQuizResponse;
 import com.spotit.api.quiz.entity.QuizAttempt;
+import com.spotit.api.quiz.entity.QuizChallenge;
 import com.spotit.api.quiz.entity.QuizGroup;
 import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizLevelResult;
@@ -26,6 +27,7 @@ import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizLevelResultRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
 import com.spotit.api.quiz.repository.QuizRankRepository;
+import com.spotit.api.quiz.repository.QuizChallengeRepository;
 import com.spotit.api.quiz.repository.QuizSeenRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import com.spotit.api.rewards.service.PointsWriteService;
@@ -73,6 +75,7 @@ class QuizPlayServiceTest {
     @Mock QuizAttemptRepository attemptRepository;
     @Mock QuizSeenRepository seenRepository;
     @Mock QuizRankRepository rankRepository;
+    @Mock QuizChallengeRepository challengeRepository;
     @InjectMocks QuizPlayService service;
 
     final UUID userId = UUID.randomUUID();
@@ -117,6 +120,10 @@ class QuizPlayServiceTest {
         when(attemptRepository.findPlayDaysSince(eq(userId), any())).thenReturn(List.of(today, today.minusDays(1)));
         when(attemptRepository.sumCorrect(userId)).thenReturn(12L);
         when(attemptRepository.maxBestStreak(userId)).thenReturn(4);
+        when(challengeRepository.findByActiveTrueOrderBySortOrderAsc()).thenReturn(List.of(
+                QuizChallenge.builder().id("know-yourself").kind("quiz").name("Know Yourself").tone("pink").cost(0).minAge(13).status("live").build(),
+                QuizChallenge.builder().id("clinic-shift").kind("game").name("Clinic Shift").icon("steth").tone("pink").cost(15).minAge(18)
+                        .status("soon").build()));
         when(rankRepository.findByActiveTrueOrderByMinStarsAsc()).thenReturn(List.of(
                 QuizRank.builder().id("curious").name("Curious").minStars(0).active(true).build(),
                 QuizRank.builder().id("explorer").name("Explorer").minStars(15).active(true).build()));
@@ -171,6 +178,9 @@ class QuizPlayServiceTest {
         assertThat(home.rounds()).isEqualTo(2);
         assertThat(home.hintCost()).isEqualTo(5);
         assertThat(home.invite()).isEqualTo(new SpotlightInvite(true, 3, 3));
+        assertThat(home.challenges()).extracting("id", "cost", "status", "locked")
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("know-yourself", null, "live", false),
+                        org.assertj.core.groups.Tuple.tuple("clinic-shift", 15, "soon", true));
     }
 
     @Test

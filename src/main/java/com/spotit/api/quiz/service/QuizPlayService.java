@@ -7,6 +7,7 @@ import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.quiz.dto.AnswerRequest;
 import com.spotit.api.quiz.dto.AnswerResponse;
+import com.spotit.api.quiz.dto.ChallengeCard;
 import com.spotit.api.quiz.dto.GroupChip;
 import com.spotit.api.quiz.dto.GroupView;
 import com.spotit.api.quiz.dto.HintRequest;
@@ -23,6 +24,7 @@ import com.spotit.api.quiz.dto.StartQuizResponse;
 import com.spotit.api.quiz.dto.TodaysPick;
 import com.spotit.api.quiz.dto.TopicCard;
 import com.spotit.api.quiz.entity.QuizAttempt;
+import com.spotit.api.quiz.entity.QuizChallenge;
 import com.spotit.api.quiz.entity.QuizGroup;
 import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizLevelResult;
@@ -30,6 +32,7 @@ import com.spotit.api.quiz.entity.QuizQuestion;
 import com.spotit.api.quiz.entity.QuizSeen;
 import com.spotit.api.quiz.entity.QuizTopic;
 import com.spotit.api.quiz.repository.QuizAttemptRepository;
+import com.spotit.api.quiz.repository.QuizChallengeRepository;
 import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizLevelResultRepository;
@@ -78,6 +81,7 @@ public class QuizPlayService {
     private final QuizAttemptRepository attemptRepository;
     private final QuizSeenRepository seenRepository;
     private final QuizRankRepository rankRepository;
+    private final QuizChallengeRepository challengeRepository;
 
     record Content(List<QuizGroup> groups, List<QuizTopic> topics, Map<String, List<QuizLevel>> levels, Map<String, Long> ready) {
         List<QuizLevel> levelsOf(String topicId) {
@@ -120,7 +124,15 @@ public class QuizPlayService {
         return new QuizHomeResponse(player.user().getPoints(), stats, pick(userId, player, content, open), shown.stream().limit(HOME_TOPIC_CARDS).toList(),
                 content.topics().size(), rounds, config.getQuizLives(), config.getQuizHintCost(),
                 new SpotlightInvite(config.isSpotlightInviteEnabled(), config.getSpotlightInviteEveryDays(),
-                        config.getSpotlightInviteMaxDismissals()));
+                        config.getSpotlightInviteMaxDismissals()), challenges(player));
+    }
+
+    private List<ChallengeCard> challenges(Player player) {
+        return challengeRepository.findByActiveTrueOrderBySortOrderAsc().stream()
+                .map(c -> new ChallengeCard(c.getId(), c.getKind(), c.getName(), c.getBlurb(), c.getIcon(), c.getTone(),
+                        QuizChallenge.QUIZ.equals(c.getKind()) ? null : c.getCost(), c.isCostFrom(), c.getMinAge(), c.getStatus(),
+                        QuizRules.isLocked(c.getMinAge(), player.age())))
+                .toList();
     }
 
     @Transactional(readOnly = true)

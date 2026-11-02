@@ -2,6 +2,7 @@ package com.spotit.api.quiz.controller;
 
 import com.spotit.api.quiz.dto.ApproveQuestionRequest;
 import com.spotit.api.quiz.dto.QuizAdminPage;
+import com.spotit.api.quiz.dto.QuizChallengeAdmin;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
@@ -31,6 +32,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class QuizConfigController {
     private final QuizAdminService quizAdminService;
+
+    @Operation(summary = "List Spotlight challenges", description = "The quiz and the games shown on the Spotlight hub, in order.")
+    @GetMapping("/challenges")
+    public QuizAdminPage<QuizChallengeAdmin> challenges(@Parameter(description = "Page number, from 0.", example = "0") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Items per page; defaults to the quiz-admin-page-size setting.", example = "50") @RequestParam(required = false) Integer size) {
+        return quizAdminService.challenges(page, size);
+    }
+
+    @Operation(summary = "Create or update a Spotlight challenge",
+            description = "kind is quiz or game; status is live or soon (shown as Coming soon); cost is in SP; minAge is 13 or 18.")
+    @PutMapping("/challenges/{id}")
+    public QuizChallengeAdmin saveChallenge(@Parameter(example = "pad-factory") @PathVariable String id, @RequestBody QuizChallengeAdmin body) {
+        return quizAdminService.saveChallenge(id, body);
+    }
 
     @Operation(summary = "List Spotlight ranks")
     @GetMapping("/ranks")
