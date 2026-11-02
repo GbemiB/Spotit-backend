@@ -117,6 +117,20 @@ class PadBankServiceTest {
     }
 
     @Test
+    void theFirstDayIsAFreeTryThenTheNormalPriceApplies() {
+        challenge.setFreePlays(1);
+        user.setPoints(0);
+        when(runRepository.countByUserId(userId)).thenReturn(0L);
+
+        PadBankStartResponse free = service.start(userId, null);
+        assertThat(free).extracting("cost", "balance").containsExactly(0, 0L);
+        verify(pointsWriteService, never()).adjust(eq(userId), anyInt(), anyString(), anyString());
+
+        when(runRepository.countByUserId(userId)).thenReturn(1L);
+        assertThatThrownBy(() -> service.start(userId, null)).extracting("errorCode").isEqualTo(ErrorCode.INSUFFICIENT_POINTS);
+    }
+
+    @Test
     void theBankStaysShutWhenNotLiveLockedEmptyOrTooExpensive() {
         challenge.setStatus("soon");
         assertThatThrownBy(() -> service.start(userId, null)).extracting("errorCode").isEqualTo(ErrorCode.NOT_YET_COMPLETE);

@@ -57,6 +57,9 @@ public class SpotlightChallenge {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    @Column(name = "free_plays", nullable = false, columnDefinition = "integer default 0")
+    private int freePlays;
+
     @Column(nullable = false)
     private boolean active;
 }

@@ -11,6 +11,7 @@ public record ChallengeCard(
         boolean costFrom,
         int minAge,
         String status,
-        boolean locked
+        boolean locked,
+        int freePlaysLeft
 ) {
 }

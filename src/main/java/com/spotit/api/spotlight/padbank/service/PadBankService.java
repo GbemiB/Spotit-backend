@@ -71,7 +71,7 @@ public class PadBankService {
             throw new ApiException(ErrorCode.NOT_YET_COMPLETE, ErrorMessage.PADBANK_DAY_EMPTY);
         }
         long balance = user.getPoints();
-        int cost = challenge.getCost();
+        int cost = runRepository.countByUserId(userId) < challenge.getFreePlays() ? 0 : challenge.getCost();
         if (cost > 0) {
             if (balance < cost) {
                 throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);

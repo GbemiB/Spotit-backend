@@ -15,6 +15,8 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, UUID> 
     @Query("SELECT COALESCE(SUM(a.correct), 0) FROM QuizAttempt a WHERE a.userId = :userId")
     long sumCorrect(UUID userId);
 
+    long countByUserId(UUID userId);
+
     @Query("SELECT COALESCE(MAX(a.bestStreak), 0) FROM QuizAttempt a WHERE a.userId = :userId")
     int maxBestStreak(UUID userId);
 }

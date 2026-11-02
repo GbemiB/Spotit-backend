@@ -29,6 +29,7 @@ class QuizSpotlightGameTest {
                 QuizLevelResult.builder().topicId("pcos").levelNumber(1).bestStars(2).build()));
         when(attempts.sumCorrect(userId)).thenReturn(12L);
         when(attempts.maxBestStreak(userId)).thenReturn(4);
+        when(attempts.countByUserId(userId)).thenReturn(9L);
         when(attempts.findPlayDaysSince(eq(userId), any())).thenReturn(List.of(today));
 
         QuizSpotlightGame game = new QuizSpotlightGame(results, attempts);
@@ -36,6 +37,7 @@ class QuizSpotlightGameTest {
 
         assertThat(game.challengeId()).isEqualTo("know-yourself");
         assertThat(summary).extracting("stars", "levelsWon", "rightAnswers", "bestRun", "topicsStarted").containsExactly(5, 2, 12L, 4, 2);
+        assertThat(summary.plays()).isEqualTo(9L);
         assertThat(summary.playDays()).containsExactly(today);
     }
 }

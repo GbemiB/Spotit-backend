@@ -14,4 +14,6 @@ public interface PadBankRunRepository extends JpaRepository<PadBankRun, UUID> {
 
     @Query("SELECT DISTINCT r.playedOn FROM PadBankRun r WHERE r.userId = :userId AND r.playedOn >= :since")
     List<LocalDate> findPlayDaysSince(UUID userId, LocalDate since);
+
+    long countByUserId(UUID userId);
 }

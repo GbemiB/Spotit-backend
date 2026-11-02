@@ -56,12 +56,13 @@ class SpotlightHomeServiceTest {
         when(config.getSpotlightInviteMaxDismissals()).thenReturn(3);
         when(challenges.findByActiveTrueOrderBySortOrderAsc()).thenReturn(List.of(
                 SpotlightChallenge.builder().id("know-yourself").kind("quiz").name("Know Yourself").tone("pink").minAge(13).status("live").build(),
-                SpotlightChallenge.builder().id("clinic-shift").kind("game").name("Clinic Shift").tone("pink").cost(15).minAge(18).status("soon").build()));
+                SpotlightChallenge.builder().id("clinic-shift").kind("game").name("Clinic Shift").tone("pink").cost(15).minAge(18).status("soon").build(),
+                SpotlightChallenge.builder().id("pad-bank-run").kind("game").name("Pad Bank Run").tone("peach").cost(10).minAge(13).status("live").freePlays(3).build()));
         when(ranks.findByActiveTrueOrderByMinStarsAsc()).thenReturn(List.of(
                 SpotlightRank.builder().id("curious").name("Curious").minStars(0).build(),
                 SpotlightRank.builder().id("explorer").name("Explorer").minStars(15).build()));
-        SpotlightGame quiz = game("know-yourself", new GameSummary(10, 4, 30, 5, 3, Set.of(today, today.minusDays(1))));
-        SpotlightGame bank = game("pad-bank-run", new GameSummary(6, 2, 0, 0, 0, Set.of(today.minusDays(2))));
+        SpotlightGame quiz = game("know-yourself", new GameSummary(10, 4, 30, 5, 3, Set.of(today, today.minusDays(1)), 7));
+        SpotlightGame bank = game("pad-bank-run", new GameSummary(6, 2, 0, 0, 0, Set.of(today.minusDays(2)), 1));
 
         SpotlightHomeResponse home = new SpotlightHomeService(users, clock, config, challenges, ranks, List.of(quiz, bank)).home(userId);
 
@@ -70,7 +71,8 @@ class SpotlightHomeServiceTest {
                 .containsExactly(3, 16, 6, 30L, 5, 3);
         assertThat(home.stats().week()).containsExactly(false, false, false, false, true, true, true);
         assertThat(home.stats().rank()).extracting("name", "nextName").containsExactly("Explorer", null);
-        assertThat(home.challenges()).extracting("id", "cost", "locked").containsExactly(tuple("know-yourself", null, false), tuple("clinic-shift", 15, true));
+        assertThat(home.challenges()).extracting("id", "cost", "locked", "freePlaysLeft").containsExactly(tuple("know-yourself", null, false, 0),
+                tuple("clinic-shift", 15, true, 0), tuple("pad-bank-run", 10, false, 2));
         assertThat(home.invite()).isEqualTo(new SpotlightInvite(true, 3, 3));
         assertThat(quiz.challengeId()).isEqualTo("know-yourself");
         assertThat(GameSummary.empty().stars()).isZero();

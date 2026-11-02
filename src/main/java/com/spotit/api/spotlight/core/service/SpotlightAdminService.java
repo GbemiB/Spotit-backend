@@ -99,6 +99,9 @@ public class SpotlightAdminService {
         if (body.active() != null) {
             challenge.setActive(body.active());
         }
+        if (body.freePlays() != null) {
+            challenge.setFreePlays(Math.max(0, body.freePlays()));
+        }
         return SpotlightChallengeAdmin.of(challengeRepository.save(challenge));
     }
 

@@ -27,6 +27,6 @@ public class PadBankSpotlightGame implements SpotlightGame {
         List<Object[]> best = runRepository.bestStarsByDay(userId);
         int stars = best.stream().mapToInt(row -> ((Number) row[1]).intValue()).sum();
         int won = (int) best.stream().filter(row -> ((Number) row[1]).intValue() > 0).count();
-        return new GameSummary(stars, won, 0, 0, 0, new HashSet<>(runRepository.findPlayDaysSince(userId, today.minusDays(HISTORY_DAYS))));
+        return new GameSummary(stars, won, 0, 0, 0, new HashSet<>(runRepository.findPlayDaysSince(userId, today.minusDays(HISTORY_DAYS))), runRepository.countByUserId(userId));
     }
 }

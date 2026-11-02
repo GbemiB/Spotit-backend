@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -39,7 +41,9 @@ public class SpotlightHomeService {
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
         LocalDate today = userClock.today(user);
         Integer age = SpotlightRules.ageOn(user.getDob(), today);
-        List<GameSummary> parts = games.stream().map(g -> g.summary(userId, today)).toList();
+        Map<String, GameSummary> byChallenge = new HashMap<>();
+        games.forEach(g -> byChallenge.put(g.challengeId(), g.summary(userId, today)));
+        List<GameSummary> parts = List.copyOf(byChallenge.values());
         Set<LocalDate> days = new HashSet<>();
         parts.forEach(p -> days.addAll(p.playDays()));
         int stars = parts.stream().mapToInt(GameSummary::stars).sum();
@@ -50,10 +54,15 @@ public class SpotlightHomeService {
         List<ChallengeCard> challenges = challengeRepository.findByActiveTrueOrderBySortOrderAsc().stream()
                 .map(c -> new ChallengeCard(c.getId(), c.getKind(), c.getName(), c.getBlurb(), c.getIcon(), c.getTone(),
                         SpotlightChallenge.QUIZ.equals(c.getKind()) ? null : c.getCost(), c.isCostFrom(), c.getMinAge(), c.getStatus(),
-                        SpotlightRules.isLocked(c.getMinAge(), age)))
+                        SpotlightRules.isLocked(c.getMinAge(), age), freePlaysLeft(c, byChallenge.get(c.getId()))))
                 .toList();
         SpotlightInvite invite = new SpotlightInvite(config.isSpotlightInviteEnabled(), config.getSpotlightInviteEveryDays(),
                 config.getSpotlightInviteMaxDismissals());
         return new SpotlightHomeResponse(user.getPoints(), stats, challenges, invite);
+    }
+
+    static int freePlaysLeft(SpotlightChallenge challenge, GameSummary summary) {
+        long played = summary == null ? 0 : summary.plays();
+        return (int) Math.max(0, challenge.getFreePlays() - played);
     }
 }

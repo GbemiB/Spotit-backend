@@ -32,6 +32,6 @@ public class QuizSpotlightGame implements SpotlightGame {
         int won = (int) results.stream().filter(r -> r.getBestStars() > 0).count();
         int topics = (int) results.stream().map(QuizLevelResult::getTopicId).distinct().count();
         return new GameSummary(stars, won, attemptRepository.sumCorrect(userId), attemptRepository.maxBestStreak(userId), topics,
-                new HashSet<>(attemptRepository.findPlayDaysSince(userId, today.minusDays(HISTORY_DAYS))));
+                new HashSet<>(attemptRepository.findPlayDaysSince(userId, today.minusDays(HISTORY_DAYS))), attemptRepository.countByUserId(userId));
     }
 }

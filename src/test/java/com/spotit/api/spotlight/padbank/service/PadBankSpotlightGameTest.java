@@ -22,12 +22,13 @@ class PadBankSpotlightGameTest {
         PadBankRunRepository runs = mock(PadBankRunRepository.class);
         when(runs.bestStarsByDay(userId)).thenReturn(List.of(new Object[]{1, 3}, new Object[]{2, 0}));
         when(runs.findPlayDaysSince(eq(userId), any())).thenReturn(List.of(today));
+        when(runs.countByUserId(userId)).thenReturn(4L);
 
         PadBankSpotlightGame game = new PadBankSpotlightGame(runs);
         GameSummary summary = game.summary(userId, today);
 
         assertThat(game.challengeId()).isEqualTo("pad-bank-run");
-        assertThat(summary).extracting("stars", "levelsWon", "rightAnswers").containsExactly(3, 1, 0L);
+        assertThat(summary).extracting("stars", "levelsWon", "rightAnswers", "plays").containsExactly(3, 1, 0L, 4L);
         assertThat(summary.playDays()).containsExactly(today);
     }
 }
