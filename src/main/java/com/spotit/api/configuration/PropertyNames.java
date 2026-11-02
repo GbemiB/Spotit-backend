@@ -25,6 +25,9 @@ public final class PropertyNames {
     public static final String PADBANK_HEARTS = "padbank-hearts";
     public static final String PADBANK_DELIVERY_COST = "padbank-delivery-cost";
     public static final String PADBANK_BUDGET_GOAL = "padbank-budget-goal";
+    public static final String PADBANK_TITLE_GREAT = "padbank-title-great";
+    public static final String PADBANK_TITLE_OK = "padbank-title-ok";
+    public static final String PADBANK_TITLE_OOPS = "padbank-title-oops";
     public static final String SPOTLIGHT_ADMIN_PAGE_SIZE = "spotlight-admin-page-size";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";

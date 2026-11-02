@@ -46,6 +46,12 @@ public interface ConfigurationDomainService {
 
     int getPadbankBudgetGoal();
 
+    String getPadbankTitleGreat();
+
+    String getPadbankTitleOk();
+
+    String getPadbankTitleOops();
+
     int getSpotlightAdminPageSize();
 
     long getAccountPurgeGraceDays();

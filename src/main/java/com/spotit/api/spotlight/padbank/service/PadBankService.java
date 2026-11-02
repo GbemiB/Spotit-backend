@@ -31,9 +31,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -64,7 +67,7 @@ public class PadBankService {
         if (SpotlightRules.isLocked(challenge.getMinAge(), SpotlightRules.ageOn(user.getDob(), today))) {
             throw new ApiException(ErrorCode.QUIZ_LOCKED, ErrorMessage.PADBANK_AGE_LOCKED);
         }
-        int day = request == null || request.day() == null ? 1 : request.day();
+        int day = request == null || request.day() == null ? nextDay(userId) : request.day();
         List<PadBankVisitor> visitors = visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(day);
         List<PadBankPack> packs = packRepository.findByActiveTrueOrderBySortOrderAsc();
         if (visitors.isEmpty() || packs.isEmpty()) {
@@ -91,6 +94,20 @@ public class PadBankService {
                 visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), PadBankRules.decodeClues(v.getClues()))).toList());
     }
 
+    int nextDay(UUID userId) {
+        List<Integer> days = visitorRepository.activeDays();
+        if (days.isEmpty()) {
+            throw new ApiException(ErrorCode.NOT_YET_COMPLETE, ErrorMessage.PADBANK_DAY_EMPTY);
+        }
+        Set<Integer> cleared = new HashSet<>();
+        for (Object[] row : runRepository.bestStarsByDay(userId)) {
+            if (((Number) row[1]).intValue() > 0) {
+                cleared.add(((Number) row[0]).intValue());
+            }
+        }
+        return days.stream().filter(d -> !cleared.contains(d)).findFirst().orElse(days.get(0));
+    }
+
     @Transactional
     public PadBankServeResponse serve(UUID userId, UUID runId, PadBankServeRequest request) {
         PadBankRun run = runRepository.findById(runId).filter(r -> r.getUserId().equals(userId))
@@ -101,7 +118,7 @@ public class PadBankService {
         if (request.round() != run.getRound()) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.QUIZ_WRONG_ROUND);
         }
-        String route = request.route().strip().toLowerCase(java.util.Locale.ROOT);
+        String route = request.route().strip().toLowerCase(Locale.ROOT);
         if (!PadBankVisitor.PICKUP.equals(route) && !PadBankVisitor.DELIVERY.equals(route)) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_ROUTE);
         }
@@ -147,7 +164,12 @@ public class PadBankService {
             default -> PadBankRules.decodeMap(visitor.getWrongWhy()).getOrDefault(packId, OOPS_TIP);
         };
         String speech = PadBankRules.OOPS.equals(result) ? OOPS_SPEECH : visitor.getThanks();
-        return new PadBankServeResponse(run.getRound(), result, tip, speech, run.getHearts(), run.getBudget(), spent, run.getServed(),
+        String title = switch (result) {
+            case PadBankRules.GREAT -> config.getPadbankTitleGreat();
+            case PadBankRules.OK -> config.getPadbankTitleOk();
+            default -> config.getPadbankTitleOops();
+        };
+        return new PadBankServeResponse(run.getRound(), result, title, tip, speech, run.getHearts(), run.getBudget(), spent, run.getServed(),
                 run.getRightCount(), stock, finished, finished ? run.getStars() : 0, goals,
                 finished && run.getRightCount() >= ids.size() && run.getHearts() > 0);
     }

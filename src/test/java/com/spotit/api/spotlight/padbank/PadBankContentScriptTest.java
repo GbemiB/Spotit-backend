@@ -33,6 +33,7 @@ class PadBankContentScriptTest {
         assertThat(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(1)).extracting("pack", "route")
                 .containsExactly(org.assertj.core.groups.Tuple.tuple("starter", "pickup"), org.assertj.core.groups.Tuple.tuple("comfort", "delivery"),
                         org.assertj.core.groups.Tuple.tuple("school", "pickup"));
+        assertThat(visitorRepository.activeDays()).containsExactly(1);
         assertThat(PadBankRules.decodeClues(visitorRepository.findById("day1-woman").orElseThrow().getClues())).hasSize(3);
         assertThat(PadBankRules.decodeMap(visitorRepository.findById("day1-girl").orElseThrow().getWrongWhy())).containsOnlyKeys("reusable", "comfort", "school");
     }

@@ -79,6 +79,15 @@ public class GlobalConfig {
     @Column(name = "padbank_budget_goal", nullable = false, columnDefinition = "bigint default 40")
     private long padbankBudgetGoal;
 
+    @Column(name = "padbank_title_great", length = 40)
+    private String padbankTitleGreat;
+
+    @Column(name = "padbank_title_ok", length = 40)
+    private String padbankTitleOk;
+
+    @Column(name = "padbank_title_oops", length = 40)
+    private String padbankTitleOops;
+
     @Column(name = "account_purge_grace_days", nullable = false)
     private long accountPurgeGraceDays;
 

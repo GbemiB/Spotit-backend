@@ -286,6 +286,27 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
+    public String getPadbankTitleGreat() {
+        String value = loadGlobal().getPadbankTitleGreat();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_TITLE_GREAT : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getPadbankTitleOk() {
+        String value = loadGlobal().getPadbankTitleOk();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_TITLE_OK : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getPadbankTitleOops() {
+        String value = loadGlobal().getPadbankTitleOops();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_TITLE_OOPS : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public int getQuizTopicsPageSize() {
         return (int) loadGlobal().getQuizTopicsPageSize();
     }

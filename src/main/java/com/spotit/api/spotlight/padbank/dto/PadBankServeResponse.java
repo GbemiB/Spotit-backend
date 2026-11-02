@@ -6,6 +6,7 @@ import java.util.Map;
 public record PadBankServeResponse(
         int round,
         String result,
+        String title,
         String tip,
         String speech,
         int hearts,

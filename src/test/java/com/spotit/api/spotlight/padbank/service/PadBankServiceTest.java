@@ -77,6 +77,10 @@ class PadBankServiceTest {
         when(config.getPadbankHearts()).thenReturn(3);
         when(config.getPadbankDeliveryCost()).thenReturn(10);
         when(config.getPadbankBudgetGoal()).thenReturn(40);
+        when(config.getPadbankTitleGreat()).thenReturn("PERFECT!");
+        when(config.getPadbankTitleOk()).thenReturn("GOOD!");
+        when(config.getPadbankTitleOops()).thenReturn("OOPS!");
+        when(visitorRepository.activeDays()).thenReturn(List.of(1, 2));
         when(packRepository.findByActiveTrueOrderBySortOrderAsc()).thenReturn(List.of(
                 PadBankPack.builder().id("starter").name("Starter Bag").cost(10).stock(4).color("pink").build(),
                 PadBankPack.builder().id("comfort").name("Comfort Kit").cost(20).stock(1).color("rose").build()));
@@ -117,6 +121,19 @@ class PadBankServiceTest {
     }
 
     @Test
+    void theServerPicksTheFirstDayNotYetCleared() {
+        assertThat(service.nextDay(userId)).isEqualTo(1);
+        when(runRepository.bestStarsByDay(userId)).thenReturn(List.<Object[]>of(new Object[]{1, 2}));
+        assertThat(service.nextDay(userId)).isEqualTo(2);
+        when(runRepository.bestStarsByDay(userId)).thenReturn(List.<Object[]>of(new Object[]{1, 2}, new Object[]{2, 1}));
+        assertThat(service.nextDay(userId)).isEqualTo(1);
+        when(runRepository.bestStarsByDay(userId)).thenReturn(List.<Object[]>of(new Object[]{1, 0}));
+        assertThat(service.nextDay(userId)).isEqualTo(1);
+        when(visitorRepository.activeDays()).thenReturn(List.of());
+        assertThatThrownBy(() -> service.nextDay(userId)).extracting("errorCode").isEqualTo(ErrorCode.NOT_YET_COMPLETE);
+    }
+
+    @Test
     void theFirstDayIsAFreeTryThenTheNormalPriceApplies() {
         challenge.setFreePlays(1);
         user.setPoints(0);
@@ -154,6 +171,7 @@ class PadBankServiceTest {
         PadBankRun r = run(0, 3, "starter:4,comfort:1");
 
         PadBankServeResponse first = service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", "pickup"));
+        assertThat(first.title()).isEqualTo("PERFECT!");
         assertThat(first).extracting("result", "tip", "speech", "budget", "spent", "served", "right", "finished")
                 .containsExactly("great", PadBankService.GREAT_TIP, "Thank you!", 90, 10, 1, 1, false);
 
@@ -169,9 +187,11 @@ class PadBankServiceTest {
     void theRightPackTheWrongWayIsOkAndAWrongPackCostsAHeart() {
         PadBankRun r = run(0, 1, "starter:4,comfort:1");
         PadBankServeResponse ok = service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", "Delivery"));
+        assertThat(ok.title()).isEqualTo("GOOD!");
         assertThat(ok).extracting("result", "tip", "hearts", "served", "right").containsExactly("ok", "Pickup was free.", 1, 1, 0);
 
         PadBankServeResponse oops = service.serve(userId, r.getId(), new PadBankServeRequest(1, "starter", "pickup"));
+        assertThat(oops.title()).isEqualTo("OOPS!");
         assertThat(oops).extracting("result", "speech", "hearts", "finished", "stars").containsExactly("oops", PadBankService.OOPS_SPEECH, 0, true, 0);
 
         PadBankRun other = run(0, 3, "starter:4,comfort:1");

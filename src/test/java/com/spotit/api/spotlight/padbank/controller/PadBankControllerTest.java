@@ -56,13 +56,14 @@ class PadBankControllerTest {
         when(service.start(USER_ID, new PadBankStartRequest(1))).thenReturn(new PadBankStartResponse(runId, 1, 40, 10, 100, 3, 10, 40,
                 List.of(new PadBankPackView("starter", "Starter Bag", 10, 4, "pink")),
                 List.of(new PadBankVisitorView("v1", "Girl, 13", "girl", List.of(new PadBankClue("drop", "First period"))))));
-        when(service.serve(USER_ID, runId, new PadBankServeRequest(0, "starter", "pickup"))).thenReturn(new PadBankServeResponse(1, "great", "Tip",
+        when(service.serve(USER_ID, runId, new PadBankServeRequest(0, "starter", "pickup"))).thenReturn(new PadBankServeResponse(1, "great", "PERFECT!", "Tip",
                 "Thanks", 3, 90, 10, 1, 1, Map.of("starter", 3), false, 0, List.of(false, false, false), false));
 
         mvc.perform(post("/api/v1/padbank/runs").contentType(MediaType.APPLICATION_JSON).content(json(new PadBankStartRequest(1))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.visitors[0].clues[0].icon").value("drop"));
         mvc.perform(post("/api/v1/padbank/runs/" + runId + "/serve").contentType(MediaType.APPLICATION_JSON)
-                .content(json(new PadBankServeRequest(0, "starter", "pickup")))).andExpect(status().isOk()).andExpect(jsonPath("$.data.result").value("great"));
+                .content(json(new PadBankServeRequest(0, "starter", "pickup")))).andExpect(status().isOk()).andExpect(jsonPath("$.data.result").value("great"))
+                .andExpect(jsonPath("$.data.title").value("PERFECT!"));
         mvc.perform(post("/api/v1/padbank/runs/" + runId + "/serve").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"round\":0,\"pack\":\"\",\"route\":\"pickup\"}")).andExpect(status().isUnprocessableEntity());
     }

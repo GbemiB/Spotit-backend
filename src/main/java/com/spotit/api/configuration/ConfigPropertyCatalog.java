@@ -102,6 +102,21 @@ public class ConfigPropertyCatalog {
                 "Pad Bank Run: budget left needed for the third star", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankBudgetGoal(),
                 (c, v) -> c.global().setPadbankBudgetGoal((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_TITLE_GREAT, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: heading shown for right pack and route; unset uses PERFECT!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankTitleGreat(),
+                (c, v) -> c.global().setPadbankTitleGreat((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_TITLE_OK, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: heading shown for right pack, other route better; unset uses GOOD!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankTitleOk(),
+                (c, v) -> c.global().setPadbankTitleOk((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_TITLE_OOPS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: heading shown for wrong pack; unset uses OOPS!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankTitleOops(),
+                (c, v) -> c.global().setPadbankTitleOops((String) v)));
     }
 
     private static void addQuizProperties(List<Property> list) {
