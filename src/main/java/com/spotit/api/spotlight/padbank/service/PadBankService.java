@@ -9,6 +9,7 @@ import com.spotit.api.rewards.service.PointsWriteService;
 import com.spotit.api.spotlight.core.entity.SpotlightChallenge;
 import com.spotit.api.spotlight.core.repository.SpotlightChallengeRepository;
 import com.spotit.api.spotlight.core.service.SpotlightRules;
+import com.spotit.api.spotlight.padbank.dto.PadBankDayRules;
 import com.spotit.api.spotlight.padbank.dto.PadBankDayTitles;
 import com.spotit.api.spotlight.padbank.dto.PadBankPackView;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeRequest;
@@ -95,6 +96,14 @@ public class PadBankService {
                         PadBankRules.decodeLines(p.getContents()))).toList(),
                 visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), PadBankRules.decodeClues(v.getClues()))).toList(),
                 new PadBankDayTitles(config.getPadbankDayTitlePerfect(), config.getPadbankDayTitleDone(), config.getPadbankDayTitleLost()));
+    }
+
+    @Transactional(readOnly = true)
+    public PadBankDayRules rules(UUID userId) {
+        int day = nextDay(userId);
+        int visitors = visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(day).size();
+        return new PadBankDayRules(day, visitors, config.getPadbankBudget(), config.getPadbankHearts(),
+                config.getPadbankDeliveryCost(), config.getPadbankBudgetGoal());
     }
 
     int nextDay(UUID userId) {

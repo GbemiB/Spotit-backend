@@ -1,6 +1,7 @@
 package com.spotit.api.spotlight.padbank.controller;
 
 import com.spotit.api.common.security.CurrentUserId;
+import com.spotit.api.spotlight.padbank.dto.PadBankDayRules;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeRequest;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeResponse;
 import com.spotit.api.spotlight.padbank.dto.PadBankStartRequest;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +28,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PadBankController {
     private final PadBankService padBankService;
+
+    @Operation(summary = "Rules for the next day", description = "The day that would open next, how many visitors it has, and the budget, "
+            + "hearts, delivery cost and budget goal. Free to call: nothing is charged.", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("/rules")
+    public PadBankDayRules rules(@CurrentUserId UUID userId) {
+        return padBankService.rules(userId);
+    }
 
     @Operation(summary = "Open the bank for a day", description = "Charges the challenge's SP cost and returns the day's visitors (clues only), "
             + "the packs on the shelf with their stock, the bank budget, hearts, delivery cost and the budget needed for the third star.",

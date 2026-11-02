@@ -7,6 +7,7 @@ import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.rewards.service.PointsWriteService;
 import com.spotit.api.spotlight.core.entity.SpotlightChallenge;
 import com.spotit.api.spotlight.core.repository.SpotlightChallengeRepository;
+import com.spotit.api.spotlight.padbank.dto.PadBankDayRules;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeRequest;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeResponse;
 import com.spotit.api.spotlight.padbank.dto.PadBankStartRequest;
@@ -118,6 +119,17 @@ class PadBankServiceTest {
         assertThat(start.packs()).extracting("id", "stock").containsExactly(org.assertj.core.groups.Tuple.tuple("starter", 4),
                 org.assertj.core.groups.Tuple.tuple("comfort", 1));
         assertThat(service.start(userId, null).day()).isEqualTo(1);
+    }
+
+    @Test
+    void rulesShowTheNextDayWithoutCharging() {
+        when(visitorRepository.activeDays()).thenReturn(List.of(1, 2));
+        when(runRepository.bestStarsByDay(userId)).thenReturn(List.<Object[]>of(new Object[]{1, 2}));
+        when(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(2)).thenReturn(List.of(visitor("a", "starter", "pickup"),
+                visitor("b", "comfort", "delivery")));
+
+        assertThat(service.rules(userId)).isEqualTo(new PadBankDayRules(2, 2, 100, 3, 10, 40));
+        verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
     }
 
     @Test

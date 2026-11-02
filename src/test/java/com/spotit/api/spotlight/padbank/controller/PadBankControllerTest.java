@@ -2,6 +2,7 @@ package com.spotit.api.spotlight.padbank.controller;
 
 import com.spotit.api.spotlight.core.dto.AdminPage;
 import com.spotit.api.spotlight.padbank.dto.PadBankClue;
+import com.spotit.api.spotlight.padbank.dto.PadBankDayRules;
 import com.spotit.api.spotlight.padbank.dto.PadBankDayTitles;
 import com.spotit.api.spotlight.padbank.dto.PadBankPackAdmin;
 import com.spotit.api.spotlight.padbank.dto.PadBankPackView;
@@ -61,6 +62,8 @@ class PadBankControllerTest {
         when(service.serve(USER_ID, runId, new PadBankServeRequest(0, "starter", "pickup"))).thenReturn(new PadBankServeResponse(1, "great", "PERFECT!", "Tip",
                 "Thanks", 3, 90, 10, 1, 1, Map.of("starter", 3), false, 0, List.of(false, false, false), false));
 
+        when(service.rules(USER_ID)).thenReturn(new PadBankDayRules(1, 3, 100, 3, 10, 40));
+        mvc.perform(get("/api/v1/padbank/rules")).andExpect(status().isOk()).andExpect(jsonPath("$.data.visitors").value(3));
         mvc.perform(post("/api/v1/padbank/runs").contentType(MediaType.APPLICATION_JSON).content(json(new PadBankStartRequest(1))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.visitors[0].clues[0].icon").value("drop"))
                 .andExpect(jsonPath("$.data.packs[0].contents[0]").value("10 day pads")).andExpect(jsonPath("$.data.dayTitles.done").value("Bank closed for today"));
