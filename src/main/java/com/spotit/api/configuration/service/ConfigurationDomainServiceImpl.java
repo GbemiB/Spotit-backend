@@ -94,8 +94,8 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getQuizTopicsPageSize() == 0) {
             global.setQuizTopicsPageSize(ConfigDefaults.QUIZ_TOPICS_PAGE_SIZE);
         }
-        if (global.getQuizAdminPageSize() == 0) {
-            global.setQuizAdminPageSize(ConfigDefaults.QUIZ_ADMIN_PAGE_SIZE);
+        if (global.getSpotlightAdminPageSize() == 0) {
+            global.setSpotlightAdminPageSize(ConfigDefaults.SPOTLIGHT_ADMIN_PAGE_SIZE);
         }
         if (global.getAccountPurgeGraceDays() == 0) {
             global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
@@ -256,8 +256,8 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
-    public int getQuizAdminPageSize() {
-        return (int) loadGlobal().getQuizAdminPageSize();
+    public int getSpotlightAdminPageSize() {
+        return (int) loadGlobal().getSpotlightAdminPageSize();
     }
 
     @Override

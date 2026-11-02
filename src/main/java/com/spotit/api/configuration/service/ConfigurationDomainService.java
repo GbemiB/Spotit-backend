@@ -38,7 +38,7 @@ public interface ConfigurationDomainService {
 
     int getQuizTopicsPageSize();
 
-    int getQuizAdminPageSize();
+    int getSpotlightAdminPageSize();
 
     long getAccountPurgeGraceDays();
 

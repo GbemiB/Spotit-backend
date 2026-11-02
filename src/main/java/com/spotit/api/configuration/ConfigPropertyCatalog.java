@@ -97,15 +97,15 @@ public class ConfigPropertyCatalog {
                 "SpotPoints charged for one quiz hint", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getQuizHintCost(),
                 (c, v) -> c.global().setQuizHintCost((Long) v)));
-        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_ENABLED, PropertyNames.GROUP_QUIZ,
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_ENABLED, PropertyNames.GROUP_SPOTLIGHT,
                 "Show the Spotlight invite pop-up on Home", Kind.BOOL, Section.GLOBAL, false, false,
                 c -> !Boolean.FALSE.equals(c.global().getSpotlightInviteEnabled()),
                 (c, v) -> c.global().setSpotlightInviteEnabled((Boolean) v)));
-        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_EVERY_DAYS, PropertyNames.GROUP_QUIZ,
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_EVERY_DAYS, PropertyNames.GROUP_SPOTLIGHT,
                 "Days between Spotlight invite pop-ups for a user who has not played", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getSpotlightInviteEveryDays(),
                 (c, v) -> c.global().setSpotlightInviteEveryDays((Long) v)));
-        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_MAX_DISMISSALS, PropertyNames.GROUP_QUIZ,
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_MAX_DISMISSALS, PropertyNames.GROUP_SPOTLIGHT,
                 "Maybe-later taps in a row after which the Spotlight invite stops", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getSpotlightInviteMaxDismissals(),
                 (c, v) -> c.global().setSpotlightInviteMaxDismissals((Long) v)));
@@ -113,10 +113,10 @@ public class ConfigPropertyCatalog {
                 "Topics sent per page on the Spotlight All topics screen", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getQuizTopicsPageSize(),
                 (c, v) -> c.global().setQuizTopicsPageSize((Long) v)));
-        list.add(new Property(PropertyNames.QUIZ_ADMIN_PAGE_SIZE, PropertyNames.GROUP_QUIZ,
-                "Default page size for the quiz admin lists (questions, levels, topics, groups, ranks)", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getQuizAdminPageSize(),
-                (c, v) -> c.global().setQuizAdminPageSize((Long) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_ADMIN_PAGE_SIZE, PropertyNames.GROUP_SPOTLIGHT,
+                "Default page size for the Spotlight admin lists (challenges, ranks, quiz and game content)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getSpotlightAdminPageSize(),
+                (c, v) -> c.global().setSpotlightAdminPageSize((Long) v)));
     }
 
     private static void addGlobalProperties(List<Property> list) {

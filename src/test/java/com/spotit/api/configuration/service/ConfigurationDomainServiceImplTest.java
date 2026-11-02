@@ -152,7 +152,7 @@ class ConfigurationDomainServiceImplTest {
 
         assertThat(row.getSpotlightInviteEnabled()).isFalse();
         assertThat(response.enabled()).isFalse();
-        assertThat(response.groupName()).isEqualTo(PropertyNames.GROUP_QUIZ);
+        assertThat(response.groupName()).isEqualTo(PropertyNames.GROUP_SPOTLIGHT);
     }
 
     @Test
