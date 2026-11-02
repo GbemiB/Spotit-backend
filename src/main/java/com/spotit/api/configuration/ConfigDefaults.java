@@ -16,6 +16,8 @@ public final class ConfigDefaults {
     public static final long QUIZ_ROUNDS = 5L;
     public static final long QUIZ_LIVES = 3L;
     public static final long QUIZ_HINT_COST = 5L;
+    public static final long SPOTLIGHT_INVITE_EVERY_DAYS = 3L;
+    public static final long SPOTLIGHT_INVITE_MAX_DISMISSALS = 3L;
     public static final long ACCOUNT_PURGE_GRACE_DAYS = 30L;
     public static final long BADGE_KNOW_YOUR_BODY_THRESHOLD = 10L;
     public static final long BADGE_CYCLE_VETERAN_THRESHOLD = 28L;

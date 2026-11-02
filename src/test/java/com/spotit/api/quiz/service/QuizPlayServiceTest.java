@@ -10,6 +10,7 @@ import com.spotit.api.quiz.dto.HintRequest;
 import com.spotit.api.quiz.dto.QuizHomeResponse;
 import com.spotit.api.quiz.dto.QuizTopicDetail;
 import com.spotit.api.quiz.dto.QuizTopicsResponse;
+import com.spotit.api.quiz.dto.SpotlightInvite;
 import com.spotit.api.quiz.dto.StartQuizRequest;
 import com.spotit.api.quiz.dto.StartQuizResponse;
 import com.spotit.api.quiz.entity.QuizAttempt;
@@ -52,6 +53,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -92,6 +94,9 @@ class QuizPlayServiceTest {
         when(config.getQuizRounds()).thenReturn(2);
         when(config.getQuizLives()).thenReturn(3);
         when(config.getQuizHintCost()).thenReturn(5);
+        lenient().when(config.isSpotlightInviteEnabled()).thenReturn(true);
+        lenient().when(config.getSpotlightInviteEveryDays()).thenReturn(3);
+        lenient().when(config.getSpotlightInviteMaxDismissals()).thenReturn(3);
         when(groupRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(
                 QuizGroup.builder().id("body").label("Body basics").tone("pink").sortOrder(1).active(true).build(),
                 QuizGroup.builder().id("rel").label("Relationships").tone("gold").sortOrder(2).active(true).build(),
@@ -152,6 +157,7 @@ class QuizPlayServiceTest {
         assertThat(home.pick().topicId()).isEqualTo("my-cycle");
         assertThat(home.rounds()).isEqualTo(2);
         assertThat(home.hintCost()).isEqualTo(5);
+        assertThat(home.invite()).isEqualTo(new SpotlightInvite(true, 3, 3));
     }
 
     @Test

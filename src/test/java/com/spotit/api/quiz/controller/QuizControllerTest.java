@@ -9,6 +9,7 @@ import com.spotit.api.quiz.dto.QuizStats;
 import com.spotit.api.quiz.dto.QuizTopicDetail;
 import com.spotit.api.quiz.dto.QuizTopicsResponse;
 import com.spotit.api.quiz.dto.RoundView;
+import com.spotit.api.quiz.dto.SpotlightInvite;
 import com.spotit.api.quiz.dto.StartQuizRequest;
 import com.spotit.api.quiz.dto.StartQuizResponse;
 import com.spotit.api.quiz.service.QuizPlayService;
@@ -56,12 +57,14 @@ class QuizControllerTest {
 
     @Test
     void homeTopicsAndLevelMap() throws Exception {
-        when(quizPlayService.home(USER_ID)).thenReturn(new QuizHomeResponse(240, new QuizStats(3, 5, 2), null, List.of(), 31, 5, 3, 5));
+        when(quizPlayService.home(USER_ID)).thenReturn(new QuizHomeResponse(240, new QuizStats(3, 5, 2), null, List.of(), 31, 5, 3, 5,
+                new SpotlightInvite(true, 3, 3)));
         when(quizPlayService.topics(USER_ID)).thenReturn(new QuizTopicsResponse(true, 31, List.of()));
         when(quizPlayService.topic(USER_ID, "my-cycle")).thenReturn(new QuizTopicDetail(null, 240, List.of()));
 
         mvc.perform(get("/api/v1/quiz/home")).andExpect(status().isOk()).andExpect(jsonPath("$.data.balance").value(240))
-                .andExpect(jsonPath("$.data.stats.streak").value(3));
+                .andExpect(jsonPath("$.data.stats.streak").value(3))
+                .andExpect(jsonPath("$.data.invite.everyDays").value(3));
         mvc.perform(get("/api/v1/quiz/topics")).andExpect(status().isOk()).andExpect(jsonPath("$.data.underAge").value(true));
         mvc.perform(get("/api/v1/quiz/topics/my-cycle")).andExpect(status().isOk()).andExpect(jsonPath("$.data.balance").value(240));
     }

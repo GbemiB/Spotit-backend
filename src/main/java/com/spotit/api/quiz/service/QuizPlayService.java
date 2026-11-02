@@ -16,6 +16,7 @@ import com.spotit.api.quiz.dto.QuizStats;
 import com.spotit.api.quiz.dto.QuizTopicDetail;
 import com.spotit.api.quiz.dto.QuizTopicsResponse;
 import com.spotit.api.quiz.dto.RoundView;
+import com.spotit.api.quiz.dto.SpotlightInvite;
 import com.spotit.api.quiz.dto.StartQuizRequest;
 import com.spotit.api.quiz.dto.StartQuizResponse;
 import com.spotit.api.quiz.dto.TodaysPick;
@@ -111,7 +112,9 @@ public class QuizPlayService {
                 all.stream().mapToInt(QuizLevelResult::getBestStars).sum(),
                 (int) all.stream().filter(r -> r.getBestStars() > 0).count());
         return new QuizHomeResponse(player.user().getPoints(), stats, pick(userId, player, content, open), shown.stream().limit(HOME_TOPIC_CARDS).toList(),
-                content.topics().size(), rounds, config.getQuizLives(), config.getQuizHintCost());
+                content.topics().size(), rounds, config.getQuizLives(), config.getQuizHintCost(),
+                new SpotlightInvite(config.isSpotlightInviteEnabled(), config.getSpotlightInviteEveryDays(),
+                        config.getSpotlightInviteMaxDismissals()));
     }
 
     @Transactional(readOnly = true)

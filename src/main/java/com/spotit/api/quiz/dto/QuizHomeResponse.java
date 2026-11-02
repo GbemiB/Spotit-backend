@@ -10,6 +10,7 @@ public record QuizHomeResponse(
         int topicCount,
         int rounds,
         int lives,
-        int hintCost
+        int hintCost,
+        SpotlightInvite invite
 ) {
 }

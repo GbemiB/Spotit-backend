@@ -52,6 +52,15 @@ public class GlobalConfig {
     @Column(name = "quiz_hint_cost", nullable = false, columnDefinition = "bigint default 5")
     private long quizHintCost;
 
+    @Column(name = "spotlight_invite_enabled", columnDefinition = "boolean default true")
+    private Boolean spotlightInviteEnabled;
+
+    @Column(name = "spotlight_invite_every_days", nullable = false, columnDefinition = "bigint default 3")
+    private long spotlightInviteEveryDays;
+
+    @Column(name = "spotlight_invite_max_dismissals", nullable = false, columnDefinition = "bigint default 3")
+    private long spotlightInviteMaxDismissals;
+
     @Column(name = "account_purge_grace_days", nullable = false)
     private long accountPurgeGraceDays;
 

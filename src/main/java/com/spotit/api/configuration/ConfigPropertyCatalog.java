@@ -108,6 +108,18 @@ public class ConfigPropertyCatalog {
                 "SpotPoints charged for one quiz hint", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getQuizHintCost(),
                 (c, v) -> c.global().setQuizHintCost((Long) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_ENABLED, PropertyNames.GROUP_QUIZ,
+                "Show the Spotlight invite pop-up on Home", Kind.BOOL, Section.GLOBAL, false, false,
+                c -> !Boolean.FALSE.equals(c.global().getSpotlightInviteEnabled()),
+                (c, v) -> c.global().setSpotlightInviteEnabled((Boolean) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_EVERY_DAYS, PropertyNames.GROUP_QUIZ,
+                "Days between Spotlight invite pop-ups for a user who has not played", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getSpotlightInviteEveryDays(),
+                (c, v) -> c.global().setSpotlightInviteEveryDays((Long) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_MAX_DISMISSALS, PropertyNames.GROUP_QUIZ,
+                "Maybe-later taps in a row after which the Spotlight invite stops", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getSpotlightInviteMaxDismissals(),
+                (c, v) -> c.global().setSpotlightInviteMaxDismissals((Long) v)));
         list.add(new Property(PropertyNames.CYCLE_DEFAULT_LENGTH, PropertyNames.GROUP_CYCLE,
                 "Default cycle length assumed until a user has logged enough data", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getCycleDefaultLength(),

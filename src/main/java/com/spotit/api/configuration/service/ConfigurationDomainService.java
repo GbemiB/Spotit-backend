@@ -30,6 +30,12 @@ public interface ConfigurationDomainService {
 
     int getQuizHintCost();
 
+    boolean isSpotlightInviteEnabled();
+
+    int getSpotlightInviteEveryDays();
+
+    int getSpotlightInviteMaxDismissals();
+
     long getAccountPurgeGraceDays();
 
     int getBadgeKnowYourBodyThreshold();

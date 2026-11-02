@@ -106,6 +106,19 @@ class ConfigurationReadTest {
     }
 
     @Test
+    void spotlightInviteIsOnUntilAnAdminTurnsItOff() {
+        assertThat(service.isSpotlightInviteEnabled()).isTrue();
+
+        lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
+                .id(GlobalConfig.SINGLETON_ID).spotlightInviteEnabled(false).spotlightInviteEveryDays(4).spotlightInviteMaxDismissals(2)
+                .build()));
+
+        assertThat(service.isSpotlightInviteEnabled()).isFalse();
+        assertThat(service.getSpotlightInviteEveryDays()).isEqualTo(4);
+        assertThat(service.getSpotlightInviteMaxDismissals()).isEqualTo(2);
+    }
+
+    @Test
     void listByAnUnknownGroupIsEmpty() {
         assertThat(service.listByGroup("smtp")).isEmpty();
     }

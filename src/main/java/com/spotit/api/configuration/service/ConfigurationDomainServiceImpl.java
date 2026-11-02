@@ -82,6 +82,15 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getQuizHintCost() == 0) {
             global.setQuizHintCost(ConfigDefaults.QUIZ_HINT_COST);
         }
+        if (global.getSpotlightInviteEnabled() == null) {
+            global.setSpotlightInviteEnabled(true);
+        }
+        if (global.getSpotlightInviteEveryDays() == 0) {
+            global.setSpotlightInviteEveryDays(ConfigDefaults.SPOTLIGHT_INVITE_EVERY_DAYS);
+        }
+        if (global.getSpotlightInviteMaxDismissals() == 0) {
+            global.setSpotlightInviteMaxDismissals(ConfigDefaults.SPOTLIGHT_INVITE_MAX_DISMISSALS);
+        }
         if (global.getAccountPurgeGraceDays() == 0) {
             global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
         }
@@ -213,6 +222,24 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getQuizHintCost() {
         return (int) loadGlobal().getQuizHintCost();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isSpotlightInviteEnabled() {
+        return !Boolean.FALSE.equals(loadGlobal().getSpotlightInviteEnabled());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getSpotlightInviteEveryDays() {
+        return (int) loadGlobal().getSpotlightInviteEveryDays();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getSpotlightInviteMaxDismissals() {
+        return (int) loadGlobal().getSpotlightInviteMaxDismissals();
     }
 
     @Override
