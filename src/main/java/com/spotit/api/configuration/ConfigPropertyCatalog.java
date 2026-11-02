@@ -44,6 +44,7 @@ public class ConfigPropertyCatalog {
 
         addSecurityProperties(list);
         addQuizProperties(list);
+        addPadBankProperties(list);
         addGlobalProperties(list);
 
         this.ordered = List.copyOf(list);
@@ -82,6 +83,25 @@ public class ConfigPropertyCatalog {
                 Kind.STRING, Section.SECURITY, true, false,
                 c -> c.security().getCryptoAesKey(),
                 (c, v) -> c.security().setCryptoAesKey((String) v)));
+    }
+
+    private static void addPadBankProperties(List<Property> list) {
+        list.add(new Property(PropertyNames.PADBANK_BUDGET, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: bank budget at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankBudget(),
+                (c, v) -> c.global().setPadbankBudget((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_HEARTS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: hearts at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankHearts(),
+                (c, v) -> c.global().setPadbankHearts((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_DELIVERY_COST, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: budget a scooter delivery costs", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDeliveryCost(),
+                (c, v) -> c.global().setPadbankDeliveryCost((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_BUDGET_GOAL, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: budget left needed for the third star", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankBudgetGoal(),
+                (c, v) -> c.global().setPadbankBudgetGoal((Long) v)));
     }
 
     private static void addQuizProperties(List<Property> list) {

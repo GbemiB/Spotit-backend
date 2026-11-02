@@ -21,6 +21,10 @@ public final class PropertyNames {
     public static final String SPOTLIGHT_INVITE_EVERY_DAYS = "spotlight-invite-every-days";
     public static final String SPOTLIGHT_INVITE_MAX_DISMISSALS = "spotlight-invite-max-dismissals";
     public static final String QUIZ_TOPICS_PAGE_SIZE = "quiz-topics-page-size";
+    public static final String PADBANK_BUDGET = "padbank-budget";
+    public static final String PADBANK_HEARTS = "padbank-hearts";
+    public static final String PADBANK_DELIVERY_COST = "padbank-delivery-cost";
+    public static final String PADBANK_BUDGET_GOAL = "padbank-budget-goal";
     public static final String SPOTLIGHT_ADMIN_PAGE_SIZE = "spotlight-admin-page-size";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";
@@ -54,6 +58,7 @@ public final class PropertyNames {
     public static final String GROUP_APP = "app";
     public static final String GROUP_QUIZ = "quiz";
     public static final String GROUP_SPOTLIGHT = "spotlight";
+    public static final String GROUP_PADBANK = "padbank";
 
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";

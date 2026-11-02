@@ -19,6 +19,10 @@ public final class ConfigDefaults {
     public static final long SPOTLIGHT_INVITE_EVERY_DAYS = 3L;
     public static final long SPOTLIGHT_INVITE_MAX_DISMISSALS = 3L;
     public static final long QUIZ_TOPICS_PAGE_SIZE = 8L;
+    public static final long PADBANK_BUDGET = 100L;
+    public static final long PADBANK_HEARTS = 3L;
+    public static final long PADBANK_DELIVERY_COST = 10L;
+    public static final long PADBANK_BUDGET_GOAL = 40L;
     public static final long SPOTLIGHT_ADMIN_PAGE_SIZE = 50L;
     public static final long ACCOUNT_PURGE_GRACE_DAYS = 30L;
     public static final long BADGE_KNOW_YOUR_BODY_THRESHOLD = 10L;

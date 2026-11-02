@@ -73,6 +73,13 @@ public final class ErrorMessage {
     public static final String QUIZ_UNKNOWN_GROUP = "No quiz group with that id.";
     public static final String QUIZ_ICON_TOO_LONG = "Topic icon names can be at most 30 characters.";
     public static final String QUIZ_BAD_CHALLENGE = "Challenge kind must be quiz or game, and status live or soon.";
+    public static final String PADBANK_NOT_OPEN = "Pad Bank Run isn't open yet.";
+    public static final String PADBANK_AGE_LOCKED = "This game opens at 18.";
+    public static final String PADBANK_DAY_EMPTY = "This day has no visitors yet.";
+    public static final String PADBANK_RUN_NOT_FOUND = "Pad Bank game not found.";
+    public static final String PADBANK_BAD_PACK = "That pack isn't on the shelf.";
+    public static final String PADBANK_OUT_OF_STOCK = "That pack has run out.";
+    public static final String PADBANK_BAD_ROUTE = "route must be pickup or delivery.";
     public static final String QUIZ_UNKNOWN_TOPIC = "No quiz topic with that id.";
 
     public static final String CONTENT_ITEM_NOT_FOUND = "Content item not found.";

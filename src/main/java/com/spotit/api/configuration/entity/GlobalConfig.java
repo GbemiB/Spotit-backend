@@ -67,6 +67,18 @@ public class GlobalConfig {
     @Column(name = "spotlight_admin_page_size", nullable = false, columnDefinition = "bigint default 50")
     private long spotlightAdminPageSize;
 
+    @Column(name = "padbank_budget", nullable = false, columnDefinition = "bigint default 100")
+    private long padbankBudget;
+
+    @Column(name = "padbank_hearts", nullable = false, columnDefinition = "bigint default 3")
+    private long padbankHearts;
+
+    @Column(name = "padbank_delivery_cost", nullable = false, columnDefinition = "bigint default 10")
+    private long padbankDeliveryCost;
+
+    @Column(name = "padbank_budget_goal", nullable = false, columnDefinition = "bigint default 40")
+    private long padbankBudgetGoal;
+
     @Column(name = "account_purge_grace_days", nullable = false)
     private long accountPurgeGraceDays;
 

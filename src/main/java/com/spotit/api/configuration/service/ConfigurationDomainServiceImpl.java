@@ -91,6 +91,18 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getSpotlightInviteMaxDismissals() == 0) {
             global.setSpotlightInviteMaxDismissals(ConfigDefaults.SPOTLIGHT_INVITE_MAX_DISMISSALS);
         }
+        if (global.getPadbankBudget() == 0) {
+            global.setPadbankBudget(ConfigDefaults.PADBANK_BUDGET);
+        }
+        if (global.getPadbankHearts() == 0) {
+            global.setPadbankHearts(ConfigDefaults.PADBANK_HEARTS);
+        }
+        if (global.getPadbankDeliveryCost() == 0) {
+            global.setPadbankDeliveryCost(ConfigDefaults.PADBANK_DELIVERY_COST);
+        }
+        if (global.getPadbankBudgetGoal() == 0) {
+            global.setPadbankBudgetGoal(ConfigDefaults.PADBANK_BUDGET_GOAL);
+        }
         if (global.getQuizTopicsPageSize() == 0) {
             global.setQuizTopicsPageSize(ConfigDefaults.QUIZ_TOPICS_PAGE_SIZE);
         }
@@ -246,6 +258,30 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getSpotlightInviteMaxDismissals() {
         return (int) loadGlobal().getSpotlightInviteMaxDismissals();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankBudget() {
+        return (int) loadGlobal().getPadbankBudget();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankHearts() {
+        return (int) loadGlobal().getPadbankHearts();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankDeliveryCost() {
+        return (int) loadGlobal().getPadbankDeliveryCost();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankBudgetGoal() {
+        return (int) loadGlobal().getPadbankBudgetGoal();
     }
 
     @Override

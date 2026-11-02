@@ -38,6 +38,14 @@ public interface ConfigurationDomainService {
 
     int getQuizTopicsPageSize();
 
+    int getPadbankBudget();
+
+    int getPadbankHearts();
+
+    int getPadbankDeliveryCost();
+
+    int getPadbankBudgetGoal();
+
     int getSpotlightAdminPageSize();
 
     long getAccountPurgeGraceDays();

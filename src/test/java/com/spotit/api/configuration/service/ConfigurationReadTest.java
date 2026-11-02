@@ -119,6 +119,17 @@ class ConfigurationReadTest {
     }
 
     @Test
+    void padBankSettingsAreReturned() {
+        lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
+                .id(GlobalConfig.SINGLETON_ID).padbankBudget(120).padbankHearts(2).padbankDeliveryCost(15).padbankBudgetGoal(30).build()));
+
+        assertThat(service.getPadbankBudget()).isEqualTo(120);
+        assertThat(service.getPadbankHearts()).isEqualTo(2);
+        assertThat(service.getPadbankDeliveryCost()).isEqualTo(15);
+        assertThat(service.getPadbankBudgetGoal()).isEqualTo(30);
+    }
+
+    @Test
     void quizPageSizesAreReturned() {
         lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
                 .id(GlobalConfig.SINGLETON_ID).quizTopicsPageSize(6).spotlightAdminPageSize(25).build()));
