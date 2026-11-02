@@ -44,6 +44,17 @@ INSERT INTO quiz_topics (id, name, group_id, min_age, sort_order, active) VALUES
   ('menopause', 'Perimenopause & Menopause', 'screening', 18, 31, false)
 ON CONFLICT DO NOTHING;
 
+UPDATE quiz_topics SET icon = 'cycle' WHERE id = 'my-cycle' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'myth' WHERE id = 'period-myths' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'sprout' WHERE id = 'body-changes' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'bottle' WHERE id = 'period-care' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'molecule' WHERE id = 'hormones-101' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'mirror' WHERE id = 'skin-hormones' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'mood' WHERE id = 'mood-hormones' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'moon' WHERE id = 'sleep-cycle' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'box' WHERE id = 'pcos' AND icon IS NULL;
+UPDATE quiz_topics SET icon = 'bowl' WHERE id = 'food-cycle' AND icon IS NULL;
+
 INSERT INTO quiz_levels (topic_id, number, name, cost, active, lives) VALUES
   ('my-cycle', 1, 'Period 101', 0, true, NULL),
   ('my-cycle', 2, 'All about ovulation', 0, true, NULL),

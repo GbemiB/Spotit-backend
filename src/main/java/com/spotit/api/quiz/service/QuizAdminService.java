@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 @Service
 @RequiredArgsConstructor
 public class QuizAdminService {
+    private static final int ICON_MAX_LENGTH = 30;
     private final QuizGroupRepository groupRepository;
     private final QuizTopicRepository topicRepository;
     private final QuizLevelRepository levelRepository;
@@ -109,6 +110,13 @@ public class QuizAdminService {
         }
         if (body.active() != null) {
             topic.setActive(body.active());
+        }
+        if (body.icon() != null) {
+            String icon = body.icon().strip();
+            if (icon.length() > ICON_MAX_LENGTH) {
+                throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.QUIZ_ICON_TOO_LONG);
+            }
+            topic.setIcon(icon.isEmpty() ? null : icon);
         }
         return QuizTopicAdmin.of(topicRepository.save(topic));
     }

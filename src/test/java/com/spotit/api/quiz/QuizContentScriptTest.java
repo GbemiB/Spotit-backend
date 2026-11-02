@@ -37,6 +37,8 @@ class QuizContentScriptTest {
         assertThat(topicRepository.count()).isEqualTo(31);
         assertThat(topicRepository.findByActiveTrueOrderBySortOrderAsc()).hasSize(10)
                 .extracting("name").contains("Inside My Cycle", "Sleep, Cycle, Repeat");
+        assertThat(topicRepository.findByActiveTrueOrderBySortOrderAsc()).extracting("icon")
+                .containsExactly("cycle", "myth", "sprout", "bottle", "molecule", "mirror", "mood", "moon", "box", "bowl");
         assertThat(levelRepository.count()).isEqualTo(50);
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 4)).get().extracting("cost", "lives").containsExactly(20, 2);
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 5)).get().extracting("cost", "lives").containsExactly(40, 1);

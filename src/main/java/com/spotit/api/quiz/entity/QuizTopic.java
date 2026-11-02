@@ -36,4 +36,7 @@ public class QuizTopic {
 
     @Column(nullable = false)
     private boolean active;
+
+    @Column(length = 30)
+    private String icon;
 }

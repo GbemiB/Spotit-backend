@@ -322,7 +322,7 @@ public class QuizPlayService {
         String tone = content.groups().stream().filter(g -> g.getId().equals(topic.getGroupId())).map(QuizGroup::getTone).findFirst().orElse("pink");
         return new TopicCard(topic.getId(), topic.getName(), topic.getGroupId(), tone, topic.getMinAge(),
                 QuizRules.isLocked(topic.getMinAge(), player.age()), !player.of(topic.getId()).isEmpty(), current, levels.size(), cleared.size(),
-                content.isReady(topic.getId(), current, rounds));
+                content.isReady(topic.getId(), current, rounds), topic.getIcon());
     }
 
     private static int stars(QuizLevelResult result) {

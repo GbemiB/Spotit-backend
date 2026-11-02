@@ -98,11 +98,22 @@ class QuizAdminServiceTest {
 
     @Test
     void topicsNeedAKnownGroup() {
-        QuizTopicAdmin created = service.saveTopic("my-cycle", new QuizTopicAdmin(null, "My Cycle", "body", 18, 2, true));
+        QuizTopicAdmin created = service.saveTopic("my-cycle", new QuizTopicAdmin(null, "My Cycle", "body", 18, 2, true, " cycle "));
         assertThat(created.minAge()).isEqualTo(18);
         assertThat(created.sortOrder()).isEqualTo(2);
+        assertThat(created.icon()).isEqualTo("cycle");
 
-        assertThatThrownBy(() -> service.saveTopic("t", new QuizTopicAdmin(null, "T", "nope", null, null, null)))
+        assertThatThrownBy(() -> service.saveTopic("t", new QuizTopicAdmin(null, "T", "nope", null, null, null, null)))
+                .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+    }
+
+    @Test
+    void aTopicIconCanBeClearedButNotTooLong() {
+        QuizTopic topic = QuizTopic.builder().id("pcos").name("PCOS").groupId("body").minAge(13).sortOrder(1).active(true).icon("box").build();
+        when(topicRepository.findById("pcos")).thenReturn(Optional.of(topic));
+
+        assertThat(service.saveTopic("pcos", new QuizTopicAdmin(null, null, null, null, null, null, " ")).icon()).isNull();
+        assertThatThrownBy(() -> service.saveTopic("pcos", new QuizTopicAdmin(null, null, null, null, null, null, "x".repeat(31))))
                 .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 

@@ -11,6 +11,7 @@ public record TopicCard(
         int currentLevel,
         int levelCount,
         int levelsCleared,
-        boolean ready
+        boolean ready,
+        String icon
 ) {
 }
