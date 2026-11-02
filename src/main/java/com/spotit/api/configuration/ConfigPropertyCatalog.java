@@ -149,6 +149,21 @@ public class ConfigPropertyCatalog {
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankTitleOops(),
                 (c, v) -> c.global().setPadbankTitleOops((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_PERFECT, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: end-of-day title with all three stars; unset uses Perfect day!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDayTitlePerfect(),
+                (c, v) -> c.global().setPadbankDayTitlePerfect((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_DONE, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: end-of-day title with hearts left; unset uses Bank closed for today",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDayTitleDone(),
+                (c, v) -> c.global().setPadbankDayTitleDone((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_LOST, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: end-of-day title when the hearts run out; unset uses Out of hearts",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDayTitleLost(),
+                (c, v) -> c.global().setPadbankDayTitleLost((String) v)));
     }
 
     private static void addQuizProperties(List<Property> list) {
@@ -180,6 +195,21 @@ public class ConfigPropertyCatalog {
                 "Topics sent per page on the Spotlight All topics screen", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getQuizTopicsPageSize(),
                 (c, v) -> c.global().setQuizTopicsPageSize((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_TITLE_WON, PropertyNames.GROUP_QUIZ,
+                "Know Yourself: result title for a won level; unset uses Level won!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTitleWon(),
+                (c, v) -> c.global().setQuizTitleWon((String) v)));
+        list.add(new Property(PropertyNames.QUIZ_TITLE_PERFECT, PropertyNames.GROUP_QUIZ,
+                "Know Yourself: result title for a level won with every heart left; unset uses Brilliant!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTitlePerfect(),
+                (c, v) -> c.global().setQuizTitlePerfect((String) v)));
+        list.add(new Property(PropertyNames.QUIZ_TITLE_LOST, PropertyNames.GROUP_QUIZ,
+                "Know Yourself: result title when the hearts run out; unset uses Out of hearts",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTitleLost(),
+                (c, v) -> c.global().setQuizTitleLost((String) v)));
         list.add(new Property(PropertyNames.SPOTLIGHT_ADMIN_PAGE_SIZE, PropertyNames.GROUP_SPOTLIGHT,
                 "Default page size for the Spotlight admin lists (challenges, ranks, quiz and game content)", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getSpotlightAdminPageSize(),

@@ -14,6 +14,7 @@ import com.spotit.api.spotlight.quiz.dto.HintRequest;
 import com.spotit.api.spotlight.quiz.dto.HintResponse;
 import com.spotit.api.spotlight.quiz.dto.LevelView;
 import com.spotit.api.spotlight.quiz.dto.QuizHomeResponse;
+import com.spotit.api.spotlight.quiz.dto.QuizResultTitles;
 import com.spotit.api.spotlight.quiz.dto.QuizTopicDetail;
 import com.spotit.api.spotlight.quiz.dto.QuizTopicsResponse;
 import com.spotit.api.spotlight.quiz.dto.RoundView;
@@ -107,7 +108,8 @@ public class QuizPlayService {
         open.stream().filter(c -> !c.started()).forEach(shown::add);
         return new QuizHomeResponse(player.user().getPoints(), pick(userId, player, content, open), shown.stream().limit(HOME_TOPIC_CARDS).toList(),
                 content.topics().size(), rounds, config.getQuizLives(), config.getQuizHintCost(),
-                QuizRules.freeLevels(content.topics().stream().map(t -> content.levelsOf(t.getId())).toList()));
+                QuizRules.freeLevels(content.topics().stream().map(t -> content.levelsOf(t.getId())).toList()),
+                new QuizResultTitles(config.getQuizTitleWon(), config.getQuizTitlePerfect(), config.getQuizTitleLost()));
     }
 
     @Transactional(readOnly = true)

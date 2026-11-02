@@ -143,6 +143,20 @@ class ConfigurationReadTest {
         assertThat(service.getPadbankTitleGreat()).isEqualTo("PERFECT!");
         assertThat(service.getPadbankTitleOk()).isEqualTo("GOOD!");
         assertThat(service.getPadbankTitleOops()).isEqualTo("OOPS!");
+        assertThat(service.getPadbankDayTitlePerfect()).isEqualTo("Perfect day!");
+        assertThat(service.getPadbankDayTitleDone()).isEqualTo("Bank closed for today");
+        assertThat(service.getPadbankDayTitleLost()).isEqualTo("Out of hearts");
+    }
+
+    @Test
+    void quizResultTitlesUseSavedTextOrDefaults() {
+        lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
+                .id(GlobalConfig.SINGLETON_ID).quizTitleWon(" Well done! ").quizTitleLost(" ").padbankDayTitleDone("Closed").build()));
+
+        assertThat(service.getQuizTitleWon()).isEqualTo("Well done!");
+        assertThat(service.getQuizTitlePerfect()).isEqualTo("Brilliant!");
+        assertThat(service.getQuizTitleLost()).isEqualTo("Out of hearts");
+        assertThat(service.getPadbankDayTitleDone()).isEqualTo("Closed");
     }
 
     @Test

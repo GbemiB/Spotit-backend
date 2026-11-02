@@ -49,15 +49,17 @@ class PadBankAdminServiceTest {
         when(packRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(PadBankPack.builder().id("starter").name("Starter Bag").cost(10).build()));
         assertThat(service.packs(null, null).items()).extracting("id").containsExactly("starter");
 
-        PadBankPackAdmin created = service.savePack("school", new PadBankPackAdmin(null, " School Kit ", 15, null, null, null, null));
+        PadBankPackAdmin created = service.savePack("school", new PadBankPackAdmin(null, " School Kit ", 15, null, null, null, null, null));
         assertThat(created).extracting("name", "cost", "stock", "color", "active").containsExactly("School Kit", 15, 1, "pink", true);
 
         PadBankPack existing = PadBankPack.builder().id("school").name("School Kit").cost(15).stock(3).color("peach").sortOrder(2).active(true).build();
         when(packRepository.findById("school")).thenReturn(Optional.of(existing));
-        PadBankPackAdmin patched = service.savePack("school", new PadBankPackAdmin(null, null, -2, -1, "gold", 5, false));
+        PadBankPackAdmin patched = service.savePack("school", new PadBankPackAdmin(null, null, -2, -1, "gold",
+                List.of(" 10 day pads ", "", "Guide|book"), 5, false));
         assertThat(patched).extracting("cost", "stock", "color", "sortOrder", "active").containsExactly(0, 0, "gold", 5, false);
+        assertThat(patched.contents()).containsExactly("10 day pads", "Guide/book");
 
-        assertThatThrownBy(() -> service.savePack("new", new PadBankPackAdmin(null, "New", null, null, null, null, null)))
+        assertThatThrownBy(() -> service.savePack("new", new PadBankPackAdmin(null, "New", null, null, null, null, null, null)))
                 .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 

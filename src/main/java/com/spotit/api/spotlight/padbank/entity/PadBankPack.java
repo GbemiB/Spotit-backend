@@ -34,6 +34,9 @@ public class PadBankPack {
     @Column(nullable = false, length = 12)
     private String color;
 
+    @Column(length = 400)
+    private String contents;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 

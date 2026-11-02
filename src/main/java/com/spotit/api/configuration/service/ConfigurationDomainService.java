@@ -64,6 +64,18 @@ public interface ConfigurationDomainService {
 
     String getPadbankTitleOops();
 
+    String getQuizTitleWon();
+
+    String getQuizTitlePerfect();
+
+    String getQuizTitleLost();
+
+    String getPadbankDayTitlePerfect();
+
+    String getPadbankDayTitleDone();
+
+    String getPadbankDayTitleLost();
+
     int getSpotlightAdminPageSize();
 
     long getAccountPurgeGraceDays();

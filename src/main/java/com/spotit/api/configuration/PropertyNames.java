@@ -34,6 +34,12 @@ public final class PropertyNames {
     public static final String PADBANK_TITLE_GREAT = "padbank-title-great";
     public static final String PADBANK_TITLE_OK = "padbank-title-ok";
     public static final String PADBANK_TITLE_OOPS = "padbank-title-oops";
+    public static final String QUIZ_TITLE_WON = "quiz-title-won";
+    public static final String QUIZ_TITLE_PERFECT = "quiz-title-perfect";
+    public static final String QUIZ_TITLE_LOST = "quiz-title-lost";
+    public static final String PADBANK_DAY_TITLE_PERFECT = "padbank-day-title-perfect";
+    public static final String PADBANK_DAY_TITLE_DONE = "padbank-day-title-done";
+    public static final String PADBANK_DAY_TITLE_LOST = "padbank-day-title-lost";
     public static final String SPOTLIGHT_ADMIN_PAGE_SIZE = "spotlight-admin-page-size";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";

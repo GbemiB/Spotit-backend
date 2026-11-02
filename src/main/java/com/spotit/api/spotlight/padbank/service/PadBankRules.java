@@ -65,6 +65,30 @@ public final class PadBankRules {
         return map;
     }
 
+    public static String encodeLines(List<String> lines) {
+        List<String> clean = new ArrayList<>();
+        for (String line : lines == null ? List.<String>of() : lines) {
+            String c = clean(line);
+            if (!c.isEmpty()) {
+                clean.add(c);
+            }
+        }
+        return String.join("\n", clean);
+    }
+
+    public static List<String> decodeLines(String raw) {
+        List<String> lines = new ArrayList<>();
+        if (raw == null || raw.isBlank()) {
+            return lines;
+        }
+        for (String line : raw.split("\n")) {
+            if (!line.isBlank()) {
+                lines.add(line.strip());
+            }
+        }
+        return lines;
+    }
+
     public static String encodeStock(Map<String, Integer> stock) {
         List<String> parts = new ArrayList<>();
         stock.forEach((k, v) -> parts.add(k + ":" + v));

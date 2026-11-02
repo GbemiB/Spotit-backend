@@ -6,6 +6,7 @@ public record SpotlightHomeResponse(
         long balance,
         SpotlightStats stats,
         List<ChallengeCard> challenges,
-        SpotlightInvite invite
+        SpotlightInvite invite,
+        List<RankStep> ranks
 ) {
 }

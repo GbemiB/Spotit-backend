@@ -53,6 +53,9 @@ public class PadBankAdminService {
         if (body.color() != null) {
             pack.setColor(body.color());
         }
+        if (body.contents() != null) {
+            pack.setContents(PadBankRules.encodeLines(body.contents()));
+        }
         if (body.sortOrder() != null) {
             pack.setSortOrder(body.sortOrder());
         }

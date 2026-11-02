@@ -106,6 +106,24 @@ public class GlobalConfig {
     @Column(name = "padbank_title_oops", length = 40)
     private String padbankTitleOops;
 
+    @Column(name = "quiz_title_won", length = 60)
+    private String quizTitleWon;
+
+    @Column(name = "quiz_title_perfect", length = 60)
+    private String quizTitlePerfect;
+
+    @Column(name = "quiz_title_lost", length = 60)
+    private String quizTitleLost;
+
+    @Column(name = "padbank_day_title_perfect", length = 60)
+    private String padbankDayTitlePerfect;
+
+    @Column(name = "padbank_day_title_done", length = 60)
+    private String padbankDayTitleDone;
+
+    @Column(name = "padbank_day_title_lost", length = 60)
+    private String padbankDayTitleLost;
+
     @Column(name = "account_purge_grace_days", nullable = false)
     private long accountPurgeGraceDays;
 

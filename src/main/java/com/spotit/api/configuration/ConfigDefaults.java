@@ -32,6 +32,12 @@ public final class ConfigDefaults {
     public static final String PADBANK_TITLE_GREAT = "PERFECT!";
     public static final String PADBANK_TITLE_OK = "GOOD!";
     public static final String PADBANK_TITLE_OOPS = "OOPS!";
+    public static final String QUIZ_TITLE_WON = "Level won!";
+    public static final String QUIZ_TITLE_PERFECT = "Brilliant!";
+    public static final String QUIZ_TITLE_LOST = "Out of hearts";
+    public static final String PADBANK_DAY_TITLE_PERFECT = "Perfect day!";
+    public static final String PADBANK_DAY_TITLE_DONE = "Bank closed for today";
+    public static final String PADBANK_DAY_TITLE_LOST = "Out of hearts";
     public static final long SPOTLIGHT_ADMIN_PAGE_SIZE = 50L;
     public static final long ACCOUNT_PURGE_GRACE_DAYS = 30L;
     public static final long BADGE_KNOW_YOUR_BODY_THRESHOLD = 10L;

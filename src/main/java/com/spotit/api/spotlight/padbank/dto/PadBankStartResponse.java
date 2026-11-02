@@ -13,6 +13,7 @@ public record PadBankStartResponse(
         int deliveryCost,
         int budgetGoal,
         List<PadBankPackView> packs,
-        List<PadBankVisitorView> visitors
+        List<PadBankVisitorView> visitors,
+        PadBankDayTitles dayTitles
 ) {
 }

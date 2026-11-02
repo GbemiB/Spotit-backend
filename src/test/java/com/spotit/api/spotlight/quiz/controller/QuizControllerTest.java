@@ -6,6 +6,7 @@ import com.spotit.api.spotlight.quiz.dto.GroupChip;
 import com.spotit.api.spotlight.quiz.dto.HintRequest;
 import com.spotit.api.spotlight.quiz.dto.HintResponse;
 import com.spotit.api.spotlight.quiz.dto.QuizHomeResponse;
+import com.spotit.api.spotlight.quiz.dto.QuizResultTitles;
 import com.spotit.api.spotlight.quiz.dto.QuizTopicDetail;
 import com.spotit.api.spotlight.quiz.dto.QuizTopicsResponse;
 import com.spotit.api.spotlight.quiz.dto.RoundView;
@@ -56,14 +57,16 @@ class QuizControllerTest {
 
     @Test
     void homeTopicsAndLevelMap() throws Exception {
-        when(quizPlayService.home(USER_ID)).thenReturn(new QuizHomeResponse(240, null, List.of(), 31, 5, 3, 5, 2));
+        when(quizPlayService.home(USER_ID)).thenReturn(new QuizHomeResponse(240, null, List.of(), 31, 5, 3, 5, 2,
+                new QuizResultTitles("Level won!", "Brilliant!", "Out of hearts")));
         when(quizPlayService.topics(USER_ID, 8, "abc", "body")).thenReturn(new QuizTopicsResponse(true, 31, List.of(),
                 List.of(new GroupChip("body", "Body basics", "pink", 4)), "next"));
         when(quizPlayService.topic(USER_ID, "my-cycle")).thenReturn(new QuizTopicDetail(null, 240, List.of()));
 
         mvc.perform(get("/api/v1/quiz/home")).andExpect(status().isOk()).andExpect(jsonPath("$.data.balance").value(240))
                 .andExpect(jsonPath("$.data.topicCount").value(31))
-                .andExpect(jsonPath("$.data.freeLevels").value(2));
+                .andExpect(jsonPath("$.data.freeLevels").value(2))
+                .andExpect(jsonPath("$.data.titles.perfect").value("Brilliant!"));
         mvc.perform(get("/api/v1/quiz/topics").param("limit", "8").param("cursor", "abc").param("group", "body")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.underAge").value(true)).andExpect(jsonPath("$.data.nextCursor").value("next"))
                 .andExpect(jsonPath("$.data.allGroups[0].id").value("body"));

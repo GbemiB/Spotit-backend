@@ -10,6 +10,7 @@ public record QuizHomeResponse(
         int rounds,
         int lives,
         int hintCost,
-        int freeLevels
+        int freeLevels,
+        QuizResultTitles titles
 ) {
 }

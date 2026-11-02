@@ -352,6 +352,42 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     }
 
     @Override
+    public String getQuizTitleWon() {
+        String value = loadGlobal().getQuizTitleWon();
+        return value == null || value.isBlank() ? ConfigDefaults.QUIZ_TITLE_WON : value.strip();
+    }
+
+    @Override
+    public String getQuizTitlePerfect() {
+        String value = loadGlobal().getQuizTitlePerfect();
+        return value == null || value.isBlank() ? ConfigDefaults.QUIZ_TITLE_PERFECT : value.strip();
+    }
+
+    @Override
+    public String getQuizTitleLost() {
+        String value = loadGlobal().getQuizTitleLost();
+        return value == null || value.isBlank() ? ConfigDefaults.QUIZ_TITLE_LOST : value.strip();
+    }
+
+    @Override
+    public String getPadbankDayTitlePerfect() {
+        String value = loadGlobal().getPadbankDayTitlePerfect();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_DAY_TITLE_PERFECT : value.strip();
+    }
+
+    @Override
+    public String getPadbankDayTitleDone() {
+        String value = loadGlobal().getPadbankDayTitleDone();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_DAY_TITLE_DONE : value.strip();
+    }
+
+    @Override
+    public String getPadbankDayTitleLost() {
+        String value = loadGlobal().getPadbankDayTitleLost();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_DAY_TITLE_LOST : value.strip();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public int getQuizTopicsPageSize() {
         return (int) loadGlobal().getQuizTopicsPageSize();

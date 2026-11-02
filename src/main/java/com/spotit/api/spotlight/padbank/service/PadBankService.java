@@ -9,6 +9,7 @@ import com.spotit.api.rewards.service.PointsWriteService;
 import com.spotit.api.spotlight.core.entity.SpotlightChallenge;
 import com.spotit.api.spotlight.core.repository.SpotlightChallengeRepository;
 import com.spotit.api.spotlight.core.service.SpotlightRules;
+import com.spotit.api.spotlight.padbank.dto.PadBankDayTitles;
 import com.spotit.api.spotlight.padbank.dto.PadBankPackView;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeRequest;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeResponse;
@@ -90,8 +91,10 @@ public class PadBankService {
                 .round(0).hearts(hearts).budget(budget).served(0).rightCount(0).stock(PadBankRules.encodeStock(stock)).results("")
                 .status(PadBankRun.PLAYING).stars(0).spSpent(cost).playedOn(today).startedAt(Instant.now()).build());
         return new PadBankStartResponse(run.getId(), day, balance, cost, budget, hearts, config.getPadbankDeliveryCost(), config.getPadbankBudgetGoal(),
-                packs.stream().map(p -> new PadBankPackView(p.getId(), p.getName(), p.getCost(), p.getStock(), p.getColor())).toList(),
-                visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), PadBankRules.decodeClues(v.getClues()))).toList());
+                packs.stream().map(p -> new PadBankPackView(p.getId(), p.getName(), p.getCost(), p.getStock(), p.getColor(),
+                        PadBankRules.decodeLines(p.getContents()))).toList(),
+                visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), PadBankRules.decodeClues(v.getClues()))).toList(),
+                new PadBankDayTitles(config.getPadbankDayTitlePerfect(), config.getPadbankDayTitleDone(), config.getPadbankDayTitleLost()));
     }
 
     int nextDay(UUID userId) {
