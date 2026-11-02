@@ -1,5 +1,6 @@
 package com.spotit.api.quiz.service;
 
+import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizQuestion;
 import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizSeen;
@@ -78,6 +79,18 @@ class QuizRulesTest {
     @Test
     void aSmallPoolGivesWhatItHas() {
         assertThat(QuizRules.pickQuestions(List.of(q("a")), List.of(), 5, new Random(1))).hasSize(1);
+    }
+
+    @Test
+    void freeLevelsCountsTheFreeLevelsEveryTopicStartsWith() {
+        QuizLevel free1 = QuizLevel.builder().number(1).cost(0).build();
+        QuizLevel free2 = QuizLevel.builder().number(2).cost(0).build();
+        QuizLevel paid3 = QuizLevel.builder().number(3).cost(10).build();
+        QuizLevel free3 = QuizLevel.builder().number(3).cost(0).build();
+
+        assertThat(QuizRules.freeLevels(List.of(List.of(paid3, free2, free1), List.of(free1, free2, free3)))).isEqualTo(2);
+        assertThat(QuizRules.freeLevels(List.of(List.of(free1, free2, free3)))).isEqualTo(3);
+        assertThat(QuizRules.freeLevels(List.of())).isZero();
     }
 
     @Test

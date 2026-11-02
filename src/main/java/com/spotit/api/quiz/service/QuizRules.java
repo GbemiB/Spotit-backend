@@ -2,6 +2,7 @@ package com.spotit.api.quiz.service;
 
 import com.spotit.api.quiz.dto.QuizAdminPage;
 import com.spotit.api.quiz.dto.RankView;
+import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizQuestion;
 import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizSeen;
@@ -86,6 +87,21 @@ public final class QuizRules {
         long start = Math.min((long) p * n, all.size());
         long end = Math.min(start + n, all.size());
         return new QuizAdminPage<>(all.subList((int) start, (int) end), p, n, all.size());
+    }
+
+    public static int freeLevels(Collection<List<QuizLevel>> levelsByTopic) {
+        int fewest = Integer.MAX_VALUE;
+        for (List<QuizLevel> levels : levelsByTopic) {
+            int free = 0;
+            for (QuizLevel level : levels.stream().sorted(Comparator.comparingInt(QuizLevel::getNumber)).toList()) {
+                if (level.getCost() > 0) {
+                    break;
+                }
+                free++;
+            }
+            fewest = Math.min(fewest, free);
+        }
+        return fewest == Integer.MAX_VALUE ? 0 : fewest;
     }
 
     public static RankView rank(List<QuizRank> ranks, int stars) {

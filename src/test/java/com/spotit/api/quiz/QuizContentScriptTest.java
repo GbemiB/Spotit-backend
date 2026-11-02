@@ -50,6 +50,8 @@ class QuizContentScriptTest {
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 4)).get().extracting("cost", "lives").containsExactly(20, 2);
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 5)).get().extracting("cost", "lives").containsExactly(40, 1);
         assertThat(levelRepository.findByTopicIdAndNumber("pcos", 1)).get().extracting("lives").isNull();
+        assertThat(levelRepository.findByTopicIdAndNumber("pcos", 2)).get().extracting("cost").isEqualTo(0);
+        assertThat(levelRepository.findByTopicIdAndNumber("pcos", 3)).get().extracting("cost").isEqualTo(10);
         assertThat(questionRepository.count()).isEqualTo(500);
         assertThat(questionRepository.findByStatusOrderByTopicIdAscLevelNumberAscIdAsc(QuizQuestion.APPROVED)).hasSize(500);
         assertThat(questionRepository.countReady()).hasSize(50);

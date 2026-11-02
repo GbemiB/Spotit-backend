@@ -124,7 +124,8 @@ public class QuizPlayService {
         return new QuizHomeResponse(player.user().getPoints(), stats, pick(userId, player, content, open), shown.stream().limit(HOME_TOPIC_CARDS).toList(),
                 content.topics().size(), rounds, config.getQuizLives(), config.getQuizHintCost(),
                 new SpotlightInvite(config.isSpotlightInviteEnabled(), config.getSpotlightInviteEveryDays(),
-                        config.getSpotlightInviteMaxDismissals()), challenges(player));
+                        config.getSpotlightInviteMaxDismissals()), challenges(player),
+                QuizRules.freeLevels(content.topics().stream().map(t -> content.levelsOf(t.getId())).toList()));
     }
 
     private List<ChallengeCard> challenges(Player player) {

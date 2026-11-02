@@ -63,7 +63,7 @@ class QuizControllerTest {
         when(quizPlayService.home(USER_ID)).thenReturn(new QuizHomeResponse(240, new QuizStats(3, 5, 2, 40, 6, 2, List.of(true, false, true, true, false, true, true),
                 new RankView("curious", "Curious", 0, "Explorer", 15)), null, List.of(), 31, 5, 3, 5,
                 new SpotlightInvite(true, 3, 3), List.of(new ChallengeCard("pad-factory", "game", "Pad Factory", "Design pads", "pad", "pink", 10,
-                true, 13, "soon", false))));
+                true, 13, "soon", false)), 2));
         when(quizPlayService.topics(USER_ID, 8, "abc", "body")).thenReturn(new QuizTopicsResponse(true, 31, List.of(),
                 List.of(new GroupChip("body", "Body basics", "pink", 4)), "next"));
         when(quizPlayService.topic(USER_ID, "my-cycle")).thenReturn(new QuizTopicDetail(null, 240, List.of()));
@@ -71,7 +71,8 @@ class QuizControllerTest {
         mvc.perform(get("/api/v1/quiz/home")).andExpect(status().isOk()).andExpect(jsonPath("$.data.balance").value(240))
                 .andExpect(jsonPath("$.data.stats.streak").value(3))
                 .andExpect(jsonPath("$.data.invite.everyDays").value(3))
-                .andExpect(jsonPath("$.data.challenges[0].cost").value(10));
+                .andExpect(jsonPath("$.data.challenges[0].cost").value(10))
+                .andExpect(jsonPath("$.data.freeLevels").value(2));
         mvc.perform(get("/api/v1/quiz/topics").param("limit", "8").param("cursor", "abc").param("group", "body")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.underAge").value(true)).andExpect(jsonPath("$.data.nextCursor").value("next"))
                 .andExpect(jsonPath("$.data.allGroups[0].id").value("body"));

@@ -178,6 +178,7 @@ class QuizPlayServiceTest {
         assertThat(home.rounds()).isEqualTo(2);
         assertThat(home.hintCost()).isEqualTo(5);
         assertThat(home.invite()).isEqualTo(new SpotlightInvite(true, 3, 3));
+        assertThat(home.freeLevels()).isGreaterThanOrEqualTo(0);
         assertThat(home.challenges()).extracting("id", "cost", "status", "locked")
                 .containsExactly(org.assertj.core.groups.Tuple.tuple("know-yourself", null, "live", false),
                         org.assertj.core.groups.Tuple.tuple("clinic-shift", 15, "soon", true));
