@@ -20,6 +20,8 @@ public final class PropertyNames {
     public static final String SPOTLIGHT_INVITE_ENABLED = "spotlight-invite-enabled";
     public static final String SPOTLIGHT_INVITE_EVERY_DAYS = "spotlight-invite-every-days";
     public static final String SPOTLIGHT_INVITE_MAX_DISMISSALS = "spotlight-invite-max-dismissals";
+    public static final String QUIZ_TOPICS_PAGE_SIZE = "quiz-topics-page-size";
+    public static final String QUIZ_ADMIN_PAGE_SIZE = "quiz-admin-page-size";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";
     public static final String BADGE_KNOW_YOUR_BODY_THRESHOLD = "badge-know-your-body-threshold";

@@ -61,6 +61,12 @@ public class GlobalConfig {
     @Column(name = "spotlight_invite_max_dismissals", nullable = false, columnDefinition = "bigint default 3")
     private long spotlightInviteMaxDismissals;
 
+    @Column(name = "quiz_topics_page_size", nullable = false, columnDefinition = "bigint default 8")
+    private long quizTopicsPageSize;
+
+    @Column(name = "quiz_admin_page_size", nullable = false, columnDefinition = "bigint default 50")
+    private long quizAdminPageSize;
+
     @Column(name = "account_purge_grace_days", nullable = false)
     private long accountPurgeGraceDays;
 

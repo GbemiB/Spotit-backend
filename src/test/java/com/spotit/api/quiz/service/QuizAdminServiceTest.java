@@ -2,6 +2,7 @@ package com.spotit.api.quiz.service;
 
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
@@ -42,6 +43,7 @@ class QuizAdminServiceTest {
     @Mock QuizLevelRepository levelRepository;
     @Mock QuizQuestionRepository questionRepository;
     @Mock QuizRankRepository rankRepository;
+    @Mock ConfigurationDomainService config;
     @InjectMocks QuizAdminService service;
 
     @BeforeEach
@@ -51,6 +53,7 @@ class QuizAdminServiceTest {
         when(levelRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(questionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(rankRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(config.getQuizAdminPageSize()).thenReturn(50);
         when(groupRepository.existsById("body")).thenReturn(true);
         when(topicRepository.existsById("my-cycle")).thenReturn(true);
     }
@@ -71,14 +74,14 @@ class QuizAdminServiceTest {
         when(questionRepository.findByStatusOrderByTopicIdAscLevelNumberAscIdAsc("draft")).thenReturn(List.of(q));
         when(questionRepository.findByTopicIdAndStatusOrderByLevelNumberAscIdAsc("my-cycle", "draft")).thenReturn(List.of());
 
-        assertThat(service.groups()).hasSize(1);
-        assertThat(service.topics()).hasSize(1);
-        assertThat(service.levels(null)).hasSize(1);
-        assertThat(service.levels("my-cycle")).isEmpty();
-        assertThat(service.questions(null, null)).hasSize(1);
-        assertThat(service.questions("my-cycle", null)).hasSize(1);
-        assertThat(service.questions(null, "draft")).hasSize(1);
-        assertThat(service.questions("my-cycle", "draft")).isEmpty();
+        assertThat(service.groups(null, null).items()).hasSize(1);
+        assertThat(service.topics(null, null).items()).hasSize(1);
+        assertThat(service.levels(null, null, null).items()).hasSize(1);
+        assertThat(service.levels("my-cycle", null, null).items()).isEmpty();
+        assertThat(service.questions(null, null, null, null)).extracting("page", "size", "total").containsExactly(0, 50, 1L);
+        assertThat(service.questions("my-cycle", null, 0, 10).items()).hasSize(1);
+        assertThat(service.questions(null, "draft", 1, 10).items()).isEmpty();
+        assertThat(service.questions("my-cycle", "draft", null, null).items()).isEmpty();
     }
 
     @Test
@@ -190,7 +193,7 @@ class QuizAdminServiceTest {
     @Test
     void ranksCanBeListedAddedAndRetuned() {
         when(rankRepository.findAllByOrderByMinStarsAsc()).thenReturn(List.of(QuizRank.builder().id("curious").name("Curious").minStars(0).active(true).build()));
-        assertThat(service.ranks()).extracting("id").containsExactly("curious");
+        assertThat(service.ranks(null, null).items()).extracting("id").containsExactly("curious");
 
         QuizRankAdmin created = service.saveRank("explorer", new QuizRankAdmin(null, " Explorer ", 15, null));
         assertThat(created).extracting("name", "minStars", "active").containsExactly("Explorer", 15, true);

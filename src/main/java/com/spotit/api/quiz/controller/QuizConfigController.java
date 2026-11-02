@@ -1,6 +1,7 @@
 package com.spotit.api.quiz.controller;
 
 import com.spotit.api.quiz.dto.ApproveQuestionRequest;
+import com.spotit.api.quiz.dto.QuizAdminPage;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 
 @Tag(name = "Quiz Config (Admin)", description = "Groups, topics, levels and questions for the Know Yourself quiz. PUT creates or "
         + "updates; only the fields sent change, and active=false switches an item off. Any change to a question's wording or answer "
@@ -34,8 +34,9 @@ public class QuizConfigController {
 
     @Operation(summary = "List Spotlight ranks")
     @GetMapping("/ranks")
-    public List<QuizRankAdmin> ranks() {
-        return quizAdminService.ranks();
+    public QuizAdminPage<QuizRankAdmin> ranks(@Parameter(description = "Page number, from 0.", example = "0") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Items per page; defaults to the quiz-admin-page-size setting.", example = "50") @RequestParam(required = false) Integer size) {
+        return quizAdminService.ranks(page, size);
     }
 
     @Operation(summary = "Create or update a Spotlight rank", description = "minStars is the number of stars needed to reach the rank.")
@@ -46,8 +47,9 @@ public class QuizConfigController {
 
     @Operation(summary = "List groups")
     @GetMapping("/groups")
-    public List<QuizGroupAdmin> groups() {
-        return quizAdminService.groups();
+    public QuizAdminPage<QuizGroupAdmin> groups(@Parameter(description = "Page number, from 0.", example = "0") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Items per page; defaults to the quiz-admin-page-size setting.", example = "50") @RequestParam(required = false) Integer size) {
+        return quizAdminService.groups(page, size);
     }
 
     @Operation(summary = "Create or update a group", description = "tone is pink, peach, green or gold.")
@@ -58,8 +60,9 @@ public class QuizConfigController {
 
     @Operation(summary = "List topics")
     @GetMapping("/topics")
-    public List<QuizTopicAdmin> topics() {
-        return quizAdminService.topics();
+    public QuizAdminPage<QuizTopicAdmin> topics(@Parameter(description = "Page number, from 0.", example = "0") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Items per page; defaults to the quiz-admin-page-size setting.", example = "50") @RequestParam(required = false) Integer size) {
+        return quizAdminService.topics(page, size);
     }
 
     @Operation(summary = "Create or update a topic", description = "minAge is 13 or 18; 18+ topics are locked for under-18s.")
@@ -70,8 +73,10 @@ public class QuizConfigController {
 
     @Operation(summary = "List levels", description = "All levels, or one topic's with ?topicId=.")
     @GetMapping("/levels")
-    public List<QuizLevelAdmin> levels(@RequestParam(required = false) String topicId) {
-        return quizAdminService.levels(topicId);
+    public QuizAdminPage<QuizLevelAdmin> levels(@RequestParam(required = false) String topicId,
+            @Parameter(description = "Page number, from 0.", example = "0") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Items per page; defaults to the quiz-admin-page-size setting.", example = "50") @RequestParam(required = false) Integer size) {
+        return quizAdminService.levels(topicId, page, size);
     }
 
     @Operation(summary = "Create or update a level", description = "cost is the SP charged each time the level is played; 0 is free.")
@@ -82,8 +87,11 @@ public class QuizConfigController {
 
     @Operation(summary = "List questions", description = "Filter with ?topicId= and/or ?status=draft|approved.")
     @GetMapping("/questions")
-    public List<QuizQuestionAdmin> questions(@RequestParam(required = false) String topicId, @RequestParam(required = false) String status) {
-        return quizAdminService.questions(topicId, status);
+    public QuizAdminPage<QuizQuestionAdmin> questions(@RequestParam(required = false) String topicId,
+            @RequestParam(required = false) String status,
+            @Parameter(description = "Page number, from 0.", example = "0") @RequestParam(required = false) Integer page,
+            @Parameter(description = "Items per page; defaults to the quiz-admin-page-size setting.", example = "50") @RequestParam(required = false) Integer size) {
+        return quizAdminService.questions(topicId, status, page, size);
     }
 
     @Operation(summary = "Create or update a question", description = "answer is myth or fact. New and edited questions are drafts.")

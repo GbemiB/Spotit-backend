@@ -1,14 +1,17 @@
 package com.spotit.api.quiz.service;
 
+import com.spotit.api.quiz.dto.QuizAdminPage;
 import com.spotit.api.quiz.dto.RankView;
 import com.spotit.api.quiz.entity.QuizQuestion;
 import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizSeen;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -53,6 +56,36 @@ public final class QuizRules {
             return "cleared";
         }
         return number == current ? "current" : "locked";
+    }
+
+    public static final int MAX_PAGE_SIZE = 200;
+
+    public static String encodeCursor(int offset) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(String.valueOf(offset).getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static int decodeCursor(String cursor) {
+        if (cursor == null || cursor.isBlank()) {
+            return 0;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8)));
+        } catch (IllegalArgumentException e) {
+            return 0;
+        }
+    }
+
+    public static int pageSize(Integer requested, int fallback) {
+        int size = requested == null ? fallback : requested;
+        return Math.max(1, Math.min(MAX_PAGE_SIZE, size));
+    }
+
+    public static <T> QuizAdminPage<T> page(List<T> all, Integer page, Integer size, int fallback) {
+        int n = pageSize(size, fallback);
+        int p = page == null ? 0 : Math.max(0, page);
+        long start = Math.min((long) p * n, all.size());
+        long end = Math.min(start + n, all.size());
+        return new QuizAdminPage<>(all.subList((int) start, (int) end), p, n, all.size());
     }
 
     public static RankView rank(List<QuizRank> ranks, int stars) {

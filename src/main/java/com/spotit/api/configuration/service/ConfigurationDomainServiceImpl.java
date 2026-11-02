@@ -91,6 +91,12 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getSpotlightInviteMaxDismissals() == 0) {
             global.setSpotlightInviteMaxDismissals(ConfigDefaults.SPOTLIGHT_INVITE_MAX_DISMISSALS);
         }
+        if (global.getQuizTopicsPageSize() == 0) {
+            global.setQuizTopicsPageSize(ConfigDefaults.QUIZ_TOPICS_PAGE_SIZE);
+        }
+        if (global.getQuizAdminPageSize() == 0) {
+            global.setQuizAdminPageSize(ConfigDefaults.QUIZ_ADMIN_PAGE_SIZE);
+        }
         if (global.getAccountPurgeGraceDays() == 0) {
             global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
         }
@@ -240,6 +246,18 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getSpotlightInviteMaxDismissals() {
         return (int) loadGlobal().getSpotlightInviteMaxDismissals();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizTopicsPageSize() {
+        return (int) loadGlobal().getQuizTopicsPageSize();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizAdminPageSize() {
+        return (int) loadGlobal().getQuizAdminPageSize();
     }
 
     @Override

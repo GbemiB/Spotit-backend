@@ -36,6 +36,10 @@ public interface ConfigurationDomainService {
 
     int getSpotlightInviteMaxDismissals();
 
+    int getQuizTopicsPageSize();
+
+    int getQuizAdminPageSize();
+
     long getAccountPurgeGraceDays();
 
     int getBadgeKnowYourBodyThreshold();

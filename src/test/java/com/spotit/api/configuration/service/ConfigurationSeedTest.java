@@ -57,6 +57,8 @@ class ConfigurationSeedTest {
         assertThat(global.getValue().getSpotlightInviteEnabled()).isTrue();
         assertThat(global.getValue().getSpotlightInviteEveryDays()).isEqualTo(ConfigDefaults.SPOTLIGHT_INVITE_EVERY_DAYS);
         assertThat(global.getValue().getSpotlightInviteMaxDismissals()).isEqualTo(ConfigDefaults.SPOTLIGHT_INVITE_MAX_DISMISSALS);
+        assertThat(global.getValue().getQuizTopicsPageSize()).isEqualTo(ConfigDefaults.QUIZ_TOPICS_PAGE_SIZE);
+        assertThat(global.getValue().getQuizAdminPageSize()).isEqualTo(ConfigDefaults.QUIZ_ADMIN_PAGE_SIZE);
     }
 
     @Test

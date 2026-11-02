@@ -1,8 +1,10 @@
 package com.spotit.api.quiz.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.exception.ErrorMessage;
+import com.spotit.api.quiz.dto.QuizAdminPage;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
@@ -35,26 +37,27 @@ public class QuizAdminService {
     private final QuizLevelRepository levelRepository;
     private final QuizQuestionRepository questionRepository;
     private final QuizRankRepository rankRepository;
+    private final ConfigurationDomainService config;
 
     @Transactional(readOnly = true)
-    public List<QuizGroupAdmin> groups() {
-        return groupRepository.findAllByOrderBySortOrderAsc().stream().map(QuizGroupAdmin::of).toList();
+    public QuizAdminPage<QuizGroupAdmin> groups(Integer page, Integer size) {
+        return paged(groupRepository.findAllByOrderBySortOrderAsc().stream().map(QuizGroupAdmin::of).toList(), page, size);
     }
 
     @Transactional(readOnly = true)
-    public List<QuizTopicAdmin> topics() {
-        return topicRepository.findAllByOrderBySortOrderAsc().stream().map(QuizTopicAdmin::of).toList();
+    public QuizAdminPage<QuizTopicAdmin> topics(Integer page, Integer size) {
+        return paged(topicRepository.findAllByOrderBySortOrderAsc().stream().map(QuizTopicAdmin::of).toList(), page, size);
     }
 
     @Transactional(readOnly = true)
-    public List<QuizLevelAdmin> levels(String topicId) {
+    public QuizAdminPage<QuizLevelAdmin> levels(String topicId, Integer page, Integer size) {
         List<QuizLevel> levels = topicId == null ? levelRepository.findAllByOrderByTopicIdAscNumberAsc()
                 : levelRepository.findByTopicIdOrderByNumberAsc(topicId);
-        return levels.stream().map(QuizLevelAdmin::of).toList();
+        return paged(levels.stream().map(QuizLevelAdmin::of).toList(), page, size);
     }
 
     @Transactional(readOnly = true)
-    public List<QuizQuestionAdmin> questions(String topicId, String status) {
+    public QuizAdminPage<QuizQuestionAdmin> questions(String topicId, String status, Integer page, Integer size) {
         List<QuizQuestion> list;
         if (topicId != null && status != null) {
             list = questionRepository.findByTopicIdAndStatusOrderByLevelNumberAscIdAsc(topicId, status);
@@ -65,12 +68,16 @@ public class QuizAdminService {
         } else {
             list = questionRepository.findAllByOrderByTopicIdAscLevelNumberAscIdAsc();
         }
-        return list.stream().map(QuizQuestionAdmin::of).toList();
+        return paged(list.stream().map(QuizQuestionAdmin::of).toList(), page, size);
     }
 
     @Transactional(readOnly = true)
-    public List<QuizRankAdmin> ranks() {
-        return rankRepository.findAllByOrderByMinStarsAsc().stream().map(QuizRankAdmin::of).toList();
+    public QuizAdminPage<QuizRankAdmin> ranks(Integer page, Integer size) {
+        return paged(rankRepository.findAllByOrderByMinStarsAsc().stream().map(QuizRankAdmin::of).toList(), page, size);
+    }
+
+    private <T> QuizAdminPage<T> paged(List<T> all, Integer page, Integer size) {
+        return QuizRules.page(all, page, size, config.getQuizAdminPageSize());
     }
 
     @Transactional

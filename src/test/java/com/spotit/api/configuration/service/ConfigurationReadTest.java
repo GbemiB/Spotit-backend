@@ -119,6 +119,15 @@ class ConfigurationReadTest {
     }
 
     @Test
+    void quizPageSizesAreReturned() {
+        lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
+                .id(GlobalConfig.SINGLETON_ID).quizTopicsPageSize(6).quizAdminPageSize(25).build()));
+
+        assertThat(service.getQuizTopicsPageSize()).isEqualTo(6);
+        assertThat(service.getQuizAdminPageSize()).isEqualTo(25);
+    }
+
+    @Test
     void listByAnUnknownGroupIsEmpty() {
         assertThat(service.listByGroup("smtp")).isEmpty();
     }

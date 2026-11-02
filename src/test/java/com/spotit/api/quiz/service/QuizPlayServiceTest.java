@@ -195,12 +195,33 @@ class QuizPlayServiceTest {
     void topicsComeByGroupWithAdultTopicsLockedForTeens() {
         user.setDob(LocalDate.of(2011, 1, 1));
 
-        QuizTopicsResponse topics = service.topics(userId);
+        when(config.getQuizTopicsPageSize()).thenReturn(8);
+        QuizTopicsResponse topics = service.topics(userId, null, null, null);
 
         assertThat(topics.underAge()).isTrue();
         assertThat(topics.groups()).extracting("id").containsExactly("body", "rel");
         assertThat(topics.groups().get(1).topics().get(0).locked()).isTrue();
         assertThat(topics.groups().get(0).topics().get(1).ready()).isFalse();
+        assertThat(topics.allGroups()).extracting("id").containsExactly("body", "rel");
+        assertThat(topics.nextCursor()).isNull();
+    }
+
+    @Test
+    void topicsComeOnePageAtATimeAndCanBeFilteredByGroup() {
+        QuizTopicsResponse first = service.topics(userId, 2, null, null);
+        assertThat(first.groups()).extracting("id").containsExactly("body");
+        assertThat(first.groups().get(0).topics()).hasSize(2);
+        assertThat(first.allGroups()).extracting("id").containsExactly("body", "rel");
+        assertThat(first.allGroups()).extracting("topicCount").containsExactly(2, 1);
+        assertThat(first.nextCursor()).isNotNull();
+
+        QuizTopicsResponse second = service.topics(userId, 2, first.nextCursor(), null);
+        assertThat(second.groups()).extracting("id").containsExactly("rel");
+        assertThat(second.nextCursor()).isNull();
+
+        QuizTopicsResponse rel = service.topics(userId, null, null, "rel");
+        assertThat(rel.groups()).extracting("id").containsExactly("rel");
+        assertThat(rel.topicCount()).isEqualTo(3);
     }
 
     @Test

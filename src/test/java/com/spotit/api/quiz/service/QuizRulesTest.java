@@ -98,4 +98,22 @@ class QuizRulesTest {
         assertThat(QuizRules.week(Set.of(today, today.minusDays(2), today.minusDays(9)), today))
                 .containsExactly(false, false, false, false, true, false, true);
     }
+
+    @Test
+    void cursorsRoundTripAndBadOnesStartAtTheTop() {
+        assertThat(QuizRules.decodeCursor(QuizRules.encodeCursor(16))).isEqualTo(16);
+        assertThat(QuizRules.decodeCursor(null)).isZero();
+        assertThat(QuizRules.decodeCursor("not a cursor!")).isZero();
+        assertThat(QuizRules.decodeCursor(QuizRules.encodeCursor(-4))).isZero();
+    }
+
+    @Test
+    void pagesAreClampedToSensibleSizes() {
+        List<Integer> all = List.of(1, 2, 3, 4, 5);
+        assertThat(QuizRules.page(all, 1, 2, 50).items()).containsExactly(3, 4);
+        assertThat(QuizRules.page(all, 9, 2, 50).items()).isEmpty();
+        assertThat(QuizRules.page(all, -1, 0, 50)).extracting("page", "size", "total").containsExactly(0, 1, 5L);
+        assertThat(QuizRules.page(all, null, null, 3).items()).containsExactly(1, 2, 3);
+        assertThat(QuizRules.pageSize(1000, 8)).isEqualTo(QuizRules.MAX_PAGE_SIZE);
+    }
 }

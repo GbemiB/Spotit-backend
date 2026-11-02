@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -46,8 +47,14 @@ public class QuizController {
             + "date of birth. ready is false when the topic's current level has too few approved questions.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/topics")
-    public QuizTopicsResponse topics(@CurrentUserId UUID userId) {
-        return quizPlayService.topics(userId);
+    public QuizTopicsResponse topics(@CurrentUserId UUID userId,
+                                     @Parameter(description = "Topics per page; defaults to the quiz-topics-page-size setting.", example = "8")
+                                     @RequestParam(required = false) Integer limit,
+                                     @Parameter(description = "nextCursor from the previous page; leave out for the first page.")
+                                     @RequestParam(required = false) String cursor,
+                                     @Parameter(description = "Only this group's topics.", example = "body")
+                                     @RequestParam(required = false) String group) {
+        return quizPlayService.topics(userId, limit, cursor, group);
     }
 
     @Operation(summary = "Level map for a topic", description = "Each level with its name, SP cost, state (cleared, current or locked), "

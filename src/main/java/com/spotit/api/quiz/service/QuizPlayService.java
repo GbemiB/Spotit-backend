@@ -7,6 +7,7 @@ import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.quiz.dto.AnswerRequest;
 import com.spotit.api.quiz.dto.AnswerResponse;
+import com.spotit.api.quiz.dto.GroupChip;
 import com.spotit.api.quiz.dto.GroupView;
 import com.spotit.api.quiz.dto.HintRequest;
 import com.spotit.api.quiz.dto.HintResponse;
@@ -123,17 +124,30 @@ public class QuizPlayService {
     }
 
     @Transactional(readOnly = true)
-    public QuizTopicsResponse topics(UUID userId) {
+    public QuizTopicsResponse topics(UUID userId, Integer limit, String cursor, String groupId) {
         Player player = player(userId);
         Content content = content();
         int rounds = config.getQuizRounds();
-        List<GroupView> groups = content.groups().stream()
-                .map(g -> new GroupView(g.getId(), g.getLabel(), g.getTone(), content.topics().stream()
+        List<QuizGroup> withTopics = content.groups().stream()
+                .filter(g -> content.topics().stream().anyMatch(t -> t.getGroupId().equals(g.getId()))).toList();
+        List<QuizTopic> ordered = withTopics.stream()
+                .filter(g -> groupId == null || g.getId().equals(groupId))
+                .flatMap(g -> content.topics().stream().filter(t -> t.getGroupId().equals(g.getId())))
+                .toList();
+        int size = QuizRules.pageSize(limit, config.getQuizTopicsPageSize());
+        int from = Math.min(QuizRules.decodeCursor(cursor), ordered.size());
+        int to = Math.min(from + size, ordered.size());
+        List<QuizTopic> slice = ordered.subList(from, to);
+        List<GroupView> groups = withTopics.stream()
+                .map(g -> new GroupView(g.getId(), g.getLabel(), g.getTone(), slice.stream()
                         .filter(t -> t.getGroupId().equals(g.getId())).map(t -> card(t, content, player, rounds)).toList()))
                 .filter(g -> !g.topics().isEmpty())
                 .toList();
+        List<GroupChip> chips = withTopics.stream().map(g -> new GroupChip(g.getId(), g.getLabel(), g.getTone(),
+                (int) content.topics().stream().filter(t -> t.getGroupId().equals(g.getId())).count())).toList();
         boolean underAge = player.age() != null && player.age() < QuizRules.ADULT_AGE;
-        return new QuizTopicsResponse(underAge, content.topics().size(), groups);
+        String next = to < ordered.size() ? QuizRules.encodeCursor(to) : null;
+        return new QuizTopicsResponse(underAge, content.topics().size(), groups, chips, next);
     }
 
     @Transactional(readOnly = true)

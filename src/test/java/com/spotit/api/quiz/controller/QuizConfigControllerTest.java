@@ -1,6 +1,7 @@
 package com.spotit.api.quiz.controller;
 
 import com.spotit.api.quiz.dto.ApproveQuestionRequest;
+import com.spotit.api.quiz.dto.QuizAdminPage;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
@@ -47,25 +48,25 @@ class QuizConfigControllerTest {
         QuizQuestionAdmin question = new QuizQuestionAdmin("q1", "my-cycle", 1, "Stress can delay a period.", "fact", null, "Because", null,
                 null, "draft", null, true, null);
         QuizRankAdmin rank = new QuizRankAdmin("explorer", "Explorer", 15, true);
-        when(quizAdminService.ranks()).thenReturn(List.of(rank));
+        when(quizAdminService.ranks(null, null)).thenReturn(new QuizAdminPage<>(List.of(rank), 0, 50, 1));
         when(quizAdminService.saveRank(eq("explorer"), any())).thenReturn(rank);
-        when(quizAdminService.groups()).thenReturn(List.of(group));
-        when(quizAdminService.topics()).thenReturn(List.of(topic));
-        when(quizAdminService.levels("my-cycle")).thenReturn(List.of(level));
-        when(quizAdminService.questions("my-cycle", "draft")).thenReturn(List.of(question));
+        when(quizAdminService.groups(null, null)).thenReturn(new QuizAdminPage<>(List.of(group), 0, 50, 1));
+        when(quizAdminService.topics(null, null)).thenReturn(new QuizAdminPage<>(List.of(topic), 0, 50, 1));
+        when(quizAdminService.levels("my-cycle", null, null)).thenReturn(new QuizAdminPage<>(List.of(level), 0, 50, 1));
+        when(quizAdminService.questions("my-cycle", "draft", 2, 10)).thenReturn(new QuizAdminPage<>(List.of(question), 2, 10, 21));
         when(quizAdminService.saveGroup(eq("body"), any())).thenReturn(group);
         when(quizAdminService.saveTopic(eq("my-cycle"), any())).thenReturn(topic);
         when(quizAdminService.saveLevel(eq("my-cycle"), eq(1), any())).thenReturn(level);
         when(quizAdminService.saveQuestion(eq("q1"), any())).thenReturn(question);
         when(quizAdminService.approve("q1", "Dr Ada")).thenReturn(question);
 
-        mvc.perform(get("/api/v1/config/quiz/ranks")).andExpect(jsonPath("$.data[0].minStars").value(15));
+        mvc.perform(get("/api/v1/config/quiz/ranks")).andExpect(jsonPath("$.data.items[0].minStars").value(15));
         mvc.perform(put("/api/v1/config/quiz/ranks/explorer").contentType(MediaType.APPLICATION_JSON).content(json(rank))).andExpect(status().isOk());
-        mvc.perform(get("/api/v1/config/quiz/groups")).andExpect(jsonPath("$.data[0].id").value("body"));
-        mvc.perform(get("/api/v1/config/quiz/topics")).andExpect(jsonPath("$.data[0].minAge").value(13));
-        mvc.perform(get("/api/v1/config/quiz/levels").param("topicId", "my-cycle")).andExpect(jsonPath("$.data[0].cost").value(0));
-        mvc.perform(get("/api/v1/config/quiz/questions").param("topicId", "my-cycle").param("status", "draft"))
-                .andExpect(jsonPath("$.data[0].status").value("draft"));
+        mvc.perform(get("/api/v1/config/quiz/groups")).andExpect(jsonPath("$.data.items[0].id").value("body"));
+        mvc.perform(get("/api/v1/config/quiz/topics")).andExpect(jsonPath("$.data.items[0].minAge").value(13));
+        mvc.perform(get("/api/v1/config/quiz/levels").param("topicId", "my-cycle")).andExpect(jsonPath("$.data.items[0].cost").value(0));
+        mvc.perform(get("/api/v1/config/quiz/questions").param("topicId", "my-cycle").param("status", "draft").param("page", "2").param("size", "10"))
+                .andExpect(jsonPath("$.data.items[0].status").value("draft")).andExpect(jsonPath("$.data.total").value(21));
         mvc.perform(put("/api/v1/config/quiz/groups/body").contentType(MediaType.APPLICATION_JSON).content(json(group))).andExpect(status().isOk());
         mvc.perform(put("/api/v1/config/quiz/topics/my-cycle").contentType(MediaType.APPLICATION_JSON).content(json(topic))).andExpect(status().isOk());
         mvc.perform(put("/api/v1/config/quiz/levels/my-cycle/1").contentType(MediaType.APPLICATION_JSON).content(json(level)))

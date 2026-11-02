@@ -43,6 +43,7 @@ public class ConfigPropertyCatalog {
         List<Property> list = new ArrayList<>();
 
         addSecurityProperties(list);
+        addQuizProperties(list);
         addGlobalProperties(list);
 
         this.ordered = List.copyOf(list);
@@ -83,19 +84,7 @@ public class ConfigPropertyCatalog {
                 (c, v) -> c.security().setCryptoAesKey((String) v)));
     }
 
-    private static void addGlobalProperties(List<Property> list) {
-        list.add(new Property(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS,
-                "Max rewarded ad views per user per day", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getAdsDailyLimit(),
-                (c, v) -> c.global().setAdsDailyLimit((Long) v)));
-        list.add(new Property(PropertyNames.POINTS_DAILY_CLAIM, PropertyNames.GROUP_POINTS,
-                "Points awarded for the daily claim", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getPointsDailyClaim(),
-                (c, v) -> c.global().setPointsDailyClaim((Long) v)));
-        list.add(new Property(PropertyNames.POINTS_WATCH_AD, PropertyNames.GROUP_POINTS,
-                "Points awarded for watching a rewarded ad", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getPointsWatchAd(),
-                (c, v) -> c.global().setPointsWatchAd((Long) v)));
+    private static void addQuizProperties(List<Property> list) {
         list.add(new Property(PropertyNames.QUIZ_ROUNDS, PropertyNames.GROUP_QUIZ,
                 "Rounds (questions) in one Know Yourself quiz level", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getQuizRounds(),
@@ -120,6 +109,29 @@ public class ConfigPropertyCatalog {
                 "Maybe-later taps in a row after which the Spotlight invite stops", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getSpotlightInviteMaxDismissals(),
                 (c, v) -> c.global().setSpotlightInviteMaxDismissals((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_TOPICS_PAGE_SIZE, PropertyNames.GROUP_QUIZ,
+                "Topics sent per page on the Spotlight All topics screen", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTopicsPageSize(),
+                (c, v) -> c.global().setQuizTopicsPageSize((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_ADMIN_PAGE_SIZE, PropertyNames.GROUP_QUIZ,
+                "Default page size for the quiz admin lists (questions, levels, topics, groups, ranks)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizAdminPageSize(),
+                (c, v) -> c.global().setQuizAdminPageSize((Long) v)));
+    }
+
+    private static void addGlobalProperties(List<Property> list) {
+        list.add(new Property(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS,
+                "Max rewarded ad views per user per day", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getAdsDailyLimit(),
+                (c, v) -> c.global().setAdsDailyLimit((Long) v)));
+        list.add(new Property(PropertyNames.POINTS_DAILY_CLAIM, PropertyNames.GROUP_POINTS,
+                "Points awarded for the daily claim", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPointsDailyClaim(),
+                (c, v) -> c.global().setPointsDailyClaim((Long) v)));
+        list.add(new Property(PropertyNames.POINTS_WATCH_AD, PropertyNames.GROUP_POINTS,
+                "Points awarded for watching a rewarded ad", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPointsWatchAd(),
+                (c, v) -> c.global().setPointsWatchAd((Long) v)));
         list.add(new Property(PropertyNames.CYCLE_DEFAULT_LENGTH, PropertyNames.GROUP_CYCLE,
                 "Default cycle length assumed until a user has logged enough data", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getCycleDefaultLength(),
