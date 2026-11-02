@@ -57,12 +57,21 @@ public class SpotlightHomeService {
         List<ChallengeCard> challenges = challengeRepository.findByActiveTrueOrderBySortOrderAsc().stream()
                 .map(c -> new ChallengeCard(c.getId(), c.getKind(), c.getName(), c.getBlurb(), c.getIcon(), c.getTone(),
                         SpotlightChallenge.QUIZ.equals(c.getKind()) ? null : c.getCost(), c.isCostFrom(), c.getMinAge(), c.getStatus(),
-                        SpotlightRules.isLocked(c.getMinAge(), age), freePlaysLeft(c, byChallenge.get(c.getId()))))
+                        SpotlightRules.isLocked(c.getMinAge(), age), freePlaysLeft(c, byChallenge.get(c.getId())),
+                        starsOf(byChallenge.get(c.getId())), playsOf(byChallenge.get(c.getId()))))
                 .toList();
         SpotlightInvite invite = new SpotlightInvite(config.isSpotlightInviteEnabled(), config.getSpotlightInviteEveryDays(),
                 config.getSpotlightInviteMaxDismissals());
         return new SpotlightHomeResponse(user.getPoints(), stats, challenges, invite,
                 rankList.stream().map(r -> new RankStep(r.getId(), r.getName(), r.getMinStars())).toList());
+    }
+
+    static int starsOf(GameSummary summary) {
+        return summary == null ? 0 : summary.stars();
+    }
+
+    static long playsOf(GameSummary summary) {
+        return summary == null ? 0 : summary.plays();
     }
 
     static int freePlaysLeft(SpotlightChallenge challenge, GameSummary summary) {

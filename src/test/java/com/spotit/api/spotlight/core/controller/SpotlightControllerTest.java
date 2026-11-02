@@ -50,7 +50,7 @@ class SpotlightControllerTest {
         authenticate();
         when(homeService.home(USER_ID)).thenReturn(new SpotlightHomeResponse(240, new SpotlightStats(3, 5, 2, 40, 6, 2,
                 List.of(true, false, true, true, false, true, true), new RankView("curious", "Curious", 0, "Explorer", 15)),
-                List.of(new ChallengeCard("pad-factory", "game", "Pad Factory", "Design pads", "pad", "pink", 10, true, 13, "soon", false, 1)),
+                List.of(new ChallengeCard("pad-factory", "game", "Pad Factory", "Design pads", "pad", "pink", 10, true, 13, "soon", false, 1, 2, 3)),
                 new SpotlightInvite(true, 3, 3), List.of(new RankStep("curious", "Curious", 0), new RankStep("explorer", "Explorer", 15))));
 
         mvc.perform(get("/api/v1/spotlight/home")).andExpect(status().isOk()).andExpect(jsonPath("$.data.balance").value(240))
@@ -58,6 +58,7 @@ class SpotlightControllerTest {
                 .andExpect(jsonPath("$.data.stats.rank.nextName").value("Explorer"))
                 .andExpect(jsonPath("$.data.challenges[0].cost").value(10))
                 .andExpect(jsonPath("$.data.challenges[0].freePlaysLeft").value(1))
+                .andExpect(jsonPath("$.data.challenges[0].stars").value(2))
                 .andExpect(jsonPath("$.data.invite.everyDays").value(3))
                 .andExpect(jsonPath("$.data.ranks[1].minStars").value(15));
     }

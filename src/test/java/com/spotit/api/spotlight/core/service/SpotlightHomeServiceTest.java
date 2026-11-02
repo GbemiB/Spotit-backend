@@ -73,6 +73,8 @@ class SpotlightHomeServiceTest {
         assertThat(home.stats().rank()).extracting("name", "nextName").containsExactly("Explorer", null);
         assertThat(home.challenges()).extracting("id", "cost", "locked", "freePlaysLeft").containsExactly(tuple("know-yourself", null, false, 0),
                 tuple("clinic-shift", 15, true, 0), tuple("pad-bank-run", 10, false, 2));
+        assertThat(home.challenges()).extracting("stars", "plays").containsExactly(tuple(10, 7L), tuple(0, 0L), tuple(6, 1L));
+        assertThat(home.ranks()).extracting("name", "minStars").containsExactly(tuple("Curious", 0), tuple("Explorer", 15));
         assertThat(home.invite()).isEqualTo(new SpotlightInvite(true, 3, 3));
         assertThat(quiz.challengeId()).isEqualTo("know-yourself");
         assertThat(GameSummary.empty().stars()).isZero();
