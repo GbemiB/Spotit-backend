@@ -33,6 +33,7 @@ import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizLevelResultRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
+import com.spotit.api.quiz.repository.QuizRankRepository;
 import com.spotit.api.quiz.repository.QuizSeenRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import com.spotit.api.rewards.service.PointsWriteService;
@@ -75,6 +76,7 @@ public class QuizPlayService {
     private final QuizLevelResultRepository resultRepository;
     private final QuizAttemptRepository attemptRepository;
     private final QuizSeenRepository seenRepository;
+    private final QuizRankRepository rankRepository;
 
     record Content(List<QuizGroup> groups, List<QuizTopic> topics, Map<String, List<QuizLevel>> levels, Map<String, Long> ready) {
         List<QuizLevel> levelsOf(String topicId) {
@@ -108,9 +110,12 @@ public class QuizPlayService {
         open.stream().filter(c -> !c.started()).forEach(shown::add);
         Set<LocalDate> days = new HashSet<>(attemptRepository.findPlayDaysSince(userId, player.today().minusDays(400)));
         List<QuizLevelResult> all = player.results().values().stream().flatMap(m -> m.values().stream()).toList();
-        QuizStats stats = new QuizStats(QuizRules.streak(days, player.today()),
-                all.stream().mapToInt(QuizLevelResult::getBestStars).sum(),
-                (int) all.stream().filter(r -> r.getBestStars() > 0).count());
+        int stars = all.stream().mapToInt(QuizLevelResult::getBestStars).sum();
+        int topicsStarted = (int) player.results().values().stream().filter(m -> !m.isEmpty()).count();
+        QuizStats stats = new QuizStats(QuizRules.streak(days, player.today()), stars,
+                (int) all.stream().filter(r -> r.getBestStars() > 0).count(), attemptRepository.sumCorrect(userId),
+                attemptRepository.maxBestStreak(userId), topicsStarted, QuizRules.week(days, player.today()),
+                QuizRules.rank(rankRepository.findByActiveTrueOrderByMinStarsAsc(), stars));
         return new QuizHomeResponse(player.user().getPoints(), stats, pick(userId, player, content, open), shown.stream().limit(HOME_TOPIC_CARDS).toList(),
                 content.topics().size(), rounds, config.getQuizLives(), config.getQuizHintCost(),
                 new SpotlightInvite(config.isSpotlightInviteEnabled(), config.getSpotlightInviteEveryDays(),

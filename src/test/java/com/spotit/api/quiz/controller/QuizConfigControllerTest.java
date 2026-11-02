@@ -4,6 +4,7 @@ import com.spotit.api.quiz.dto.ApproveQuestionRequest;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
+import com.spotit.api.quiz.dto.QuizRankAdmin;
 import com.spotit.api.quiz.dto.QuizTopicAdmin;
 import com.spotit.api.quiz.service.QuizAdminService;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +46,9 @@ class QuizConfigControllerTest {
         QuizLevelAdmin level = new QuizLevelAdmin("my-cycle", 1, "Your period basics", 0, true, null);
         QuizQuestionAdmin question = new QuizQuestionAdmin("q1", "my-cycle", 1, "Stress can delay a period.", "fact", null, "Because", null,
                 null, "draft", null, true, null);
+        QuizRankAdmin rank = new QuizRankAdmin("explorer", "Explorer", 15, true);
+        when(quizAdminService.ranks()).thenReturn(List.of(rank));
+        when(quizAdminService.saveRank(eq("explorer"), any())).thenReturn(rank);
         when(quizAdminService.groups()).thenReturn(List.of(group));
         when(quizAdminService.topics()).thenReturn(List.of(topic));
         when(quizAdminService.levels("my-cycle")).thenReturn(List.of(level));
@@ -55,6 +59,8 @@ class QuizConfigControllerTest {
         when(quizAdminService.saveQuestion(eq("q1"), any())).thenReturn(question);
         when(quizAdminService.approve("q1", "Dr Ada")).thenReturn(question);
 
+        mvc.perform(get("/api/v1/config/quiz/ranks")).andExpect(jsonPath("$.data[0].minStars").value(15));
+        mvc.perform(put("/api/v1/config/quiz/ranks/explorer").contentType(MediaType.APPLICATION_JSON).content(json(rank))).andExpect(status().isOk());
         mvc.perform(get("/api/v1/config/quiz/groups")).andExpect(jsonPath("$.data[0].id").value("body"));
         mvc.perform(get("/api/v1/config/quiz/topics")).andExpect(jsonPath("$.data[0].minAge").value(13));
         mvc.perform(get("/api/v1/config/quiz/levels").param("topicId", "my-cycle")).andExpect(jsonPath("$.data[0].cost").value(0));

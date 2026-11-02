@@ -5,14 +5,17 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
+import com.spotit.api.quiz.dto.QuizRankAdmin;
 import com.spotit.api.quiz.dto.QuizTopicAdmin;
 import com.spotit.api.quiz.entity.QuizGroup;
 import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizQuestion;
+import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizTopic;
 import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
+import com.spotit.api.quiz.repository.QuizRankRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +41,7 @@ class QuizAdminServiceTest {
     @Mock QuizTopicRepository topicRepository;
     @Mock QuizLevelRepository levelRepository;
     @Mock QuizQuestionRepository questionRepository;
+    @Mock QuizRankRepository rankRepository;
     @InjectMocks QuizAdminService service;
 
     @BeforeEach
@@ -46,6 +50,7 @@ class QuizAdminServiceTest {
         when(topicRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(levelRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(questionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(rankRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(groupRepository.existsById("body")).thenReturn(true);
         when(topicRepository.existsById("my-cycle")).thenReturn(true);
     }
@@ -180,5 +185,23 @@ class QuizAdminServiceTest {
     void approvingAnUnknownQuestionIs404() {
         assertThatThrownBy(() -> service.approve("nope", "Dr Ada")).isInstanceOf(ApiException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void ranksCanBeListedAddedAndRetuned() {
+        when(rankRepository.findAllByOrderByMinStarsAsc()).thenReturn(List.of(QuizRank.builder().id("curious").name("Curious").minStars(0).active(true).build()));
+        assertThat(service.ranks()).extracting("id").containsExactly("curious");
+
+        QuizRankAdmin created = service.saveRank("explorer", new QuizRankAdmin(null, " Explorer ", 15, null));
+        assertThat(created).extracting("name", "minStars", "active").containsExactly("Explorer", 15, true);
+
+        QuizRank existing = QuizRank.builder().id("explorer").name("Explorer").minStars(15).active(true).build();
+        when(rankRepository.findById("explorer")).thenReturn(Optional.of(existing));
+        QuizRankAdmin patched = service.saveRank("explorer", new QuizRankAdmin(null, null, -3, false));
+        assertThat(patched.minStars()).isZero();
+        assertThat(patched.active()).isFalse();
+
+        assertThatThrownBy(() -> service.saveRank("new", new QuizRankAdmin(null, "New", null, null)))
+                .isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 }

@@ -1,4 +1,15 @@
 package com.spotit.api.quiz.dto;
 
-public record QuizStats(int streak, int stars, int levelsDone) {
+import java.util.List;
+
+public record QuizStats(
+        int streak,
+        int stars,
+        int levelsDone,
+        long rightAnswers,
+        int bestRun,
+        int topicsStarted,
+        List<Boolean> week,
+        RankView rank
+) {
 }

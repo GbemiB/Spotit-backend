@@ -18,12 +18,14 @@ import com.spotit.api.quiz.entity.QuizGroup;
 import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizLevelResult;
 import com.spotit.api.quiz.entity.QuizQuestion;
+import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizTopic;
 import com.spotit.api.quiz.repository.QuizAttemptRepository;
 import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizLevelResultRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
+import com.spotit.api.quiz.repository.QuizRankRepository;
 import com.spotit.api.quiz.repository.QuizSeenRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import com.spotit.api.rewards.service.PointsWriteService;
@@ -70,6 +72,7 @@ class QuizPlayServiceTest {
     @Mock QuizLevelResultRepository resultRepository;
     @Mock QuizAttemptRepository attemptRepository;
     @Mock QuizSeenRepository seenRepository;
+    @Mock QuizRankRepository rankRepository;
     @InjectMocks QuizPlayService service;
 
     final UUID userId = UUID.randomUUID();
@@ -112,6 +115,11 @@ class QuizPlayServiceTest {
                 new Object[]{"my-cycle", 1, 2L}, new Object[]{"my-cycle", 2, 2L}, new Object[]{"sex", 1, 2L}));
         when(resultRepository.findByUserId(userId)).thenReturn(results);
         when(attemptRepository.findPlayDaysSince(eq(userId), any())).thenReturn(List.of(today, today.minusDays(1)));
+        when(attemptRepository.sumCorrect(userId)).thenReturn(12L);
+        when(attemptRepository.maxBestStreak(userId)).thenReturn(4);
+        when(rankRepository.findByActiveTrueOrderByMinStarsAsc()).thenReturn(List.of(
+                QuizRank.builder().id("curious").name("Curious").minStars(0).active(true).build(),
+                QuizRank.builder().id("explorer").name("Explorer").minStars(15).active(true).build()));
         when(attemptRepository.save(any())).thenAnswer(inv -> {
             QuizAttempt a = inv.getArgument(0);
             if (a.getId() == null) {
@@ -154,6 +162,11 @@ class QuizPlayServiceTest {
         assertThat(home.stats().streak()).isEqualTo(2);
         assertThat(home.stats().stars()).isEqualTo(2);
         assertThat(home.stats().levelsDone()).isEqualTo(1);
+        assertThat(home.stats().rightAnswers()).isEqualTo(12);
+        assertThat(home.stats().bestRun()).isEqualTo(4);
+        assertThat(home.stats().topicsStarted()).isEqualTo(1);
+        assertThat(home.stats().week()).containsExactly(false, false, false, false, false, true, true);
+        assertThat(home.stats().rank()).extracting("name", "nextName", "nextMinStars").containsExactly("Curious", "Explorer", 15);
         assertThat(home.pick().topicId()).isEqualTo("my-cycle");
         assertThat(home.rounds()).isEqualTo(2);
         assertThat(home.hintCost()).isEqualTo(5);

@@ -4,6 +4,7 @@ import com.spotit.api.quiz.dto.ApproveQuestionRequest;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
+import com.spotit.api.quiz.dto.QuizRankAdmin;
 import com.spotit.api.quiz.dto.QuizTopicAdmin;
 import com.spotit.api.quiz.service.QuizAdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +31,18 @@ import java.util.List;
 @RequiredArgsConstructor
 public class QuizConfigController {
     private final QuizAdminService quizAdminService;
+
+    @Operation(summary = "List Spotlight ranks")
+    @GetMapping("/ranks")
+    public List<QuizRankAdmin> ranks() {
+        return quizAdminService.ranks();
+    }
+
+    @Operation(summary = "Create or update a Spotlight rank", description = "minStars is the number of stars needed to reach the rank.")
+    @PutMapping("/ranks/{id}")
+    public QuizRankAdmin saveRank(@Parameter(example = "explorer") @PathVariable String id, @RequestBody QuizRankAdmin body) {
+        return quizAdminService.saveRank(id, body);
+    }
 
     @Operation(summary = "List groups")
     @GetMapping("/groups")

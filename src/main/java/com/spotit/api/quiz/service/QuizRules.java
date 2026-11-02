@@ -1,6 +1,8 @@
 package com.spotit.api.quiz.service;
 
+import com.spotit.api.quiz.dto.RankView;
 import com.spotit.api.quiz.entity.QuizQuestion;
+import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizSeen;
 
 import java.time.Instant;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 
 public final class QuizRules {
     public static final int ADULT_AGE = 18;
+    static final int WEEK_DAYS = 7;
 
     private QuizRules() {
     }
@@ -50,6 +53,32 @@ public final class QuizRules {
             return "cleared";
         }
         return number == current ? "current" : "locked";
+    }
+
+    public static RankView rank(List<QuizRank> ranks, int stars) {
+        if (ranks.isEmpty()) {
+            return null;
+        }
+        QuizRank current = ranks.get(0);
+        QuizRank next = null;
+        for (QuizRank r : ranks) {
+            if (r.getMinStars() <= stars) {
+                current = r;
+            } else {
+                next = r;
+                break;
+            }
+        }
+        return new RankView(current.getId(), current.getName(), current.getMinStars(), next == null ? null : next.getName(),
+                next == null ? null : next.getMinStars());
+    }
+
+    public static List<Boolean> week(Set<LocalDate> playDays, LocalDate today) {
+        List<Boolean> days = new ArrayList<>();
+        for (int back = WEEK_DAYS - 1; back >= 0; back--) {
+            days.add(playDays.contains(today.minusDays(back)));
+        }
+        return days;
     }
 
     public static int streak(Set<LocalDate> playDays, LocalDate today) {

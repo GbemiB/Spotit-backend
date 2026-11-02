@@ -44,6 +44,13 @@ INSERT INTO quiz_topics (id, name, group_id, min_age, sort_order, active) VALUES
   ('menopause', 'Perimenopause & Menopause', 'screening', 18, 31, false)
 ON CONFLICT DO NOTHING;
 
+INSERT INTO quiz_ranks (id, name, min_stars, active) VALUES
+  ('curious', 'Curious', 0, true),
+  ('explorer', 'Explorer', 15, true),
+  ('myth-buster', 'Myth Buster', 45, true),
+  ('know-it-all', 'Know-It-All', 90, true)
+ON CONFLICT DO NOTHING;
+
 UPDATE quiz_topics SET icon = 'cycle' WHERE id = 'my-cycle' AND icon IS NULL;
 UPDATE quiz_topics SET icon = 'myth' WHERE id = 'period-myths' AND icon IS NULL;
 UPDATE quiz_topics SET icon = 'sprout' WHERE id = 'body-changes' AND icon IS NULL;

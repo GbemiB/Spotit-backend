@@ -11,4 +11,10 @@ import java.util.UUID;
 public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, UUID> {
     @Query("SELECT DISTINCT a.playedOn FROM QuizAttempt a WHERE a.userId = :userId AND a.status <> 'playing' AND a.playedOn >= :since")
     List<LocalDate> findPlayDaysSince(UUID userId, LocalDate since);
+
+    @Query("SELECT COALESCE(SUM(a.correct), 0) FROM QuizAttempt a WHERE a.userId = :userId")
+    long sumCorrect(UUID userId);
+
+    @Query("SELECT COALESCE(MAX(a.bestStreak), 0) FROM QuizAttempt a WHERE a.userId = :userId")
+    int maxBestStreak(UUID userId);
 }

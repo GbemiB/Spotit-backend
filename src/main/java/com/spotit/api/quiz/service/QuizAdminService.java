@@ -6,14 +6,17 @@ import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.quiz.dto.QuizGroupAdmin;
 import com.spotit.api.quiz.dto.QuizLevelAdmin;
 import com.spotit.api.quiz.dto.QuizQuestionAdmin;
+import com.spotit.api.quiz.dto.QuizRankAdmin;
 import com.spotit.api.quiz.dto.QuizTopicAdmin;
 import com.spotit.api.quiz.entity.QuizGroup;
 import com.spotit.api.quiz.entity.QuizLevel;
 import com.spotit.api.quiz.entity.QuizQuestion;
+import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizTopic;
 import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
+import com.spotit.api.quiz.repository.QuizRankRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class QuizAdminService {
     private final QuizTopicRepository topicRepository;
     private final QuizLevelRepository levelRepository;
     private final QuizQuestionRepository questionRepository;
+    private final QuizRankRepository rankRepository;
 
     @Transactional(readOnly = true)
     public List<QuizGroupAdmin> groups() {
@@ -62,6 +66,30 @@ public class QuizAdminService {
             list = questionRepository.findAllByOrderByTopicIdAscLevelNumberAscIdAsc();
         }
         return list.stream().map(QuizQuestionAdmin::of).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuizRankAdmin> ranks() {
+        return rankRepository.findAllByOrderByMinStarsAsc().stream().map(QuizRankAdmin::of).toList();
+    }
+
+    @Transactional
+    public QuizRankAdmin saveRank(String id, QuizRankAdmin body) {
+        QuizRank rank = rankRepository.findById(id).orElse(null);
+        if (rank == null) {
+            requireAll(body.name(), body.minStars());
+            rank = QuizRank.builder().id(id).active(true).build();
+        }
+        if (body.name() != null) {
+            rank.setName(body.name().strip());
+        }
+        if (body.minStars() != null) {
+            rank.setMinStars(Math.max(0, body.minStars()));
+        }
+        if (body.active() != null) {
+            rank.setActive(body.active());
+        }
+        return QuizRankAdmin.of(rankRepository.save(rank));
     }
 
     @Transactional

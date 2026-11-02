@@ -4,6 +4,7 @@ import com.spotit.api.quiz.entity.QuizQuestion;
 import com.spotit.api.quiz.repository.QuizGroupRepository;
 import com.spotit.api.quiz.repository.QuizLevelRepository;
 import com.spotit.api.quiz.repository.QuizQuestionRepository;
+import com.spotit.api.quiz.repository.QuizRankRepository;
 import com.spotit.api.quiz.repository.QuizTopicRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ class QuizContentScriptTest {
     @Autowired QuizTopicRepository topicRepository;
     @Autowired QuizLevelRepository levelRepository;
     @Autowired QuizQuestionRepository questionRepository;
+    @Autowired QuizRankRepository rankRepository;
 
     @Test
     void theScriptLoadsTenTopicsFiveLevelsAndFiveHundredApprovedQuestionsAndCanBeRunTwice() throws Exception {
@@ -34,6 +36,7 @@ class QuizContentScriptTest {
         }
 
         assertThat(groupRepository.count()).isEqualTo(7);
+        assertThat(rankRepository.findByActiveTrueOrderByMinStarsAsc()).extracting("minStars").containsExactly(0, 15, 45, 90);
         assertThat(topicRepository.count()).isEqualTo(31);
         assertThat(topicRepository.findByActiveTrueOrderBySortOrderAsc()).hasSize(10)
                 .extracting("name").contains("Inside My Cycle", "Sleep, Cycle, Repeat");

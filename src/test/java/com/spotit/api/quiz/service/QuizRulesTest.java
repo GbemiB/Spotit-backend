@@ -1,6 +1,7 @@
 package com.spotit.api.quiz.service;
 
 import com.spotit.api.quiz.entity.QuizQuestion;
+import com.spotit.api.quiz.entity.QuizRank;
 import com.spotit.api.quiz.entity.QuizSeen;
 import org.junit.jupiter.api.Test;
 
@@ -77,5 +78,24 @@ class QuizRulesTest {
     @Test
     void aSmallPoolGivesWhatItHas() {
         assertThat(QuizRules.pickQuestions(List.of(q("a")), List.of(), 5, new Random(1))).hasSize(1);
+    }
+
+    @Test
+    void theRankFollowsStarsAndNamesTheNextOne() {
+        List<QuizRank> ranks = List.of(QuizRank.builder().id("curious").name("Curious").minStars(0).build(),
+                QuizRank.builder().id("explorer").name("Explorer").minStars(15).build(),
+                QuizRank.builder().id("top").name("Know-It-All").minStars(90).build());
+
+        assertThat(QuizRules.rank(ranks, 0)).extracting("id", "nextName", "nextMinStars").containsExactly("curious", "Explorer", 15);
+        assertThat(QuizRules.rank(ranks, 33)).extracting("name", "minStars", "nextMinStars").containsExactly("Explorer", 15, 90);
+        assertThat(QuizRules.rank(ranks, 150)).extracting("id", "nextName", "nextMinStars").containsExactly("top", null, null);
+        assertThat(QuizRules.rank(List.of(), 10)).isNull();
+    }
+
+    @Test
+    void theWeekRunsFromSixDaysAgoToToday() {
+        LocalDate today = LocalDate.of(2026, 11, 2);
+        assertThat(QuizRules.week(Set.of(today, today.minusDays(2), today.minusDays(9)), today))
+                .containsExactly(false, false, false, false, true, false, true);
     }
 }

@@ -6,6 +6,7 @@ import com.spotit.api.quiz.dto.HintRequest;
 import com.spotit.api.quiz.dto.HintResponse;
 import com.spotit.api.quiz.dto.QuizHomeResponse;
 import com.spotit.api.quiz.dto.QuizStats;
+import com.spotit.api.quiz.dto.RankView;
 import com.spotit.api.quiz.dto.QuizTopicDetail;
 import com.spotit.api.quiz.dto.QuizTopicsResponse;
 import com.spotit.api.quiz.dto.RoundView;
@@ -57,7 +58,8 @@ class QuizControllerTest {
 
     @Test
     void homeTopicsAndLevelMap() throws Exception {
-        when(quizPlayService.home(USER_ID)).thenReturn(new QuizHomeResponse(240, new QuizStats(3, 5, 2), null, List.of(), 31, 5, 3, 5,
+        when(quizPlayService.home(USER_ID)).thenReturn(new QuizHomeResponse(240, new QuizStats(3, 5, 2, 40, 6, 2, List.of(true, false, true, true, false, true, true),
+                new RankView("curious", "Curious", 0, "Explorer", 15)), null, List.of(), 31, 5, 3, 5,
                 new SpotlightInvite(true, 3, 3)));
         when(quizPlayService.topics(USER_ID)).thenReturn(new QuizTopicsResponse(true, 31, List.of()));
         when(quizPlayService.topic(USER_ID, "my-cycle")).thenReturn(new QuizTopicDetail(null, 240, List.of()));
