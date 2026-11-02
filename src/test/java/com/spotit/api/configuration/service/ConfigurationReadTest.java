@@ -119,6 +119,19 @@ class ConfigurationReadTest {
     }
 
     @Test
+    void giveDaySettingsAreReturned() {
+        lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
+                .id(GlobalConfig.SINGLETON_ID).givedayStartCoins(150).givedayGoodPicks(2).givedayTitleThree("Wow").build()));
+
+        assertThat(service.getGivedayStartCoins()).isEqualTo(150);
+        assertThat(service.getGivedayGoodPicks()).isEqualTo(2);
+        assertThat(service.getGivedayTitleThree()).isEqualTo("Wow");
+        assertThat(service.getGivedayTitleTwo()).isEqualTo("Lovely work");
+        assertThat(service.getGivedayTitleOne()).isEqualTo("A good start");
+        assertThat(service.getGivedayTitleZero()).isEqualTo("Something important is missing");
+    }
+
+    @Test
     void padBankSettingsAreReturned() {
         lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
                 .id(GlobalConfig.SINGLETON_ID).padbankBudget(120).padbankHearts(2).padbankDeliveryCost(15).padbankBudgetGoal(30).padbankTitleOops(" ").build()));

@@ -67,6 +67,24 @@ public class GlobalConfig {
     @Column(name = "spotlight_admin_page_size", nullable = false, columnDefinition = "bigint default 50")
     private long spotlightAdminPageSize;
 
+    @Column(name = "giveday_start_coins", nullable = false, columnDefinition = "bigint default 200")
+    private long givedayStartCoins;
+
+    @Column(name = "giveday_good_picks", nullable = false, columnDefinition = "bigint default 3")
+    private long givedayGoodPicks;
+
+    @Column(name = "giveday_title_three", length = 60)
+    private String givedayTitleThree;
+
+    @Column(name = "giveday_title_two", length = 60)
+    private String givedayTitleTwo;
+
+    @Column(name = "giveday_title_one", length = 60)
+    private String givedayTitleOne;
+
+    @Column(name = "giveday_title_zero", length = 60)
+    private String givedayTitleZero;
+
     @Column(name = "padbank_budget", nullable = false, columnDefinition = "bigint default 100")
     private long padbankBudget;
 

@@ -38,6 +38,18 @@ public interface ConfigurationDomainService {
 
     int getQuizTopicsPageSize();
 
+    int getGivedayStartCoins();
+
+    int getGivedayGoodPicks();
+
+    String getGivedayTitleThree();
+
+    String getGivedayTitleTwo();
+
+    String getGivedayTitleOne();
+
+    String getGivedayTitleZero();
+
     int getPadbankBudget();
 
     int getPadbankHearts();

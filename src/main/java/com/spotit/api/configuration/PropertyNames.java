@@ -21,6 +21,12 @@ public final class PropertyNames {
     public static final String SPOTLIGHT_INVITE_EVERY_DAYS = "spotlight-invite-every-days";
     public static final String SPOTLIGHT_INVITE_MAX_DISMISSALS = "spotlight-invite-max-dismissals";
     public static final String QUIZ_TOPICS_PAGE_SIZE = "quiz-topics-page-size";
+    public static final String GIVEDAY_START_COINS = "giveday-start-coins";
+    public static final String GIVEDAY_GOOD_PICKS = "giveday-good-picks";
+    public static final String GIVEDAY_TITLE_THREE = "giveday-title-three";
+    public static final String GIVEDAY_TITLE_TWO = "giveday-title-two";
+    public static final String GIVEDAY_TITLE_ONE = "giveday-title-one";
+    public static final String GIVEDAY_TITLE_ZERO = "giveday-title-zero";
     public static final String PADBANK_BUDGET = "padbank-budget";
     public static final String PADBANK_HEARTS = "padbank-hearts";
     public static final String PADBANK_DELIVERY_COST = "padbank-delivery-cost";
@@ -62,6 +68,7 @@ public final class PropertyNames {
     public static final String GROUP_QUIZ = "quiz";
     public static final String GROUP_SPOTLIGHT = "spotlight";
     public static final String GROUP_PADBANK = "padbank";
+    public static final String GROUP_GIVEDAY = "giveday";
 
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";

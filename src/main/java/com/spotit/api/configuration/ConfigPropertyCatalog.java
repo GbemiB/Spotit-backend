@@ -45,6 +45,7 @@ public class ConfigPropertyCatalog {
         addSecurityProperties(list);
         addQuizProperties(list);
         addPadBankProperties(list);
+        addGiveDayProperties(list);
         addGlobalProperties(list);
 
         this.ordered = List.copyOf(list);
@@ -83,6 +84,37 @@ public class ConfigPropertyCatalog {
                 Kind.STRING, Section.SECURITY, true, false,
                 c -> c.security().getCryptoAesKey(),
                 (c, v) -> c.security().setCryptoAesKey((String) v)));
+    }
+
+    private static void addGiveDayProperties(List<Property> list) {
+        list.add(new Property(PropertyNames.GIVEDAY_START_COINS, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: give coins at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayStartCoins(),
+                (c, v) -> c.global().setGivedayStartCoins((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_GOOD_PICKS, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: well-matched products needed for the second star", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayGoodPicks(),
+                (c, v) -> c.global().setGivedayGoodPicks((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_THREE, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with three stars; unset uses A perfect give!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleThree(),
+                (c, v) -> c.global().setGivedayTitleThree((String) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_TWO, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with two stars; unset uses Lovely work",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleTwo(),
+                (c, v) -> c.global().setGivedayTitleTwo((String) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_ONE, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with one star; unset uses A good start",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleOne(),
+                (c, v) -> c.global().setGivedayTitleOne((String) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_ZERO, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with no stars; unset uses Something important is missing",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleZero(),
+                (c, v) -> c.global().setGivedayTitleZero((String) v)));
     }
 
     private static void addPadBankProperties(List<Property> list) {

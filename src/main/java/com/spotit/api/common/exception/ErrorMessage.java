@@ -74,6 +74,16 @@ public final class ErrorMessage {
     public static final String QUIZ_ICON_TOO_LONG = "Topic icon names can be at most 30 characters.";
     public static final String QUIZ_BAD_CHALLENGE = "Challenge kind must be quiz or game, and status live or soon.";
     public static final String PADBANK_NOT_OPEN = "Pad Bank Run isn't open yet.";
+    public static final String GIVEDAY_NOT_OPEN = "Give Day isn't open yet.";
+    public static final String GIVEDAY_AGE_LOCKED = "This game opens when you're older.";
+    public static final String GIVEDAY_EMPTY = "Give Day has no places yet.";
+    public static final String GIVEDAY_RUN_NOT_FOUND = "Give Day game not found.";
+    public static final String GIVEDAY_BAD_PLACE = "That place isn't on the map.";
+    public static final String GIVEDAY_PLACE_DONE = "You already gave at this place today.";
+    public static final String GIVEDAY_BAD_PEOPLE = "Pick one of the group sizes for this place.";
+    public static final String GIVEDAY_BAD_PRODUCT = "That product isn't on the shelf.";
+    public static final String GIVEDAY_NOT_ENOUGH_COINS = "Not enough give coins for this kit.";
+    public static final String GIVEDAY_BAD_RATING = "rating must be good, ok or poor.";
     public static final String PADBANK_AGE_LOCKED = "This game opens at 18.";
     public static final String PADBANK_DAY_EMPTY = "This day has no visitors yet.";
     public static final String PADBANK_RUN_NOT_FOUND = "Pad Bank game not found.";

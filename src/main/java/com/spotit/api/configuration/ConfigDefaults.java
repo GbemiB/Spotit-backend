@@ -19,6 +19,12 @@ public final class ConfigDefaults {
     public static final long SPOTLIGHT_INVITE_EVERY_DAYS = 3L;
     public static final long SPOTLIGHT_INVITE_MAX_DISMISSALS = 3L;
     public static final long QUIZ_TOPICS_PAGE_SIZE = 8L;
+    public static final long GIVEDAY_START_COINS = 200L;
+    public static final long GIVEDAY_GOOD_PICKS = 3L;
+    public static final String GIVEDAY_TITLE_THREE = "A perfect give!";
+    public static final String GIVEDAY_TITLE_TWO = "Lovely work";
+    public static final String GIVEDAY_TITLE_ONE = "A good start";
+    public static final String GIVEDAY_TITLE_ZERO = "Something important is missing";
     public static final long PADBANK_BUDGET = 100L;
     public static final long PADBANK_HEARTS = 3L;
     public static final long PADBANK_DELIVERY_COST = 10L;

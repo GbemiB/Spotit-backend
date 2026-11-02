@@ -91,6 +91,12 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getSpotlightInviteMaxDismissals() == 0) {
             global.setSpotlightInviteMaxDismissals(ConfigDefaults.SPOTLIGHT_INVITE_MAX_DISMISSALS);
         }
+        if (global.getGivedayStartCoins() == 0) {
+            global.setGivedayStartCoins(ConfigDefaults.GIVEDAY_START_COINS);
+        }
+        if (global.getGivedayGoodPicks() == 0) {
+            global.setGivedayGoodPicks(ConfigDefaults.GIVEDAY_GOOD_PICKS);
+        }
         if (global.getPadbankBudget() == 0) {
             global.setPadbankBudget(ConfigDefaults.PADBANK_BUDGET);
         }
@@ -258,6 +264,46 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getSpotlightInviteMaxDismissals() {
         return (int) loadGlobal().getSpotlightInviteMaxDismissals();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayStartCoins() {
+        return (int) loadGlobal().getGivedayStartCoins();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayGoodPicks() {
+        return (int) loadGlobal().getGivedayGoodPicks();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleThree() {
+        String value = loadGlobal().getGivedayTitleThree();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_THREE : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleTwo() {
+        String value = loadGlobal().getGivedayTitleTwo();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_TWO : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleOne() {
+        String value = loadGlobal().getGivedayTitleOne();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_ONE : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleZero() {
+        String value = loadGlobal().getGivedayTitleZero();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_ZERO : value.strip();
     }
 
     @Override
