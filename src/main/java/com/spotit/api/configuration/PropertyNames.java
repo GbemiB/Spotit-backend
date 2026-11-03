@@ -21,7 +21,10 @@ public final class PropertyNames {
     public static final String SPOTLIGHT_INVITE_EVERY_DAYS = "spotlight-invite-every-days";
     public static final String SPOTLIGHT_INVITE_MAX_DISMISSALS = "spotlight-invite-max-dismissals";
     public static final String QUIZ_TOPICS_PAGE_SIZE = "quiz-topics-page-size";
-    public static final String GIVEDAY_START_COINS = "giveday-start-coins";
+    public static final String GIVEDAY_DAY_START = "giveday-day-start";
+    public static final String GIVEDAY_DAY_END = "giveday-day-end";
+    public static final String GIVEDAY_VISIT_MINUTES = "giveday-visit-minutes";
+    public static final String GIVEDAY_UNITS_PER_KM = "giveday-units-per-km";
     public static final String GIVEDAY_GOOD_PICKS = "giveday-good-picks";
     public static final String GIVEDAY_TITLE_THREE = "giveday-title-three";
     public static final String GIVEDAY_TITLE_TWO = "giveday-title-two";

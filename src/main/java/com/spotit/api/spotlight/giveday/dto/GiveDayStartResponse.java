@@ -7,8 +7,18 @@ public record GiveDayStartResponse(
         UUID runId,
         long balance,
         int cost,
-        int coins,
-        List<GiveDayPlaceView> places,
+        int clock,
+        int dayEnd,
+        int visitMinutes,
+        int unitsPerKm,
+        String home,
+        int x,
+        int y,
+        int stars,
+        int level,
+        List<GiveDayLevelView> levels,
+        List<GiveDayTravelView> travel,
+        List<GiveDayAreaView> areas,
         List<GiveDayProductView> products
 ) {
 }

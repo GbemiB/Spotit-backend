@@ -87,10 +87,23 @@ public class ConfigPropertyCatalog {
     }
 
     private static void addGiveDayProperties(List<Property> list) {
-        list.add(new Property(PropertyNames.GIVEDAY_START_COINS, PropertyNames.GROUP_GIVEDAY,
-                "Give Day: give coins at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getGivedayStartCoins(),
-                (c, v) -> c.global().setGivedayStartCoins((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_DAY_START, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: clock time the day starts, in minutes after midnight (480 = 8:00 am)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayDayStart(),
+                (c, v) -> c.global().setGivedayDayStart((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_DAY_END, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: clock time the day ends, in minutes after midnight (1080 = 6:00 pm)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayDayEnd(),
+                (c, v) -> c.global().setGivedayDayEnd((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_VISIT_MINUTES, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: minutes a visit takes; a place must stay open that long after arrival", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayVisitMinutes(),
+                (c, v) -> c.global().setGivedayVisitMinutes((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_UNITS_PER_KM, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: map units in one km (100 = the map is drawn in 10 m units); used for each level's km radius", Kind.LONG, Section.GLOBAL,
+                false, false,
+                c -> c.global().getGivedayUnitsPerKm(),
+                (c, v) -> c.global().setGivedayUnitsPerKm((Long) v)));
         list.add(new Property(PropertyNames.GIVEDAY_GOOD_PICKS, PropertyNames.GROUP_GIVEDAY,
                 "Give Day: well-matched products needed for the second star", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getGivedayGoodPicks(),

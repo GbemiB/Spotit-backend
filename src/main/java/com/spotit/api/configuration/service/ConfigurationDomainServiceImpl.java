@@ -91,8 +91,17 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getSpotlightInviteMaxDismissals() == 0) {
             global.setSpotlightInviteMaxDismissals(ConfigDefaults.SPOTLIGHT_INVITE_MAX_DISMISSALS);
         }
-        if (global.getGivedayStartCoins() == 0) {
-            global.setGivedayStartCoins(ConfigDefaults.GIVEDAY_START_COINS);
+        if (global.getGivedayDayStart() == 0) {
+            global.setGivedayDayStart(ConfigDefaults.GIVEDAY_DAY_START);
+        }
+        if (global.getGivedayDayEnd() == 0) {
+            global.setGivedayDayEnd(ConfigDefaults.GIVEDAY_DAY_END);
+        }
+        if (global.getGivedayVisitMinutes() == 0) {
+            global.setGivedayVisitMinutes(ConfigDefaults.GIVEDAY_VISIT_MINUTES);
+        }
+        if (global.getGivedayUnitsPerKm() == 0) {
+            global.setGivedayUnitsPerKm(ConfigDefaults.GIVEDAY_UNITS_PER_KM);
         }
         if (global.getGivedayGoodPicks() == 0) {
             global.setGivedayGoodPicks(ConfigDefaults.GIVEDAY_GOOD_PICKS);
@@ -262,8 +271,30 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
-    public int getGivedayStartCoins() {
-        return (int) loadGlobal().getGivedayStartCoins();
+    public int getGivedayDayStart() {
+        long value = loadGlobal().getGivedayDayStart();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_DAY_START : value);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayDayEnd() {
+        long value = loadGlobal().getGivedayDayEnd();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_DAY_END : value);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayVisitMinutes() {
+        long value = loadGlobal().getGivedayVisitMinutes();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_VISIT_MINUTES : value);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayUnitsPerKm() {
+        long value = loadGlobal().getGivedayUnitsPerKm();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_UNITS_PER_KM : value);
     }
 
     @Override

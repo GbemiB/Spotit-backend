@@ -79,10 +79,15 @@ public final class ErrorMessage {
     public static final String GIVEDAY_EMPTY = "Give Day has no places yet.";
     public static final String GIVEDAY_RUN_NOT_FOUND = "Give Day game not found.";
     public static final String GIVEDAY_BAD_PLACE = "That place isn't on the map.";
+    public static final String GIVEDAY_BAD_AREA = "That area isn't on the map.";
+    public static final String GIVEDAY_NO_HOME = "Pick your home area first.";
     public static final String GIVEDAY_PLACE_DONE = "You already gave at this place today.";
-    public static final String GIVEDAY_BAD_PEOPLE = "Pick one of the group sizes for this place.";
     public static final String GIVEDAY_BAD_PRODUCT = "That product isn't on the shelf.";
-    public static final String GIVEDAY_NOT_ENOUGH_COINS = "Not enough give coins for this kit.";
+    public static final String GIVEDAY_OVER_BUDGET = "That gift is over the budget for this place.";
+    public static final String GIVEDAY_LEVEL_LOCKED = "Win more stars to open this part of the map.";
+    public static final String GIVEDAY_CLOSED = "That place is closed by then.";
+    public static final String GIVEDAY_BAD_TRAVEL = "Pick a way to travel.";
+    public static final String GIVEDAY_NOT_THERE = "Travel to this place first.";
     public static final String GIVEDAY_BAD_RATING = "rating must be good, ok or poor.";
     public static final String PADBANK_AGE_LOCKED = "This game opens at 18.";
     public static final String PADBANK_DAY_EMPTY = "This day has no visitors yet.";

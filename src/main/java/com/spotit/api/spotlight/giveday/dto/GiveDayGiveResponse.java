@@ -10,8 +10,11 @@ public record GiveDayGiveResponse(
         List<GiveDayReview> review,
         List<GiveDayReview> missed,
         int people,
-        int spent,
-        int coins,
-        int helped
+        int giftCost,
+        int giftBudget,
+        int helped,
+        int clock,
+        int playerStars,
+        int level
 ) {
 }

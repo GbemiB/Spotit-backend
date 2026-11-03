@@ -12,11 +12,12 @@ public record GiveDayPlaceView(
         String hostLook,
         String who,
         int total,
-        List<Integer> counts,
         List<GiveDayFact> facts,
         int x,
         int y,
+        int closes,
         boolean forSelf,
-        boolean locked
+        boolean locked,
+        Integer stars
 ) {
 }

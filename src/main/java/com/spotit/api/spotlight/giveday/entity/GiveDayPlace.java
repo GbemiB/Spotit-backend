@@ -19,8 +19,11 @@ import lombok.Setter;
 @Builder
 public class GiveDayPlace {
     @Id
-    @Column(length = 30)
+    @Column(length = 40)
     private String id;
+
+    @Column(name = "area_id", nullable = false, length = 30)
+    private String areaId;
 
     @Column(nullable = false, length = 60)
     private String name;
@@ -46,9 +49,6 @@ public class GiveDayPlace {
     @Column(name = "people_total", nullable = false)
     private int total;
 
-    @Column(name = "people_options", nullable = false, length = 60)
-    private String counts;
-
     @Column(length = 300)
     private String thanks;
 
@@ -63,6 +63,9 @@ public class GiveDayPlace {
 
     @Column(name = "for_self", nullable = false)
     private boolean forSelf;
+
+    @Column(name = "closes_at", nullable = false)
+    private int closes;
 
     @Column(name = "min_age", nullable = false)
     private int minAge;

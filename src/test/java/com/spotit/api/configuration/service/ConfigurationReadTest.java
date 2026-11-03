@@ -121,9 +121,12 @@ class ConfigurationReadTest {
     @Test
     void giveDaySettingsAreReturned() {
         lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
-                .id(GlobalConfig.SINGLETON_ID).givedayStartCoins(150).givedayGoodPicks(2).givedayTitleThree("Wow").build()));
+                .id(GlobalConfig.SINGLETON_ID).givedayUnitsPerKm(50).givedayDayStart(420).givedayGoodPicks(2).givedayTitleThree("Wow").build()));
 
-        assertThat(service.getGivedayStartCoins()).isEqualTo(150);
+        assertThat(service.getGivedayUnitsPerKm()).isEqualTo(50);
+        assertThat(service.getGivedayDayStart()).isEqualTo(420);
+        assertThat(service.getGivedayDayEnd()).isEqualTo(1080);
+        assertThat(service.getGivedayVisitMinutes()).isEqualTo(30);
         assertThat(service.getGivedayGoodPicks()).isEqualTo(2);
         assertThat(service.getGivedayTitleThree()).isEqualTo("Wow");
         assertThat(service.getGivedayTitleTwo()).isEqualTo("Lovely work");

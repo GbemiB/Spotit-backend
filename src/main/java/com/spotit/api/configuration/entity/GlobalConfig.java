@@ -68,8 +68,17 @@ public class GlobalConfig {
     @Column(name = "spotlight_admin_page_size", nullable = false, columnDefinition = "bigint default 50")
     private long spotlightAdminPageSize;
 
-    @Column(name = "giveday_start_coins", nullable = false, columnDefinition = "bigint default 200")
-    private long givedayStartCoins;
+    @Column(name = "giveday_day_start", nullable = false, columnDefinition = "bigint default 480")
+    private long givedayDayStart;
+
+    @Column(name = "giveday_day_end", nullable = false, columnDefinition = "bigint default 1080")
+    private long givedayDayEnd;
+
+    @Column(name = "giveday_visit_minutes", nullable = false, columnDefinition = "bigint default 30")
+    private long givedayVisitMinutes;
+
+    @Column(name = "giveday_units_per_km", nullable = false, columnDefinition = "bigint default 100")
+    private long givedayUnitsPerKm;
 
     @Column(name = "giveday_good_picks", nullable = false, columnDefinition = "bigint default 3")
     private long givedayGoodPicks;

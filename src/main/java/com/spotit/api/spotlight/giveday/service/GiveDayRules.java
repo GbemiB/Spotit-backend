@@ -6,19 +6,77 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.ToIntFunction;
 
 public final class GiveDayRules {
     private static final String SEP = "|";
     private static final String SEP_RE = "\\|";
+    private static final int MINUTE_STEP = 5;
 
     private GiveDayRules() {
     }
 
-    public static int stars(boolean absorbent, int good, int poor, int people, int total, int goodPicks) {
+    public static int stars(boolean absorbent, int good, int poor, int goodPicks) {
         if (!absorbent) {
             return 0;
         }
-        return 1 + (poor == 0 && good >= goodPicks ? 1 : 0) + (people >= total ? 1 : 0);
+        return 1 + (poor == 0 ? 1 : 0) + (good >= goodPicks ? 1 : 0);
+    }
+
+    public static int distance(int x1, int y1, int x2, int y2) {
+        return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+    }
+
+    public static int minutes(int distance, int unitsPerMinute) {
+        int raw = (int) Math.round((double) distance / Math.max(1, unitsPerMinute) / MINUTE_STEP) * MINUTE_STEP;
+        return Math.max(MINUTE_STEP, raw);
+    }
+
+    public static <T> T ring(int x1, int y1, int x2, int y2, int unitsPerKm, List<T> levels, ToIntFunction<T> radiusKm) {
+        double km = Math.hypot(x1 - x2, y1 - y2) / Math.max(1, unitsPerKm);
+        for (T l : levels) {
+            if (km <= radiusKm.applyAsInt(l)) {
+                return l;
+            }
+        }
+        return levels.get(levels.size() - 1);
+    }
+
+    public static <T> int level(int stars, List<T> levels, ToIntFunction<T> need, ToIntFunction<T> number) {
+        int best = levels.isEmpty() ? 1 : number.applyAsInt(levels.get(0));
+        for (T l : levels) {
+            if (stars >= need.applyAsInt(l)) {
+                best = Math.max(best, number.applyAsInt(l));
+            }
+        }
+        return best;
+    }
+
+    public static int bestStars(List<Map<String, Integer>> days) {
+        Map<String, Integer> best = new LinkedHashMap<>();
+        days.forEach(d -> d.forEach((place, stars) -> best.merge(place, stars, Math::max)));
+        return best.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public static Set<Integer> decodePasses(String raw) {
+        Set<Integer> passes = new TreeSet<>();
+        if (raw == null || raw.isBlank()) {
+            return passes;
+        }
+        for (String part : raw.split(",")) {
+            if (!part.isBlank()) {
+                passes.add(Integer.parseInt(part.strip()));
+            }
+        }
+        return passes;
+    }
+
+    public static String encodePasses(Set<Integer> passes) {
+        List<String> parts = new ArrayList<>();
+        passes.forEach(n -> parts.add(String.valueOf(n)));
+        return String.join(",", parts);
     }
 
     public static int dayStars(Map<String, Integer> visits) {
@@ -26,25 +84,6 @@ public final class GiveDayRules {
             return 0;
         }
         return visits.values().stream().mapToInt(Integer::intValue).sum() / visits.size();
-    }
-
-    public static List<Integer> decodeCounts(String raw) {
-        List<Integer> counts = new ArrayList<>();
-        if (raw == null || raw.isBlank()) {
-            return counts;
-        }
-        for (String part : raw.split(",")) {
-            if (!part.isBlank()) {
-                counts.add(Integer.parseInt(part.strip()));
-            }
-        }
-        return counts;
-    }
-
-    public static String encodeCounts(List<Integer> counts) {
-        List<String> parts = new ArrayList<>();
-        (counts == null ? List.<Integer>of() : counts).forEach(n -> parts.add(String.valueOf(Math.max(1, n))));
-        return String.join(",", parts);
     }
 
     public static List<GiveDayFact> decodeFacts(String raw) {

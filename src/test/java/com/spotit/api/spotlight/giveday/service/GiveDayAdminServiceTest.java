@@ -2,16 +2,25 @@ package com.spotit.api.spotlight.giveday.service;
 
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.spotlight.giveday.dto.GiveDayAreaAdmin;
 import com.spotit.api.spotlight.giveday.dto.GiveDayFact;
+import com.spotit.api.spotlight.giveday.dto.GiveDayLevelAdmin;
 import com.spotit.api.spotlight.giveday.dto.GiveDayNeedAdmin;
 import com.spotit.api.spotlight.giveday.dto.GiveDayPlaceAdmin;
 import com.spotit.api.spotlight.giveday.dto.GiveDayProductAdmin;
+import com.spotit.api.spotlight.giveday.dto.GiveDayTravelAdmin;
+import com.spotit.api.spotlight.giveday.entity.GiveDayArea;
+import com.spotit.api.spotlight.giveday.entity.GiveDayLevel;
 import com.spotit.api.spotlight.giveday.entity.GiveDayNeed;
 import com.spotit.api.spotlight.giveday.entity.GiveDayPlace;
 import com.spotit.api.spotlight.giveday.entity.GiveDayProduct;
+import com.spotit.api.spotlight.giveday.entity.GiveDayTravel;
+import com.spotit.api.spotlight.giveday.repository.GiveDayAreaRepository;
+import com.spotit.api.spotlight.giveday.repository.GiveDayLevelRepository;
 import com.spotit.api.spotlight.giveday.repository.GiveDayNeedRepository;
 import com.spotit.api.spotlight.giveday.repository.GiveDayPlaceRepository;
 import com.spotit.api.spotlight.giveday.repository.GiveDayProductRepository;
+import com.spotit.api.spotlight.giveday.repository.GiveDayTravelRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +44,9 @@ class GiveDayAdminServiceTest {
     @Mock GiveDayPlaceRepository placeRepository;
     @Mock GiveDayProductRepository productRepository;
     @Mock GiveDayNeedRepository needRepository;
+    @Mock GiveDayAreaRepository areaRepository;
+    @Mock GiveDayLevelRepository levelRepository;
+    @Mock GiveDayTravelRepository travelRepository;
     @Mock ConfigurationDomainService config;
     @InjectMocks GiveDayAdminService service;
 
@@ -43,6 +55,10 @@ class GiveDayAdminServiceTest {
         when(placeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(productRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(needRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(areaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(levelRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(travelRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(areaRepository.existsById("yaba")).thenReturn(true);
         when(config.getSpotlightAdminPageSize()).thenReturn(50);
         when(placeRepository.existsById("school")).thenReturn(true);
         when(productRepository.existsById("pads")).thenReturn(true);
@@ -50,24 +66,58 @@ class GiveDayAdminServiceTest {
 
     @Test
     void placesCanBeAddedAndEdited() {
-        when(placeRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(GiveDayPlace.builder().id("school").name("School").counts("10,20")
+        when(placeRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(GiveDayPlace.builder().id("school").areaId("yaba").name("School")
                 .facts("girls|pink|40 girls").build()));
-        assertThat(service.places(null, null).items().get(0).counts()).containsExactly(10, 20);
+        assertThat(service.places(null, null).items().get(0)).extracting("areaId", "name").containsExactly("yaba", "School");
 
-        GiveDayPlaceAdmin created = service.savePlace("camp", new GiveDayPlaceAdmin(null, " Hope Camp ", "Camp", "30 women", "\"Light please\"",
-                "Mrs Hauwa", "woman", "women", 30, List.of(10, 20, 30), "Thanks", List.of(new GiveDayFact("tent", "peach", "Tents")), 70, 305, false,
-                null, 4, null));
-        assertThat(created).extracting("name", "total", "x", "y", "minAge", "active").containsExactly("Hope Camp", 30, 70, 305, 13, true);
+        GiveDayPlaceAdmin created = service.savePlace("camp", new GiveDayPlaceAdmin(null, " yaba ", " Hope Camp ", "Camp", "30 women", "\"Light please\"",
+                "Mrs Hauwa", "woman", "women", 30, "Thanks", List.of(new GiveDayFact("tent", "peach", "Tents")), 7600, 2600, 960, false, null, 4, null));
+        assertThat(created).extracting("areaId", "name", "total", "x", "y", "closes", "minAge", "active")
+                .containsExactly("yaba", "Hope Camp", 30, 7600, 2600, 960, 13, true);
         assertThat(created.facts()).containsExactly(new GiveDayFact("tent", "peach", "Tents"));
 
-        GiveDayPlace existing = GiveDayPlace.builder().id("camp").name("Camp").counts("10").facts("").minAge(13).active(true).build();
+        GiveDayPlace existing = GiveDayPlace.builder().id("camp").areaId("yaba").name("Camp").facts("").minAge(13).active(true).build();
         when(placeRepository.findById("camp")).thenReturn(Optional.of(existing));
-        GiveDayPlaceAdmin edited = service.savePlace("camp", new GiveDayPlaceAdmin(null, null, null, null, null, null, null, null, 0, null, null, null,
-                null, null, true, 18, null, false));
-        assertThat(edited).extracting("total", "forSelf", "minAge", "active").containsExactly(1, true, 18, false);
+        GiveDayPlaceAdmin edited = service.savePlace("camp", new GiveDayPlaceAdmin(null, null, null, null, null, null, null, null, null, 0, null, null,
+                null, null, -5, true, 18, null, false));
+        assertThat(edited).extracting("total", "closes", "forSelf", "minAge", "active").containsExactly(1, 0, true, 18, false);
+        assertThatThrownBy(() -> service.savePlace("camp", new GiveDayPlaceAdmin(null, "atlantis", null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null))).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
 
-        assertThatThrownBy(() -> service.savePlace("new", new GiveDayPlaceAdmin(null, "New", null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null))).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+        assertThatThrownBy(() -> service.savePlace("new", new GiveDayPlaceAdmin(null, "yaba", "New", null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null))).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+    }
+
+    @Test
+    void areasLevelsAndTravelCanBeManaged() {
+        when(areaRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(GiveDayArea.builder().id("yaba").name("Yaba").build()));
+        assertThat(service.areas(null, null).items()).extracting("id").containsExactly("yaba");
+        assertThat(service.saveArea("ikeja", new GiveDayAreaAdmin(null, " Ikeja ", " Ikeja ", 7400, 1650, null, null)))
+                .extracting("name", "region", "x", "y", "active").containsExactly("Ikeja", "Ikeja", 7400, 1650, true);
+        when(areaRepository.findById("ikeja")).thenReturn(Optional.of(GiveDayArea.builder().id("ikeja").name("Ikeja").active(true).build()));
+        assertThat(service.saveArea("ikeja", new GiveDayAreaAdmin(null, null, null, null, null, 4, false))).extracting("sortOrder", "active")
+                .containsExactly(4, false);
+        assertThatThrownBy(() -> service.saveArea("new", new GiveDayAreaAdmin(null, "New", null, null, null, null, null)))
+                .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+
+        when(levelRepository.findAllByOrderByNumberAsc()).thenReturn(List.of(GiveDayLevel.builder().number(1).name("Near").build()));
+        assertThat(service.levels(null, null).items()).extracting("number").containsExactly(1);
+        assertThat(service.saveLevel(3, new GiveDayLevelAdmin(null, " Across ", 0, 10, -1, 10, null)))
+                .extracting("number", "name", "radiusKm", "starsNeeded", "passCost", "giftBudget", "active").containsExactly(3, "Across", 1, 10, 0, 10, true);
+        when(levelRepository.findById(3)).thenReturn(Optional.of(GiveDayLevel.builder().number(3).name("Across").radiusKm(15).active(true).build()));
+        assertThat(service.saveLevel(3, new GiveDayLevelAdmin(null, null, null, null, null, null, false)).active()).isFalse();
+        assertThatThrownBy(() -> service.saveLevel(9, new GiveDayLevelAdmin(null, "Far", null, 1, 0, 1, null)))
+                .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+
+        when(travelRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(GiveDayTravel.builder().id("walk").label("Walk").build()));
+        assertThat(service.travel(null, null).items()).extracting("id").containsExactly("walk");
+        assertThat(service.saveTravel("bike", new GiveDayTravelAdmin(null, " Bike ", -2, 0, 2, null)))
+                .extracting("label", "cost", "unitsPerMinute", "sortOrder", "active").containsExactly("Bike", 0, 1, 2, true);
+        when(travelRepository.findById("bike")).thenReturn(Optional.of(GiveDayTravel.builder().id("bike").label("Bike").active(true).build()));
+        assertThat(service.saveTravel("bike", new GiveDayTravelAdmin(null, null, 3, 25, null, false))).extracting("cost", "unitsPerMinute", "active")
+                .containsExactly(3, 25, false);
+        assertThatThrownBy(() -> service.saveTravel("jet", new GiveDayTravelAdmin(null, "Jet", null, null, null, null)))
+                .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 
     @Test

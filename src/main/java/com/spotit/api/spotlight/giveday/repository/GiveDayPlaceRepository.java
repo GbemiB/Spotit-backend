@@ -9,4 +9,6 @@ public interface GiveDayPlaceRepository extends JpaRepository<GiveDayPlace, Stri
     List<GiveDayPlace> findAllByOrderBySortOrderAsc();
 
     List<GiveDayPlace> findByActiveTrueOrderBySortOrderAsc();
+
+    List<GiveDayPlace> findByAreaIdAndActiveTrueOrderBySortOrderAsc(String areaId);
 }

@@ -7,6 +7,7 @@ import java.util.List;
 
 public record GiveDayPlaceAdmin(
         String id,
+        String areaId,
         String name,
         String kind,
         String teaser,
@@ -15,19 +16,19 @@ public record GiveDayPlaceAdmin(
         String hostLook,
         String who,
         Integer total,
-        List<Integer> counts,
         String thanks,
         List<GiveDayFact> facts,
         Integer x,
         Integer y,
+        Integer closes,
         Boolean forSelf,
         Integer minAge,
         Integer sortOrder,
         Boolean active
 ) {
     public static GiveDayPlaceAdmin of(GiveDayPlace p) {
-        return new GiveDayPlaceAdmin(p.getId(), p.getName(), p.getKind(), p.getTeaser(), p.getQuote(), p.getHostName(), p.getHostLook(), p.getWho(),
-                p.getTotal(), GiveDayRules.decodeCounts(p.getCounts()), p.getThanks(), GiveDayRules.decodeFacts(p.getFacts()), p.getMapX(), p.getMapY(),
-                p.isForSelf(), p.getMinAge(), p.getSortOrder(), p.isActive());
+        return new GiveDayPlaceAdmin(p.getId(), p.getAreaId(), p.getName(), p.getKind(), p.getTeaser(), p.getQuote(), p.getHostName(), p.getHostLook(),
+                p.getWho(), p.getTotal(), p.getThanks(), GiveDayRules.decodeFacts(p.getFacts()), p.getMapX(), p.getMapY(), p.getCloses(), p.isForSelf(),
+                p.getMinAge(), p.getSortOrder(), p.isActive());
     }
 }

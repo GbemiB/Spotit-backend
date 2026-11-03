@@ -19,7 +19,10 @@ public final class ConfigDefaults {
     public static final long SPOTLIGHT_INVITE_EVERY_DAYS = 3L;
     public static final long SPOTLIGHT_INVITE_MAX_DISMISSALS = 3L;
     public static final long QUIZ_TOPICS_PAGE_SIZE = 8L;
-    public static final long GIVEDAY_START_COINS = 200L;
+    public static final long GIVEDAY_DAY_START = 480L;
+    public static final long GIVEDAY_DAY_END = 1080L;
+    public static final long GIVEDAY_VISIT_MINUTES = 30L;
+    public static final long GIVEDAY_UNITS_PER_KM = 100L;
     public static final long GIVEDAY_GOOD_PICKS = 3L;
     public static final String GIVEDAY_TITLE_THREE = "A perfect give!";
     public static final String GIVEDAY_TITLE_TWO = "Lovely work";

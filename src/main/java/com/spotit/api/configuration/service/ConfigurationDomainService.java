@@ -38,7 +38,13 @@ public interface ConfigurationDomainService {
 
     int getQuizTopicsPageSize();
 
-    int getGivedayStartCoins();
+    int getGivedayDayStart();
+
+    int getGivedayDayEnd();
+
+    int getGivedayVisitMinutes();
+
+    int getGivedayUnitsPerKm();
 
     int getGivedayGoodPicks();
 

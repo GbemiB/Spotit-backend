@@ -35,10 +35,25 @@ public class GiveDayRun {
     private UUID userId;
 
     @Column(nullable = false)
-    private int coins;
-
-    @Column(nullable = false)
     private int helped;
+
+    @Column(name = "clock_minutes", nullable = false)
+    private int clock;
+
+    @Column(name = "home_area", length = 30)
+    private String homeArea;
+
+    @Column(name = "pos_x", nullable = false)
+    private int posX;
+
+    @Column(name = "pos_y", nullable = false)
+    private int posY;
+
+    @Column(name = "here_place", length = 40)
+    private String here;
+
+    @Column(length = 60)
+    private String passes;
 
     @Column(nullable = false, columnDefinition = "text")
     private String visits;

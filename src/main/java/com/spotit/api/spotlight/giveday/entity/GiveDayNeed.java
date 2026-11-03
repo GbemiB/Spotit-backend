@@ -26,7 +26,7 @@ public class GiveDayNeed {
     @Column(length = 70)
     private String id;
 
-    @Column(name = "place_id", nullable = false, length = 30)
+    @Column(name = "place_id", nullable = false, length = 40)
     private String placeId;
 
     @Column(name = "product_id", nullable = false, length = 30)
