@@ -20,6 +20,9 @@ public class JwtService {
     private static final String CLAIM_TYPE = "type";
     private static final String CLAIM_EMAIL = "email";
     private static final String CLAIM_PREMIUM = "premium";
+    private static final String CLAIM_ACCOUNT_TYPE = "accountType";
+    private static final String ACCOUNT_PARTNER = "partner";
+    private static final String ACCOUNT_OWNER = "owner";
     private static final String TYPE_ACCESS = "access";
     private static final String TYPE_REFRESH = "refresh";
 
@@ -36,12 +39,17 @@ public class JwtService {
     }
 
     public String generateAccessToken(UUID userId, String email, boolean premium) {
+        return generateAccessToken(userId, email, premium, false);
+    }
+
+    public String generateAccessToken(UUID userId, String email, boolean premium, boolean partner) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim(CLAIM_TYPE, TYPE_ACCESS)
                 .claim(CLAIM_EMAIL, email)
                 .claim(CLAIM_PREMIUM, premium)
+                .claim(CLAIM_ACCOUNT_TYPE, partner ? ACCOUNT_PARTNER : ACCOUNT_OWNER)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(accessTokenTtlSeconds)))
                 .signWith(key)
@@ -77,7 +85,8 @@ public class JwtService {
             UUID userId = UUID.fromString(claims.getSubject());
             String email = claims.get(CLAIM_EMAIL, String.class);
             boolean premium = Boolean.TRUE.equals(claims.get(CLAIM_PREMIUM, Boolean.class));
-            return Optional.of(new SecurityUser(userId, email, premium, adminProperties.isAdmin(email)));
+            boolean partner = ACCOUNT_PARTNER.equals(claims.get(CLAIM_ACCOUNT_TYPE, String.class));
+            return Optional.of(new SecurityUser(userId, email, premium, adminProperties.isAdmin(email), partner));
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }

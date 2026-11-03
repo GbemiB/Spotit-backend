@@ -293,13 +293,20 @@ class ReminderPlannerTest {
     }
 
     @Test
-    void periodAndOvulationCanBothArriveTheSameMorning() {
+    void noOvulationReminderWhileThePeriodIsDueOrLate() {
         user.setCycleLength(15);
         LocalDate next = LAST_PERIOD.plusDays(15);
 
         assertThat(plan(next, MORNING)).containsExactly(
-                new Planned(ReminderType.period_today, "Your period may start today. Tap to log it."),
-                new Planned(ReminderType.ovulation_today, "Today is your predicted ovulation day."));
+                new Planned(ReminderType.period_today, "Your period may start today. Tap to log it."));
+        assertThat(plan(OVULATION.plusDays(28), MORNING)).extracting(Planned::type).doesNotContain(ReminderType.ovulation_today);
+    }
+
+    @Test
+    void noLogNudgeOnPredictedPeriodDaysThatWereNotConfirmed() {
+        user.setNotifDigest(false);
+
+        assertThat(plan(NEXT_PERIOD.plusDays(1), EVENING)).isEmpty();
     }
 
     @Test

@@ -17,6 +17,8 @@ public interface PointsWriteService {
 
     LogPointsResult recordPeriodLog(UUID userId);
 
+    LogPointsResult recordCheckIn(UUID userId);
+
     DailyClaimResult claimDaily(UUID userId);
 
     AdWatchResult watchAd(UUID userId);

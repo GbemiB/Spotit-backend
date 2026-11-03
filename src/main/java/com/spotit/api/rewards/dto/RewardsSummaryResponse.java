@@ -7,7 +7,8 @@ public record RewardsSummaryResponse(
         String nextLevel,
         Long pointsToNextLevel,
         int streak,
-        int longestStreak
+        int longestStreak,
+        long lifetimePoints
 ) {
     public record LevelRange(long lo, long hi) {
     }

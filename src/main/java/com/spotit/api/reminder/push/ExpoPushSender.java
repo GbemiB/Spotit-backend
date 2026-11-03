@@ -70,6 +70,10 @@ public class ExpoPushSender implements PushSender {
         payload.put("title", message.title());
         payload.put("body", message.body());
         payload.put("data", message.data());
+        if (message.collapseId() != null) {
+            payload.put("collapseId", message.collapseId());
+            payload.put("tag", message.collapseId());
+        }
         payload.put("sound", "default");
         payload.put("channelId", CHANNEL_ID);
         payload.put("priority", "high");

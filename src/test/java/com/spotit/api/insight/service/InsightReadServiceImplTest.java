@@ -1,6 +1,7 @@
 package com.spotit.api.insight.service;
 
 import com.spotit.api.common.exception.ApiException;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.insight.dto.CycleTrendsResponse;
 import com.spotit.api.insight.dto.RegularityResponse;
@@ -11,6 +12,7 @@ import com.spotit.api.log.entity.MoodType;
 import com.spotit.api.log.repository.CycleLogRepository;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,10 +37,16 @@ class InsightReadServiceImplTest {
     @Mock CycleLogRepository cycleLogRepository;
     @Mock UserRepository userRepository;
     @Mock ConfigurationDomainService configurationDomainService;
+    @Mock UserClock userClock;
     @InjectMocks InsightReadServiceImpl service;
 
     UUID userId = UUID.randomUUID();
     LocalDate today = LocalDate.now();
+
+    @BeforeEach
+    void setUpClock() {
+        lenient().when(userClock.today(any())).thenReturn(today);
+    }
 
     private void stubUser() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(User.builder().id(userId).cycleLength(28).periodLength(5).build()));
@@ -101,6 +110,7 @@ class InsightReadServiceImplTest {
 
     @Test
     void weeklyDigestCountsLogsAndPicksTheMostCommonMood() {
+        stubUser();
         when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, today.minusDays(6), today)).thenReturn(List.of(
                 CycleLog.builder().logDate(today).mood(MoodType.calm).build(),
                 CycleLog.builder().logDate(today.minusDays(1)).mood(MoodType.calm).build(),
@@ -112,6 +122,7 @@ class InsightReadServiceImplTest {
 
     @Test
     void weeklyDigestWithNoMoodsHasNoTopMood() {
+        stubUser();
         when(cycleLogRepository.findByUserIdAndLogDateBetweenOrderByLogDateAsc(userId, today.minusDays(6), today)).thenReturn(List.of());
 
         WeeklyDigestResponse digest = service.getWeeklyDigest(userId);

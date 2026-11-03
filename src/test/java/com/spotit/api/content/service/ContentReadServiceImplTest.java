@@ -5,7 +5,9 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.content.dto.ContentFeedResponse;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
+import com.spotit.api.content.dto.ContentReferenceDto;
 import com.spotit.api.content.entity.ContentItem;
+import com.spotit.api.content.entity.ContentReference;
 import com.spotit.api.content.repository.ContentItemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +54,16 @@ class ContentReadServiceImplTest {
     }
 
     @Test
+    void feedIncludesReferences() {
+        ContentItem item = item();
+        item.getReferences().add(new ContentReference("NHS — Periods", "https://www.nhs.uk/conditions/periods/"));
+        when(contentItemRepository.findByActiveTrueOrderBySortOrderAsc(PageRequest.of(0, 5))).thenReturn(List.of(item));
+
+        assertThat(service.getFeed(5).items().get(0).references())
+                .containsExactly(new ContentReferenceDto("NHS — Periods", "https://www.nhs.uk/conditions/periods/"));
+    }
+
+    @Test
     void feedFallsBackToTheConfiguredDefaultLimit() {
         when(configurationDomainService.getContentFeedDefaultLimit()).thenReturn(10);
         when(contentItemRepository.findByActiveTrueOrderBySortOrderAsc(PageRequest.of(0, 10))).thenReturn(List.of());
@@ -64,7 +76,7 @@ class ContentReadServiceImplTest {
         when(contentItemRepository.findAll()).thenReturn(List.of(item()));
 
         assertThat(service.listAllForAdmin()).containsExactly(
-                new ContentItemAdminResponse(id, "Health", "Cycle 101", "Body", "https://img", "lifestyle", true, "Acme", 3, false));
+                new ContentItemAdminResponse(id, "Health", "Cycle 101", "Body", "https://img", "lifestyle", true, "Acme", 3, false, List.of()));
     }
 
     @Test

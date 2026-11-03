@@ -63,7 +63,7 @@ class AuthControllerTest {
     }
 
     private TokenResponse tokens() {
-        return new TokenResponse("access", "refresh", 900, new TokenResponse.UserSummary(USER_ID, true));
+        return new TokenResponse("access", "refresh", 900, new TokenResponse.UserSummary(USER_ID, true, "owner"));
     }
 
     @Test

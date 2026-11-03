@@ -33,10 +33,10 @@ public class RewardsReadServiceImpl implements RewardsReadService {
     @Transactional(readOnly = true)
     public RewardsSummaryResponse getSummary(UUID userId) {
         User user = requireUser(userId);
-        LevelUtil.LevelInfo level = LevelUtil.levelFor(user.getPoints(), levelDefinitionService.getLevelDefs());
+        LevelUtil.LevelInfo level = LevelUtil.levelFor(user.getLifetimePoints(), levelDefinitionService.getLevelDefs());
         return new RewardsSummaryResponse(
                 user.getPoints(), level.name(), new RewardsSummaryResponse.LevelRange(level.lo(), level.hi()),
-                level.nextLevelName(), level.pointsToNextLevel(), user.getStreak(), user.getLongestStreak()
+                level.nextLevelName(), level.pointsToNextLevel(), user.getStreak(), user.getLongestStreak(), user.getLifetimePoints()
         );
     }
 

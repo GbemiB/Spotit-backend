@@ -1,6 +1,9 @@
 package com.spotit.api.content.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+
+import java.util.List;
 
 public record CreateContentItemRequest(
         @NotBlank String tag,
@@ -11,6 +14,7 @@ public record CreateContentItemRequest(
         boolean sponsored,
         String advertiser,
         int sortOrder,
-        Boolean active
+        Boolean active,
+        List<@Valid ContentReferenceDto> references
 ) {
 }

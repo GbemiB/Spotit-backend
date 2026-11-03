@@ -37,6 +37,11 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_type", nullable = false, columnDefinition = "varchar(20) default 'owner'")
+    @Builder.Default
+    private AccountOwner accountType = AccountOwner.owner;
+
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 
@@ -53,6 +58,9 @@ public class User {
 
     @Column(name = "last_period_date")
     private LocalDate lastPeriodDate;
+
+    @Column(name = "tracking_start_date")
+    private LocalDate trackingStartDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "theme_pref", nullable = false)
@@ -73,6 +81,9 @@ public class User {
     @Column(name = "notif_digest", nullable = false)
     private boolean notifDigest;
 
+    @Column(name = "notif_partner_love")
+    private Boolean notifPartnerLove;
+
     @Column(name = "period_days_before", length = 40)
     private String periodDaysBefore;
 
@@ -81,6 +92,9 @@ public class User {
 
     @Column(nullable = false)
     private long points;
+
+    @Column(name = "points_spent")
+    private Long pointsSpent;
 
     @Column(nullable = false)
     private int streak;
@@ -109,6 +123,12 @@ public class User {
     @Column(name = "pending_deletion_at")
     private Instant pendingDeletionAt;
 
+    @Column(name = "last_active_at")
+    private Instant lastActiveAt;
+
+    @Column(name = "onboarded_at")
+    private Instant onboardedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -125,5 +145,13 @@ public class User {
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    public boolean isNotifPartnerLoveOn() {
+        return !Boolean.FALSE.equals(notifPartnerLove);
+    }
+
+    public long getLifetimePoints() {
+        return points + (pointsSpent == null ? 0 : pointsSpent);
     }
 }

@@ -119,7 +119,7 @@ databases:
   - name: spotit-db-dev
     databaseName: spotitdb
     user: spotituser
-    plan: free
+    plan: basic-256mb
     region: oregon
 
   - name: spotit-db-prod

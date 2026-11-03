@@ -6,7 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +47,31 @@ class JwtServiceTest {
         assertThat(parsed.get().userId()).isEqualTo(userId);
         assertThat(parsed.get().email()).isEqualTo("user@example.com");
         assertThat(parsed.get().premium()).isTrue();
+    }
+
+    @Test
+    void aPartnerTokenCarriesThePartnerRole() {
+        JwtService jwtService = service();
+
+        SecurityUser partner = jwtService.parseAccessToken(jwtService.generateAccessToken(UUID.randomUUID(), "p@example.com", false, true)).orElseThrow();
+        SecurityUser owner = jwtService.parseAccessToken(jwtService.generateAccessToken(UUID.randomUUID(), "o@example.com", false, false)).orElseThrow();
+
+        assertThat(partner.partner()).isTrue();
+        assertThat(partner.getAuthorities()).extracting("authority").contains(SecurityUser.ROLE_PARTNER);
+        assertThat(owner.partner()).isFalse();
+        assertThat(owner.getAuthorities()).extracting("authority").doesNotContain(SecurityUser.ROLE_PARTNER);
+    }
+
+    @Test
+    void aTokenWithoutTheAccountTypeClaimIsAnOwnerToken() {
+        JwtService jwtService = service();
+        String legacy = Jwts.builder().subject(UUID.randomUUID().toString()).claim("type", "access").claim("email", "old@example.com")
+                .claim("premium", false).issuedAt(new Date()).expiration(new Date(System.currentTimeMillis() + 60_000))
+                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();
+
+        SecurityUser user = jwtService.parseAccessToken(legacy).orElseThrow();
+
+        assertThat(user.partner()).isFalse();
     }
 
     @Test

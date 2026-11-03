@@ -1,6 +1,6 @@
 package com.spotit.api.insight.controller;
 
-import com.spotit.api.common.security.CurrentUserId;
+import com.spotit.api.common.security.ViewedUserId;
 import com.spotit.api.insight.dto.CycleTrendsResponse;
 import com.spotit.api.insight.dto.RegularityResponse;
 import com.spotit.api.insight.dto.WeeklyDigestResponse;
@@ -36,7 +36,7 @@ public class InsightController {
                     examples = @ExampleObject(value = InsightControllerSwagger.TRENDS_200_EXAMPLE)))
     })
     @GetMapping("/trends")
-    public CycleTrendsResponse trends(@CurrentUserId UUID userId,
+    public CycleTrendsResponse trends(@ViewedUserId UUID userId,
             @Parameter(description = "Number of recent cycles to include; defaults to 6.", example = "6") @RequestParam(required = false) Integer cycles) {
         return insightReadService.getTrends(userId, cycles);
     }
@@ -49,7 +49,7 @@ public class InsightController {
                     examples = @ExampleObject(value = InsightControllerSwagger.WEEKLY_DIGEST_200_EXAMPLE)))
     })
     @GetMapping("/digest/weekly")
-    public WeeklyDigestResponse weeklyDigest(@CurrentUserId UUID userId) {
+    public WeeklyDigestResponse weeklyDigest(@ViewedUserId UUID userId) {
         return insightReadService.getWeeklyDigest(userId);
     }
 
@@ -61,7 +61,7 @@ public class InsightController {
                     examples = @ExampleObject(value = InsightControllerSwagger.REGULARITY_200_EXAMPLE)))
     })
     @GetMapping("/regularity")
-    public RegularityResponse regularity(@CurrentUserId UUID userId) {
+    public RegularityResponse regularity(@ViewedUserId UUID userId) {
         return insightReadService.getRegularity(userId);
     }
 }

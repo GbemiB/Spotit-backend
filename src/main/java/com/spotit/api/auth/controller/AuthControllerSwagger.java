@@ -70,7 +70,7 @@ final class AuthControllerSwagger {
                 "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.abc123",
                 "refreshToken": "8f14e45fceea167a5a36dedd4bea2543",
                 "expiresIn": 3600,
-                "user": { "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6", "onboarded": false }
+                "user": { "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6", "onboarded": false, "accountType": "owner" }
               }
             }
             """;
@@ -124,7 +124,7 @@ final class AuthControllerSwagger {
                 "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.abc123",
                 "refreshToken": "8f14e45fceea167a5a36dedd4bea2543",
                 "expiresIn": 3600,
-                "user": { "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6", "onboarded": true }
+                "user": { "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6", "onboarded": true, "accountType": "owner" }
               }
             }
             """;

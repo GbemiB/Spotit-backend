@@ -2,6 +2,7 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml ./
 COPY src ./src
+COPY scripts ./scripts
 # Tests run here so a failing test fails the image build and Render never deploys it.
 RUN mvn -B clean package
 

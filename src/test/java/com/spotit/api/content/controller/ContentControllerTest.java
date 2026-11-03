@@ -30,7 +30,7 @@ class ContentControllerTest {
     }
 
     private ContentFeedResponse feed() {
-        return new ContentFeedResponse(List.of(new ContentItemResponse("1", "Health", "Cycle 101", "Body", "lifestyle", false, null)));
+        return new ContentFeedResponse(List.of(new ContentItemResponse("1", "Health", "Cycle 101", "Body", "lifestyle", false, null, List.of())));
     }
 
     @Test

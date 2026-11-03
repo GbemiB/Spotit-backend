@@ -2,6 +2,7 @@ package com.spotit.api.rewards.service;
 
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
+import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
 import com.spotit.api.user.entity.User;
@@ -28,6 +29,7 @@ class PointsWriteServiceImplTest {
     @Mock PointsHistoryRepository pointsHistoryRepository;
     @Mock ConfigurationDomainService configurationDomainService;
     @Mock ChallengeReadService challengeReadService;
+    @Mock UserClock userClock;
 
     PointsWriteServiceImpl service;
     UUID userId;
@@ -35,9 +37,10 @@ class PointsWriteServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new PointsWriteServiceImpl(userRepository, pointsHistoryRepository, configurationDomainService, challengeReadService);
+        service = new PointsWriteServiceImpl(userRepository, pointsHistoryRepository, configurationDomainService, challengeReadService, userClock);
         userId = UUID.randomUUID();
         today = LocalDate.now(ZoneOffset.UTC);
+        lenient().when(userClock.today(any())).thenReturn(today);
     }
 
     private User userWith(long points, int streak, int longestStreak, LocalDate lastLogDate) {
@@ -211,12 +214,48 @@ class PointsWriteServiceImplTest {
 
     @Test
     void adjustAppliesAPositiveOrNegativeDeltaToTheBalance() {
-        userWith(500, 0, 0, null);
+        User user = userWith(500, 0, 0, null);
 
         long newBalance = service.adjust(userId, -200, "🎁", "Redeemed something");
+        service.adjust(userId, 50, "🏆", "Won something");
 
         assertThat(newBalance).isEqualTo(300);
+        assertThat(user.getPointsSpent()).isEqualTo(200L);
+        assertThat(user.getLifetimePoints()).isEqualTo(550);
         verify(pointsHistoryRepository).save(argThat(entry ->
                 entry.getDelta() == -200 && entry.getLabel().equals("Redeemed something")));
+    }
+
+    @Test
+    void aPartnerCheckInEarnsTheDailyRewardAndContinuesHisStreak() {
+        User user = userWith(100, 2, 4, today.minusDays(1));
+        when(challengeReadService.getDailyLogReward()).thenReturn(10);
+
+        PointsWriteService.LogPointsResult result = service.recordCheckIn(userId);
+
+        assertThat(result.pointsAwarded()).isEqualTo(10);
+        assertThat(result.newBalance()).isEqualTo(110);
+        assertThat(result.streak()).isEqualTo(3);
+        assertThat(user.getLastLogDate()).isEqualTo(today);
+        verify(pointsHistoryRepository).save(any());
+    }
+
+    @Test
+    void aPartnerCheckInAfterAGapStartsANewStreak() {
+        userWith(0, 7, 7, today.minusDays(3));
+        when(challengeReadService.getDailyLogReward()).thenReturn(10);
+
+        assertThat(service.recordCheckIn(userId).streak()).isEqualTo(1);
+    }
+
+    @Test
+    void aSecondPartnerCheckInTheSameDayEarnsNothing() {
+        userWith(50, 3, 3, today);
+
+        PointsWriteService.LogPointsResult result = service.recordCheckIn(userId);
+
+        assertThat(result.pointsAwarded()).isZero();
+        assertThat(result.streak()).isEqualTo(3);
+        verify(pointsHistoryRepository, never()).save(any());
     }
 }

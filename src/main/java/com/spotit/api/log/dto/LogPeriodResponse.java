@@ -8,6 +8,7 @@ public record LogPeriodResponse(
         LocalDate endDate,
         String flow,
         LocalDate lastPeriodDate,
+        LocalDate trackingStartDate,
         int cycleLength,
         int periodLength,
         LogEntryResponse startDayEntry,

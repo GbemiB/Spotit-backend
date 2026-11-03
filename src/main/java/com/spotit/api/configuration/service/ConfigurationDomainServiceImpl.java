@@ -73,6 +73,51 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getPointsWatchAd() == 0) {
             global.setPointsWatchAd(ConfigDefaults.POINTS_WATCH_AD);
         }
+        if (global.getQuizRounds() == 0) {
+            global.setQuizRounds(ConfigDefaults.QUIZ_ROUNDS);
+        }
+        if (global.getQuizLives() == 0) {
+            global.setQuizLives(ConfigDefaults.QUIZ_LIVES);
+        }
+        if (global.getQuizHintCost() == 0) {
+            global.setQuizHintCost(ConfigDefaults.QUIZ_HINT_COST);
+        }
+        if (global.getSpotlightInviteEnabled() == null) {
+            global.setSpotlightInviteEnabled(true);
+        }
+        if (global.getSpotlightInviteEveryDays() == 0) {
+            global.setSpotlightInviteEveryDays(ConfigDefaults.SPOTLIGHT_INVITE_EVERY_DAYS);
+        }
+        if (global.getSpotlightInviteMaxDismissals() == 0) {
+            global.setSpotlightInviteMaxDismissals(ConfigDefaults.SPOTLIGHT_INVITE_MAX_DISMISSALS);
+        }
+        if (global.getGivedayDayStart() == 0) {
+            global.setGivedayDayStart(ConfigDefaults.GIVEDAY_DAY_START);
+        }
+        if (global.getGivedayDayEnd() == 0) {
+            global.setGivedayDayEnd(ConfigDefaults.GIVEDAY_DAY_END);
+        }
+        if (global.getGivedayVisitMinutes() == 0) {
+            global.setGivedayVisitMinutes(ConfigDefaults.GIVEDAY_VISIT_MINUTES);
+        }
+        if (global.getGivedayUnitsPerKm() == 0) {
+            global.setGivedayUnitsPerKm(ConfigDefaults.GIVEDAY_UNITS_PER_KM);
+        }
+        if (global.getGivedayGoodPicks() == 0) {
+            global.setGivedayGoodPicks(ConfigDefaults.GIVEDAY_GOOD_PICKS);
+        }
+        if (global.getPadbankHearts() == 0) {
+            global.setPadbankHearts(ConfigDefaults.PADBANK_HEARTS);
+        }
+        if (global.getPadbankDeliveryCost() == 0) {
+            global.setPadbankDeliveryCost(ConfigDefaults.PADBANK_DELIVERY_COST);
+        }
+        if (global.getQuizTopicsPageSize() == 0) {
+            global.setQuizTopicsPageSize(ConfigDefaults.QUIZ_TOPICS_PAGE_SIZE);
+        }
+        if (global.getSpotlightAdminPageSize() == 0) {
+            global.setSpotlightAdminPageSize(ConfigDefaults.SPOTLIGHT_ADMIN_PAGE_SIZE);
+        }
         if (global.getAccountPurgeGraceDays() == 0) {
             global.setAccountPurgeGraceDays(ConfigDefaults.ACCOUNT_PURGE_GRACE_DAYS);
         }
@@ -190,6 +235,197 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
+    public int getQuizRounds() {
+        return (int) loadGlobal().getQuizRounds();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizLives() {
+        return (int) loadGlobal().getQuizLives();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizHintCost() {
+        return (int) loadGlobal().getQuizHintCost();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isSpotlightInviteEnabled() {
+        return !Boolean.FALSE.equals(loadGlobal().getSpotlightInviteEnabled());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getSpotlightInviteEveryDays() {
+        return (int) loadGlobal().getSpotlightInviteEveryDays();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getSpotlightInviteMaxDismissals() {
+        return (int) loadGlobal().getSpotlightInviteMaxDismissals();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayDayStart() {
+        long value = loadGlobal().getGivedayDayStart();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_DAY_START : value);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayDayEnd() {
+        long value = loadGlobal().getGivedayDayEnd();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_DAY_END : value);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayVisitMinutes() {
+        long value = loadGlobal().getGivedayVisitMinutes();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_VISIT_MINUTES : value);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayUnitsPerKm() {
+        long value = loadGlobal().getGivedayUnitsPerKm();
+        return (int) (value <= 0 ? ConfigDefaults.GIVEDAY_UNITS_PER_KM : value);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getGivedayGoodPicks() {
+        return (int) loadGlobal().getGivedayGoodPicks();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleThree() {
+        String value = loadGlobal().getGivedayTitleThree();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_THREE : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleTwo() {
+        String value = loadGlobal().getGivedayTitleTwo();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_TWO : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleOne() {
+        String value = loadGlobal().getGivedayTitleOne();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_ONE : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getGivedayTitleZero() {
+        String value = loadGlobal().getGivedayTitleZero();
+        return value == null || value.isBlank() ? ConfigDefaults.GIVEDAY_TITLE_ZERO : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankFreeVisitors() {
+        return (int) Math.max(0, loadGlobal().getPadbankFreeVisitors());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankHearts() {
+        return (int) loadGlobal().getPadbankHearts();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankDeliveryCost() {
+        return (int) loadGlobal().getPadbankDeliveryCost();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPadbankVisitorFee() {
+        return (int) Math.max(0, loadGlobal().getPadbankVisitorFee());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getPadbankTitleGreat() {
+        String value = loadGlobal().getPadbankTitleGreat();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_TITLE_GREAT : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getPadbankTitleOk() {
+        String value = loadGlobal().getPadbankTitleOk();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_TITLE_OK : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getPadbankTitleOops() {
+        String value = loadGlobal().getPadbankTitleOops();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_TITLE_OOPS : value.strip();
+    }
+
+    @Override
+    public String getQuizTitleWon() {
+        String value = loadGlobal().getQuizTitleWon();
+        return value == null || value.isBlank() ? ConfigDefaults.QUIZ_TITLE_WON : value.strip();
+    }
+
+    @Override
+    public String getQuizTitlePerfect() {
+        String value = loadGlobal().getQuizTitlePerfect();
+        return value == null || value.isBlank() ? ConfigDefaults.QUIZ_TITLE_PERFECT : value.strip();
+    }
+
+    @Override
+    public String getQuizTitleLost() {
+        String value = loadGlobal().getQuizTitleLost();
+        return value == null || value.isBlank() ? ConfigDefaults.QUIZ_TITLE_LOST : value.strip();
+    }
+
+    @Override
+    public String getPadbankDayTitlePerfect() {
+        String value = loadGlobal().getPadbankDayTitlePerfect();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_DAY_TITLE_PERFECT : value.strip();
+    }
+
+    @Override
+    public String getPadbankDayTitleDone() {
+        String value = loadGlobal().getPadbankDayTitleDone();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_DAY_TITLE_DONE : value.strip();
+    }
+
+    @Override
+    public String getPadbankDayTitleLost() {
+        String value = loadGlobal().getPadbankDayTitleLost();
+        return value == null || value.isBlank() ? ConfigDefaults.PADBANK_DAY_TITLE_LOST : value.strip();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getQuizTopicsPageSize() {
+        return (int) loadGlobal().getQuizTopicsPageSize();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getSpotlightAdminPageSize() {
+        return (int) loadGlobal().getSpotlightAdminPageSize();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public long getAccountPurgeGraceDays() {
         return loadGlobal().getAccountPurgeGraceDays();
     }
@@ -272,6 +508,13 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     public long getAppMinBuildIos() {
         Long value = loadGlobal().getAppMinBuildIos();
         return value == null ? 0L : value;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getAppSupportEmail() {
+        String value = loadGlobal().getAppSupportEmail();
+        return value == null || value.isBlank() ? ConfigDefaults.APP_SUPPORT_EMAIL : value.strip();
     }
 
     @Override

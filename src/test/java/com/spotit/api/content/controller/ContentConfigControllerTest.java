@@ -3,6 +3,7 @@ package com.spotit.api.content.controller;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
+import com.spotit.api.content.dto.ContentReferenceDto;
 import com.spotit.api.content.dto.CreateContentItemRequest;
 import com.spotit.api.content.dto.UpdateContentItemRequest;
 import com.spotit.api.content.service.ContentReadService;
@@ -44,7 +45,7 @@ class ContentConfigControllerTest {
     }
 
     private ContentItemAdminResponse item(String title) {
-        return new ContentItemAdminResponse(id, "Health", title, "Body", null, "lifestyle", false, null, 1, true);
+        return new ContentItemAdminResponse(id, "Health", title, "Body", null, "lifestyle", false, null, 1, true, List.of());
     }
 
     @Test
@@ -75,7 +76,7 @@ class ContentConfigControllerTest {
 
     @Test
     void createReturns201() throws Exception {
-        CreateContentItemRequest request = new CreateContentItemRequest("Health", "Cycle 101", "Body", null, "lifestyle", false, null, 1, true);
+        CreateContentItemRequest request = new CreateContentItemRequest("Health", "Cycle 101", "Body", null, "lifestyle", false, null, 1, true, null);
         when(contentWriteService.create(request)).thenReturn(item("Cycle 101"));
 
         mvc.perform(post("/api/v1/config/content").contentType(MediaType.APPLICATION_JSON).content(json(request)))
@@ -85,7 +86,18 @@ class ContentConfigControllerTest {
 
     @Test
     void createRequiresABody() throws Exception {
-        CreateContentItemRequest request = new CreateContentItemRequest("Health", "Cycle 101", " ", null, null, false, null, 1, true);
+        CreateContentItemRequest request = new CreateContentItemRequest("Health", "Cycle 101", " ", null, null, false, null, 1, true, null);
+
+        mvc.perform(post("/api/v1/config/content").contentType(MediaType.APPLICATION_JSON).content(json(request)))
+                .andExpect(status().isUnprocessableEntity());
+
+        verifyNoInteractions(contentWriteService);
+    }
+
+    @Test
+    void createRejectsAReferenceWithoutAnHttpsLink() throws Exception {
+        CreateContentItemRequest request = new CreateContentItemRequest("Health", "Cycle 101", "Body", null, null, false, null, 1, true,
+                List.of(new ContentReferenceDto("NHS", "javascript:alert(1)")));
 
         mvc.perform(post("/api/v1/config/content").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isUnprocessableEntity());
@@ -95,7 +107,7 @@ class ContentConfigControllerTest {
 
     @Test
     void updateAppliesThePatch() throws Exception {
-        UpdateContentItemRequest request = new UpdateContentItemRequest(null, "Renamed", null, null, null, null, null, null, null);
+        UpdateContentItemRequest request = new UpdateContentItemRequest(null, "Renamed", null, null, null, null, null, null, null, null);
         when(contentWriteService.update(id, request)).thenReturn(item("Renamed"));
 
         mvc.perform(patch("/api/v1/config/content/{id}", id).contentType(MediaType.APPLICATION_JSON).content(json(request)))

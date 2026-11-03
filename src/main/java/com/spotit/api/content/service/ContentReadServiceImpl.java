@@ -7,6 +7,7 @@ import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.content.dto.ContentFeedResponse;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
 import com.spotit.api.content.dto.ContentItemResponse;
+import com.spotit.api.content.dto.ContentReferenceDto;
 import com.spotit.api.content.entity.ContentItem;
 import com.spotit.api.content.repository.ContentItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,8 @@ public class ContentReadServiceImpl implements ContentReadService {
     public ContentFeedResponse getFeed(Integer limit) {
         int pageSize = limit == null ? configurationDomainService.getContentFeedDefaultLimit() : limit;
         var items = contentItemRepository.findByActiveTrueOrderBySortOrderAsc(PageRequest.of(0, pageSize)).stream()
-                .map(i -> new ContentItemResponse(i.getId().toString(), i.getTag(), i.getTitle(), i.getBody(), i.getImageKey(), i.isSponsored(), i.getAdvertiser()))
+                .map(i -> new ContentItemResponse(i.getId().toString(), i.getTag(), i.getTitle(), i.getBody(), i.getImageKey(), i.isSponsored(), i.getAdvertiser(),
+                        ContentReferenceDto.fromEntities(i.getReferences())))
                 .toList();
         return new ContentFeedResponse(items);
     }
@@ -49,6 +51,6 @@ public class ContentReadServiceImpl implements ContentReadService {
 
     private ContentItemAdminResponse toAdminResponse(ContentItem i) {
         return new ContentItemAdminResponse(i.getId(), i.getTag(), i.getTitle(), i.getBody(), i.getImageUrl(), i.getImageKey(), i.isSponsored(),
-                i.getAdvertiser(), i.getSortOrder(), i.isActive());
+                i.getAdvertiser(), i.getSortOrder(), i.isActive(), ContentReferenceDto.fromEntities(i.getReferences()));
     }
 }

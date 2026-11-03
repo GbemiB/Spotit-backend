@@ -15,7 +15,10 @@ public interface CycleLogRepository extends JpaRepository<CycleLog, UUID> {
 
     List<CycleLog> findByUserIdAndFlowIsNotNull(UUID userId);
 
+    Optional<CycleLog> findFirstByUserIdAndFlowIsNotNullOrderByLogDateAsc(UUID userId);
+
     long countByUserId(UUID userId);
+
 
     void deleteByUserIdAndLogDate(UUID userId, LocalDate logDate);
 

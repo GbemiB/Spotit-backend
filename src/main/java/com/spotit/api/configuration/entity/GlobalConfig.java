@@ -1,5 +1,6 @@
 package com.spotit.api.configuration.entity;
 
+import com.spotit.api.configuration.ConfigDefaults;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -42,6 +43,98 @@ public class GlobalConfig {
 
     @Column(name = "points_watch_ad", nullable = false)
     private long pointsWatchAd;
+
+    @Column(name = "quiz_rounds", nullable = false, columnDefinition = "bigint default 5")
+    private long quizRounds;
+
+    @Column(name = "quiz_lives", nullable = false, columnDefinition = "bigint default 3")
+    private long quizLives;
+
+    @Column(name = "quiz_hint_cost", nullable = false, columnDefinition = "bigint default 5")
+    private long quizHintCost;
+
+    @Column(name = "spotlight_invite_enabled", columnDefinition = "boolean default true")
+    private Boolean spotlightInviteEnabled;
+
+    @Column(name = "spotlight_invite_every_days", nullable = false, columnDefinition = "bigint default 3")
+    private long spotlightInviteEveryDays;
+
+    @Column(name = "spotlight_invite_max_dismissals", nullable = false, columnDefinition = "bigint default 3")
+    private long spotlightInviteMaxDismissals;
+
+    @Column(name = "quiz_topics_page_size", nullable = false, columnDefinition = "bigint default 8")
+    private long quizTopicsPageSize;
+
+    @Column(name = "spotlight_admin_page_size", nullable = false, columnDefinition = "bigint default 50")
+    private long spotlightAdminPageSize;
+
+    @Column(name = "giveday_day_start", nullable = false, columnDefinition = "bigint default 480")
+    private long givedayDayStart;
+
+    @Column(name = "giveday_day_end", nullable = false, columnDefinition = "bigint default 1080")
+    private long givedayDayEnd;
+
+    @Column(name = "giveday_visit_minutes", nullable = false, columnDefinition = "bigint default 30")
+    private long givedayVisitMinutes;
+
+    @Column(name = "giveday_units_per_km", nullable = false, columnDefinition = "bigint default 100")
+    private long givedayUnitsPerKm;
+
+    @Column(name = "giveday_good_picks", nullable = false, columnDefinition = "bigint default 3")
+    private long givedayGoodPicks;
+
+    @Column(name = "giveday_title_three", length = 60)
+    private String givedayTitleThree;
+
+    @Column(name = "giveday_title_two", length = 60)
+    private String givedayTitleTwo;
+
+    @Column(name = "giveday_title_one", length = 60)
+    private String givedayTitleOne;
+
+    @Column(name = "giveday_title_zero", length = 60)
+    private String givedayTitleZero;
+
+    @Column(name = "padbank_free_visitors", nullable = false, columnDefinition = "bigint default 2")
+    @Builder.Default
+    private long padbankFreeVisitors = ConfigDefaults.PADBANK_FREE_VISITORS;
+
+    @Column(name = "padbank_hearts", nullable = false, columnDefinition = "bigint default 3")
+    private long padbankHearts;
+
+    @Column(name = "padbank_delivery_cost", nullable = false, columnDefinition = "bigint default 2")
+    private long padbankDeliveryCost;
+
+    @Column(name = "padbank_visitor_fee", nullable = false, columnDefinition = "bigint default 2")
+    @Builder.Default
+    private long padbankVisitorFee = ConfigDefaults.PADBANK_VISITOR_FEE;
+
+    @Column(name = "padbank_title_great", length = 40)
+    private String padbankTitleGreat;
+
+    @Column(name = "padbank_title_ok", length = 40)
+    private String padbankTitleOk;
+
+    @Column(name = "padbank_title_oops", length = 40)
+    private String padbankTitleOops;
+
+    @Column(name = "quiz_title_won", length = 60)
+    private String quizTitleWon;
+
+    @Column(name = "quiz_title_perfect", length = 60)
+    private String quizTitlePerfect;
+
+    @Column(name = "quiz_title_lost", length = 60)
+    private String quizTitleLost;
+
+    @Column(name = "padbank_day_title_perfect", length = 60)
+    private String padbankDayTitlePerfect;
+
+    @Column(name = "padbank_day_title_done", length = 60)
+    private String padbankDayTitleDone;
+
+    @Column(name = "padbank_day_title_lost", length = 60)
+    private String padbankDayTitleLost;
 
     @Column(name = "account_purge_grace_days", nullable = false)
     private long accountPurgeGraceDays;
@@ -87,6 +180,9 @@ public class GlobalConfig {
 
     @Column(name = "app_store_url_android")
     private String appStoreUrlAndroid;
+
+    @Column(name = "app_support_email")
+    private String appSupportEmail;
 
     @Column(name = "app_store_url_ios")
     private String appStoreUrlIos;

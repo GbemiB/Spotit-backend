@@ -1,7 +1,8 @@
 package com.spotit.api.content.dto;
 
+import java.util.List;
 import java.util.UUID;
 
 public record ContentItemAdminResponse(UUID id, String tag, String title, String body, String imageUrl, String imageKey, boolean sponsored,
-                                        String advertiser, int sortOrder, boolean active) {
+                                        String advertiser, int sortOrder, boolean active, List<ContentReferenceDto> references) {
 }

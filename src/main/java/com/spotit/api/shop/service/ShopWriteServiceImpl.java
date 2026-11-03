@@ -40,7 +40,7 @@ public class ShopWriteServiceImpl implements ShopWriteService {
                 .filter(Product::isActive)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PRODUCT_NOT_FOUND));
 
-        String levelName = LevelUtil.levelFor(user.getPoints(), levelDefinitionService.getLevelDefs()).name();
+        String levelName = LevelUtil.levelFor(user.getLifetimePoints(), levelDefinitionService.getLevelDefs()).name();
         if (!LevelUtil.meetsMinLevel(levelName, product.getMinLevel(), levelDefinitionService.getLevelOrder())) {
             throw new ApiException(ErrorCode.LEVEL_TOO_LOW, ErrorMessage.unlocksAtLevel(product.getMinLevel()));
         }

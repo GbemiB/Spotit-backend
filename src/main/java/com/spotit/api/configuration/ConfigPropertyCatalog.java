@@ -43,6 +43,9 @@ public class ConfigPropertyCatalog {
         List<Property> list = new ArrayList<>();
 
         addSecurityProperties(list);
+        addQuizProperties(list);
+        addPadBankProperties(list);
+        addGiveDayProperties(list);
         addGlobalProperties(list);
 
         this.ordered = List.copyOf(list);
@@ -81,6 +84,149 @@ public class ConfigPropertyCatalog {
                 Kind.STRING, Section.SECURITY, true, false,
                 c -> c.security().getCryptoAesKey(),
                 (c, v) -> c.security().setCryptoAesKey((String) v)));
+    }
+
+    private static void addGiveDayProperties(List<Property> list) {
+        list.add(new Property(PropertyNames.GIVEDAY_DAY_START, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: clock time the day starts, in minutes after midnight (480 = 8:00 am)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayDayStart(),
+                (c, v) -> c.global().setGivedayDayStart((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_DAY_END, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: clock time the day ends, in minutes after midnight (1080 = 6:00 pm)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayDayEnd(),
+                (c, v) -> c.global().setGivedayDayEnd((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_VISIT_MINUTES, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: minutes a visit takes; a place must stay open that long after arrival", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayVisitMinutes(),
+                (c, v) -> c.global().setGivedayVisitMinutes((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_UNITS_PER_KM, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: map units in one km (100 = the map is drawn in 10 m units); used for each level's km radius", Kind.LONG, Section.GLOBAL,
+                false, false,
+                c -> c.global().getGivedayUnitsPerKm(),
+                (c, v) -> c.global().setGivedayUnitsPerKm((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_GOOD_PICKS, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: well-matched products needed for the second star", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayGoodPicks(),
+                (c, v) -> c.global().setGivedayGoodPicks((Long) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_THREE, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with three stars; unset uses A perfect give!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleThree(),
+                (c, v) -> c.global().setGivedayTitleThree((String) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_TWO, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with two stars; unset uses Lovely work",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleTwo(),
+                (c, v) -> c.global().setGivedayTitleTwo((String) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_ONE, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with one star; unset uses A good start",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleOne(),
+                (c, v) -> c.global().setGivedayTitleOne((String) v)));
+        list.add(new Property(PropertyNames.GIVEDAY_TITLE_ZERO, PropertyNames.GROUP_GIVEDAY,
+                "Give Day: title for a give with no stars; unset uses Something important is missing",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getGivedayTitleZero(),
+                (c, v) -> c.global().setGivedayTitleZero((String) v)));
+    }
+
+    private static void addPadBankProperties(List<Property> list) {
+        list.add(new Property(PropertyNames.PADBANK_FREE_VISITORS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: visitors served free at the start of each day (0 = none)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankFreeVisitors(),
+                (c, v) -> c.global().setPadbankFreeVisitors((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_HEARTS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: hearts at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankHearts(),
+                (c, v) -> c.global().setPadbankHearts((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_DELIVERY_COST, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: SP a scooter delivery costs, after the free visitors", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDeliveryCost(),
+                (c, v) -> c.global().setPadbankDeliveryCost((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_VISITOR_FEE, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: SP fee for each visitor after the free ones, on top of the pack price", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankVisitorFee(),
+                (c, v) -> c.global().setPadbankVisitorFee((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_TITLE_GREAT, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: heading shown for right pack and route; unset uses PERFECT!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankTitleGreat(),
+                (c, v) -> c.global().setPadbankTitleGreat((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_TITLE_OK, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: heading shown for right pack, other route better; unset uses GOOD!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankTitleOk(),
+                (c, v) -> c.global().setPadbankTitleOk((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_TITLE_OOPS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: heading shown for wrong pack; unset uses OOPS!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankTitleOops(),
+                (c, v) -> c.global().setPadbankTitleOops((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_PERFECT, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: end-of-day title with all three stars; unset uses Perfect day!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDayTitlePerfect(),
+                (c, v) -> c.global().setPadbankDayTitlePerfect((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_DONE, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: end-of-day title with hearts left; unset uses Bank closed for today",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDayTitleDone(),
+                (c, v) -> c.global().setPadbankDayTitleDone((String) v)));
+        list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_LOST, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: end-of-day title when the hearts run out; unset uses Out of hearts",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankDayTitleLost(),
+                (c, v) -> c.global().setPadbankDayTitleLost((String) v)));
+    }
+
+    private static void addQuizProperties(List<Property> list) {
+        list.add(new Property(PropertyNames.QUIZ_ROUNDS, PropertyNames.GROUP_QUIZ,
+                "Rounds (questions) in one Know Yourself quiz level", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizRounds(),
+                (c, v) -> c.global().setQuizRounds((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_LIVES, PropertyNames.GROUP_QUIZ,
+                "Hearts a player starts each quiz level with", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizLives(),
+                (c, v) -> c.global().setQuizLives((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_HINT_COST, PropertyNames.GROUP_QUIZ,
+                "SpotPoints charged for one quiz hint", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizHintCost(),
+                (c, v) -> c.global().setQuizHintCost((Long) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_ENABLED, PropertyNames.GROUP_SPOTLIGHT,
+                "Show the Spotlight invite pop-up on Home", Kind.BOOL, Section.GLOBAL, false, false,
+                c -> !Boolean.FALSE.equals(c.global().getSpotlightInviteEnabled()),
+                (c, v) -> c.global().setSpotlightInviteEnabled((Boolean) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_EVERY_DAYS, PropertyNames.GROUP_SPOTLIGHT,
+                "Days between Spotlight invite pop-ups for a user who has not played", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getSpotlightInviteEveryDays(),
+                (c, v) -> c.global().setSpotlightInviteEveryDays((Long) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_INVITE_MAX_DISMISSALS, PropertyNames.GROUP_SPOTLIGHT,
+                "Maybe-later taps in a row after which the Spotlight invite stops", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getSpotlightInviteMaxDismissals(),
+                (c, v) -> c.global().setSpotlightInviteMaxDismissals((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_TOPICS_PAGE_SIZE, PropertyNames.GROUP_QUIZ,
+                "Topics sent per page on the Spotlight All topics screen", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTopicsPageSize(),
+                (c, v) -> c.global().setQuizTopicsPageSize((Long) v)));
+        list.add(new Property(PropertyNames.QUIZ_TITLE_WON, PropertyNames.GROUP_QUIZ,
+                "Know Yourself: result title for a won level; unset uses Level won!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTitleWon(),
+                (c, v) -> c.global().setQuizTitleWon((String) v)));
+        list.add(new Property(PropertyNames.QUIZ_TITLE_PERFECT, PropertyNames.GROUP_QUIZ,
+                "Know Yourself: result title for a level won with every heart left; unset uses Brilliant!",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTitlePerfect(),
+                (c, v) -> c.global().setQuizTitlePerfect((String) v)));
+        list.add(new Property(PropertyNames.QUIZ_TITLE_LOST, PropertyNames.GROUP_QUIZ,
+                "Know Yourself: result title when the hearts run out; unset uses Out of hearts",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getQuizTitleLost(),
+                (c, v) -> c.global().setQuizTitleLost((String) v)));
+        list.add(new Property(PropertyNames.SPOTLIGHT_ADMIN_PAGE_SIZE, PropertyNames.GROUP_SPOTLIGHT,
+                "Default page size for the Spotlight admin lists (challenges, ranks, quiz and game content)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getSpotlightAdminPageSize(),
+                (c, v) -> c.global().setSpotlightAdminPageSize((Long) v)));
     }
 
     private static void addGlobalProperties(List<Property> list) {
@@ -167,6 +313,11 @@ public class ConfigPropertyCatalog {
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getAppStoreUrlAndroid(),
                 (c, v) -> c.global().setAppStoreUrlAndroid((String) v)));
+        list.add(new Property(PropertyNames.APP_SUPPORT_EMAIL, PropertyNames.GROUP_APP,
+                "Email address the app’s Contact support row opens; unset uses spotitinternational@gmail.com",
+                Kind.STRING, Section.GLOBAL, false, false,
+                c -> c.global().getAppSupportEmail(),
+                (c, v) -> c.global().setAppSupportEmail((String) v)));
         list.add(new Property(PropertyNames.APP_STORE_URL_IOS, PropertyNames.GROUP_APP,
                 "Store page the iOS update screen opens; unset hides the update button on iOS",
                 Kind.STRING, Section.GLOBAL, false, false,

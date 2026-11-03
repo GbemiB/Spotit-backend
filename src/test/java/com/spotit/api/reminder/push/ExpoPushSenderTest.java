@@ -220,4 +220,28 @@ class ExpoPushSenderTest {
 
         assertThat(sender.receipts(ids)).containsOnly(Map.entry("ticket-300", ""));
     }
+
+    @Test
+    void aGroupedMessageCarriesCollapseIdAndTag() {
+        PushMessage grouped = new PushMessage("ExponentPushToken[a]", "Tunde sent you more love ♡", "2 more today", Map.of("screen", "home"),
+                "partner-love-x");
+        server.expect(requestTo(BASE + "/send"))
+                .andExpect(jsonPath("$[0].collapseId").value("partner-love-x"))
+                .andExpect(jsonPath("$[0].tag").value("partner-love-x"))
+                .andRespond(withSuccess("{\"data\":[{\"status\":\"ok\",\"id\":\"ticket-1\"}]}", MediaType.APPLICATION_JSON));
+
+        sender.send(List.of(grouped));
+        server.verify();
+    }
+
+    @Test
+    void anOrdinaryMessageHasNoCollapseId() {
+        server.expect(requestTo(BASE + "/send"))
+                .andExpect(jsonPath("$[0].collapseId").doesNotExist())
+                .andExpect(jsonPath("$[0].tag").doesNotExist())
+                .andRespond(withSuccess("{\"data\":[{\"status\":\"ok\",\"id\":\"ticket-1\"}]}", MediaType.APPLICATION_JSON));
+
+        sender.send(List.of(MESSAGE));
+        server.verify();
+    }
 }

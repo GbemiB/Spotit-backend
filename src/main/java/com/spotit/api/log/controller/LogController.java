@@ -4,12 +4,14 @@ import com.spotit.api.common.dto.ErrorDetail;
 import com.spotit.api.common.dto.MessageResponse;
 import com.spotit.api.common.i18n.EnumMessages;
 import com.spotit.api.common.security.CurrentUserId;
+import com.spotit.api.common.security.ViewedUserId;
 import com.spotit.api.log.dto.EnumOption;
 import com.spotit.api.log.dto.LogEntryResponse;
 import com.spotit.api.log.dto.LogPeriodRequest;
 import com.spotit.api.log.dto.LogPeriodResponse;
 import com.spotit.api.log.dto.LogTemplateResponse;
 import com.spotit.api.log.dto.LogsRangeResponse;
+import com.spotit.api.log.dto.RemovePeriodResponse;
 import com.spotit.api.log.dto.SaveLogRequest;
 import com.spotit.api.log.dto.SaveLogResponse;
 import com.spotit.api.log.entity.FlowIntensity;
@@ -105,7 +107,7 @@ public class LogController {
                     examples = @ExampleObject(value = LogControllerSwagger.GET_LOG_200_EXAMPLE)))
     })
     @GetMapping("/{date}")
-    public LogEntryResponse getLog(@CurrentUserId UUID userId,
+    public LogEntryResponse getLog(@ViewedUserId UUID userId,
                                     @Parameter(description = "Log date (ISO-8601)", example = "2026-07-10")
                                     @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return logReadService.getLog(userId, date);
@@ -122,7 +124,7 @@ public class LogController {
                     examples = @ExampleObject(value = LogControllerSwagger.GET_LOGS_RANGE_422_EXAMPLE)))
     })
     @GetMapping
-    public LogsRangeResponse getLogsInRange(@CurrentUserId UUID userId,
+    public LogsRangeResponse getLogsInRange(@ViewedUserId UUID userId,
                                              @Parameter(description = "Range start date (inclusive)", example = "2026-07-01")
                                              @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                              @Parameter(description = "Range end date (inclusive)", example = "2026-07-10")
@@ -143,5 +145,22 @@ public class LogController {
                                       @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         logWriteService.deleteLog(userId, date);
         return new MessageResponse("Entry deleted.");
+    }
+
+    @Operation(summary = LogControllerSwagger.REMOVE_PERIOD_SUMMARY, description = LogControllerSwagger.REMOVE_PERIOD_DESCRIPTION,
+            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Period removed.", content = @Content(
+                    schema = @Schema(implementation = RemovePeriodResponse.class),
+                    examples = @ExampleObject(value = LogControllerSwagger.REMOVE_PERIOD_200_EXAMPLE))),
+            @ApiResponse(responseCode = "404", description = "No logged period on that day.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = LogControllerSwagger.REMOVE_PERIOD_404_EXAMPLE)))
+    })
+    @DeleteMapping("/period/{date}")
+    public RemovePeriodResponse removePeriod(@CurrentUserId UUID userId,
+                                             @Parameter(description = "Any day of the period (ISO-8601)", example = "2026-10-07")
+                                             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return logWriteService.removePeriod(userId, date);
     }
 }

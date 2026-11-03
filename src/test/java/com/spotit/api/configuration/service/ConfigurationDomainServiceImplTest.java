@@ -143,6 +143,19 @@ class ConfigurationDomainServiceImplTest {
     }
 
     @Test
+    void updateTurnsTheSpotlightInviteOff() {
+        GlobalConfig row = GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).build();
+        when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(row));
+        when(globalConfigRepository.save(any(GlobalConfig.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        GlobalConfigurationResponse response = service.update(PropertyNames.SPOTLIGHT_INVITE_ENABLED, request(null, null, false, null, null));
+
+        assertThat(row.getSpotlightInviteEnabled()).isFalse();
+        assertThat(response.enabled()).isFalse();
+        assertThat(response.groupName()).isEqualTo(PropertyNames.GROUP_SPOTLIGHT);
+    }
+
+    @Test
     void listAllIsOrderedByNameAndMapsEachProperty() {
         when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID))
                 .thenReturn(Optional.of(GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).logMaxPeriodRangeDays(14).build()));

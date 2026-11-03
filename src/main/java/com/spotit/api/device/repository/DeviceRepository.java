@@ -13,6 +13,8 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     List<Device> findByUserIdIn(Collection<UUID> userIds);
 
+    List<Device> findByUserId(UUID userId);
+
     void deleteByPushToken(String pushToken);
 
     void deleteByPushTokenIn(Collection<String> pushTokens);

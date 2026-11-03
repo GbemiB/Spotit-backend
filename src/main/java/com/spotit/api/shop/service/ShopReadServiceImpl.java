@@ -32,7 +32,7 @@ public class ShopReadServiceImpl implements ShopReadService {
     @Transactional(readOnly = true)
     public List<ProductResponse> listProducts(UUID userId) {
         User user = requireUser(userId);
-        String levelName = LevelUtil.levelFor(user.getPoints(), levelDefinitionService.getLevelDefs()).name();
+        String levelName = LevelUtil.levelFor(user.getLifetimePoints(), levelDefinitionService.getLevelDefs()).name();
         List<String> levelOrder = levelDefinitionService.getLevelOrder();
 
         return productRepository.findByActiveTrue().stream()

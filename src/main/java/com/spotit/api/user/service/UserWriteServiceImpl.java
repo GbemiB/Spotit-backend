@@ -94,6 +94,9 @@ public class UserWriteServiceImpl implements UserWriteService {
         if (request.digest() != null) {
             user.setNotifDigest(request.digest());
         }
+        if (request.partnerLove() != null) {
+            user.setNotifPartnerLove(request.partnerLove());
+        }
         ReminderSettings settings = reminderSettings;
         if (request.periodDaysBefore() != null) {
             if (request.periodDaysBefore().isEmpty()) {
@@ -122,6 +125,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         }
         user.setDob(request.dob());
         user.setLastPeriodDate(request.lastPeriodDate());
+        user.setTrackingStartDate(request.lastPeriodDate() == null ? null : request.lastPeriodDate().withDayOfMonth(1));
         user.setGoal(resolveGoal(request.goal()));
         if (request.cycleLength() != null) {
             if (request.cycleLength() < 21 || request.cycleLength() > 45) {
@@ -136,6 +140,9 @@ public class UserWriteServiceImpl implements UserWriteService {
             user.setPeriodLength(request.periodLength());
         }
         user.setOnboarded(true);
+        if (user.getOnboardedAt() == null) {
+            user.setOnboardedAt(Instant.now());
+        }
         userRepository.save(user);
         return new OnboardingResponse(true, user.getCycleLength(), user.getPeriodLength(), user.getGoal().name());
     }
@@ -188,6 +195,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         user.setGoal(null);
         user.setDob(null);
         user.setLastPeriodDate(null);
+        user.setTrackingStartDate(null);
         user.setCycleLength(configurationDomainService.getCycleDefaultLength());
         user.setPeriodLength(configurationDomainService.getCycleDefaultPeriodLength());
         user.setThemePref(ThemePref.system);
@@ -196,6 +204,7 @@ public class UserWriteServiceImpl implements UserWriteService {
         user.setNotifDailyLog(true);
         user.setNotifDigest(false);
         user.setPoints(0);
+        user.setPointsSpent(0L);
         user.setStreak(0);
         user.setLongestStreak(0);
         user.setLastLogDate(null);

@@ -14,6 +14,36 @@ public final class PropertyNames {
     public static final String CYCLE_DEFAULT_PERIOD_LENGTH = "cycle-default-period-length";
     public static final String POINTS_DAILY_CLAIM = "points-daily-claim";
     public static final String POINTS_WATCH_AD = "points-watch-ad";
+    public static final String QUIZ_ROUNDS = "quiz-rounds";
+    public static final String QUIZ_LIVES = "quiz-lives";
+    public static final String QUIZ_HINT_COST = "quiz-hint-cost";
+    public static final String SPOTLIGHT_INVITE_ENABLED = "spotlight-invite-enabled";
+    public static final String SPOTLIGHT_INVITE_EVERY_DAYS = "spotlight-invite-every-days";
+    public static final String SPOTLIGHT_INVITE_MAX_DISMISSALS = "spotlight-invite-max-dismissals";
+    public static final String QUIZ_TOPICS_PAGE_SIZE = "quiz-topics-page-size";
+    public static final String GIVEDAY_DAY_START = "giveday-day-start";
+    public static final String GIVEDAY_DAY_END = "giveday-day-end";
+    public static final String GIVEDAY_VISIT_MINUTES = "giveday-visit-minutes";
+    public static final String GIVEDAY_UNITS_PER_KM = "giveday-units-per-km";
+    public static final String GIVEDAY_GOOD_PICKS = "giveday-good-picks";
+    public static final String GIVEDAY_TITLE_THREE = "giveday-title-three";
+    public static final String GIVEDAY_TITLE_TWO = "giveday-title-two";
+    public static final String GIVEDAY_TITLE_ONE = "giveday-title-one";
+    public static final String GIVEDAY_TITLE_ZERO = "giveday-title-zero";
+    public static final String PADBANK_FREE_VISITORS = "padbank-free-visitors";
+    public static final String PADBANK_HEARTS = "padbank-hearts";
+    public static final String PADBANK_DELIVERY_COST = "padbank-delivery-cost";
+    public static final String PADBANK_VISITOR_FEE = "padbank-visitor-fee";
+    public static final String PADBANK_TITLE_GREAT = "padbank-title-great";
+    public static final String PADBANK_TITLE_OK = "padbank-title-ok";
+    public static final String PADBANK_TITLE_OOPS = "padbank-title-oops";
+    public static final String QUIZ_TITLE_WON = "quiz-title-won";
+    public static final String QUIZ_TITLE_PERFECT = "quiz-title-perfect";
+    public static final String QUIZ_TITLE_LOST = "quiz-title-lost";
+    public static final String PADBANK_DAY_TITLE_PERFECT = "padbank-day-title-perfect";
+    public static final String PADBANK_DAY_TITLE_DONE = "padbank-day-title-done";
+    public static final String PADBANK_DAY_TITLE_LOST = "padbank-day-title-lost";
+    public static final String SPOTLIGHT_ADMIN_PAGE_SIZE = "spotlight-admin-page-size";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";
     public static final String BADGE_KNOW_YOUR_BODY_THRESHOLD = "badge-know-your-body-threshold";
@@ -30,6 +60,7 @@ public final class PropertyNames {
     public static final String APP_MIN_BUILD_ANDROID = "app-min-build-android";
     public static final String APP_MIN_BUILD_IOS = "app-min-build-ios";
     public static final String APP_STORE_URL_ANDROID = "app-store-url-android";
+    public static final String APP_SUPPORT_EMAIL = "app-support-email";
     public static final String APP_STORE_URL_IOS = "app-store-url-ios";
 
     public static final String GROUP_SECURITY = "security";
@@ -43,6 +74,10 @@ public final class PropertyNames {
     public static final String GROUP_REWARDS = "rewards";
     public static final String GROUP_CONTENT = "content";
     public static final String GROUP_APP = "app";
+    public static final String GROUP_QUIZ = "quiz";
+    public static final String GROUP_SPOTLIGHT = "spotlight";
+    public static final String GROUP_PADBANK = "padbank";
+    public static final String GROUP_GIVEDAY = "giveday";
 
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";

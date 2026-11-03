@@ -1,6 +1,7 @@
 package com.spotit.api.content;
 
 import com.spotit.api.content.entity.ContentItem;
+import com.spotit.api.content.entity.ContentReference;
 import com.spotit.api.content.repository.ContentItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,11 +11,51 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ContentDataSeeder {
+
+    private static final ContentReference NHS_PERIODS = ref("NHS — Periods", "https://www.nhs.uk/conditions/periods/");
+    private static final ContentReference NHS_PERIOD_PAIN = ref("NHS — Period pain", "https://www.nhs.uk/conditions/period-pain/");
+    private static final ContentReference NHS_PMS = ref("NHS — PMS (premenstrual syndrome)", "https://www.nhs.uk/conditions/pre-menstrual-syndrome/");
+    private static final ContentReference ACOG_DYSMENORRHEA = ref("ACOG — Dysmenorrhea: Painful Periods",
+            "https://www.acog.org/womens-health/faqs/dysmenorrhea-painful-periods");
+    private static final ContentReference CLEVELAND_CYCLE = ref("Cleveland Clinic — Menstrual Cycle",
+            "https://my.clevelandclinic.org/health/articles/10132-menstrual-cycle");
+
+    private static final Map<String, List<ContentReference>> REFERENCES = Map.of(
+            "Understanding Your Menstrual Cycle", List.of(NHS_PERIODS, CLEVELAND_CYCLE),
+            "Foods That Ease Period Cramps", List.of(ACOG_DYSMENORRHEA,
+                    ref("NHS — Vitamins and minerals: magnesium", "https://www.nhs.uk/conditions/vitamins-and-minerals/others/")),
+            "How to Exercise Through Your Entire Cycle", List.of(NHS_PERIOD_PAIN,
+                    ref("NHS — Physical activity guidelines for adults",
+                            "https://www.nhs.uk/live-well/exercise/physical-activity-guidelines-for-adults-aged-19-to-64/")),
+            "Managing Period Cramps Naturally", List.of(NHS_PERIOD_PAIN, ACOG_DYSMENORRHEA),
+            "Your Mood and Your Menstrual Cycle", List.of(NHS_PMS,
+                    ref("Cleveland Clinic — Premenstrual Syndrome (PMS)",
+                            "https://my.clevelandclinic.org/health/diseases/24288-pms-premenstrual-syndrome")),
+            "Signs of a Healthy Menstrual Cycle", List.of(NHS_PERIODS,
+                    ref("NHS — Heavy periods", "https://www.nhs.uk/conditions/heavy-periods/"),
+                    ref("ACOG — Heavy Menstrual Bleeding", "https://www.acog.org/womens-health/faqs/heavy-menstrual-bleeding")),
+            "Why Tracking Your Symptoms Changes Everything", List.of(
+                    ref("ACOG — Using the Menstrual Cycle as a Vital Sign",
+                            "https://www.acog.org/clinical/clinical-guidance/committee-opinion/articles/2015/12/"
+                                    + "menstruation-in-girls-and-adolescents-using-the-menstrual-cycle-as-a-vital-sign"),
+                    NHS_PMS),
+            "Sleep and Your Menstrual Cycle", List.of(
+                    ref("Sleep Foundation — Period Insomnia: How PMS and PMDD Impact Sleep", "https://www.sleepfoundation.org/women-sleep/pms-and-insomnia"),
+                    ref("NHS — Insomnia", "https://www.nhs.uk/conditions/insomnia/")),
+            "What Is Ovulation and How to Recognise It", List.of(
+                    ref("Cleveland Clinic — Ovulation", "https://my.clevelandclinic.org/health/articles/23439-ovulation"),
+                    ref("NHS — Natural family planning (fertility awareness)",
+                            "https://www.nhs.uk/contraception/methods-of-contraception/natural-family-planning/")),
+            "Iron-Rich Eating During and After Your Period", List.of(
+                    ref("NHS — Vitamins and minerals: iron", "https://www.nhs.uk/conditions/vitamins-and-minerals/iron/"),
+                    ref("NHS — Iron deficiency anaemia", "https://www.nhs.uk/conditions/iron-deficiency-anaemia/"))
+    );
 
     private final ContentItemRepository contentItemRepository;
 
@@ -26,6 +67,7 @@ public class ContentDataSeeder {
                     .anyMatch(i -> i.getBody() == null || i.getBody().isBlank()
                             || i.getImageKey() == null || i.getImageKey().isBlank());
             if (!incomplete) {
+                backfillReferences();
                 return;
             }
             contentItemRepository.deleteAll();
@@ -44,8 +86,31 @@ public class ContentDataSeeder {
                 ironRichEatingDuringAndAfterYourPeriod()
         );
 
+        items.forEach(this::applyReferences);
         contentItemRepository.saveAll(items);
         log.info("Content feed seeded with {} items", items.size());
+    }
+
+    private void backfillReferences() {
+        List<ContentItem> updated = contentItemRepository.findAll().stream()
+                .filter(i -> i.getReferences().isEmpty() && REFERENCES.containsKey(i.getTitle()))
+                .toList();
+        updated.forEach(this::applyReferences);
+        if (!updated.isEmpty()) {
+            contentItemRepository.saveAll(updated);
+            log.info("Added references to {} content items", updated.size());
+        }
+    }
+
+    private void applyReferences(ContentItem item) {
+        List<ContentReference> refs = REFERENCES.get(item.getTitle());
+        if (refs != null) {
+            refs.forEach(r -> item.getReferences().add(ref(r.getLabel(), r.getUrl())));
+        }
+    }
+
+    private static ContentReference ref(String label, String url) {
+        return new ContentReference(label, url);
     }
 
     private static ContentItem understandingYourMenstrualCycle() {

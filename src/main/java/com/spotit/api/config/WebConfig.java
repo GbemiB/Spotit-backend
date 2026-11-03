@@ -1,6 +1,7 @@
 package com.spotit.api.config;
 
 import com.spotit.api.common.security.CurrentUserIdArgumentResolver;
+import com.spotit.api.common.security.ViewedUserIdArgumentResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
@@ -13,9 +14,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
     private final CurrentUserIdArgumentResolver currentUserIdArgumentResolver;
+    private final ViewedUserIdArgumentResolver viewedUserIdArgumentResolver;
 
     @Override
     public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
         resolvers.add(currentUserIdArgumentResolver);
+        resolvers.add(viewedUserIdArgumentResolver);
     }
 }

@@ -35,11 +35,30 @@ public class ReminderWriteServiceImpl implements ReminderWriteService {
     @Override
     @Transactional
     public Optional<ReminderDelivery> record(UUID userId, ReminderType type, LocalDate forDate, String body, Instant now) {
+        return record(userId, type, forDate, type.getTitle(), body, now);
+    }
+
+    @Override
+    @Transactional
+    public Optional<ReminderDelivery> record(UUID userId, ReminderType type, LocalDate forDate, String title, String body, Instant now) {
         if (reminderDeliveryRepository.existsByUserIdAndTypeAndForDate(userId, type, forDate)) {
             return Optional.empty();
         }
         return Optional.of(reminderDeliveryRepository.saveAndFlush(ReminderDelivery.builder()
-                .userId(userId).type(type).forDate(forDate).title(type.getTitle()).body(body).sentAt(now).build()));
+                .userId(userId).type(type).forDate(forDate).title(title).body(body).sentAt(now).build()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countFor(UUID userId, ReminderType type, LocalDate forDate) {
+        return reminderDeliveryRepository.countByUserIdAndTypeAndForDate(userId, type, forDate);
+    }
+
+    @Override
+    @Transactional
+    public ReminderDelivery recordEvery(UUID userId, ReminderType type, LocalDate forDate, String title, String body, Instant now) {
+        return reminderDeliveryRepository.saveAndFlush(ReminderDelivery.builder()
+                .userId(userId).type(type).forDate(forDate).title(title).body(body).sentAt(now).build());
     }
 
     @Override

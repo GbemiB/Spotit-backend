@@ -3,9 +3,11 @@ package com.spotit.api.content.service;
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
+import com.spotit.api.content.dto.ContentReferenceDto;
 import com.spotit.api.content.dto.CreateContentItemRequest;
 import com.spotit.api.content.dto.UpdateContentItemRequest;
 import com.spotit.api.content.entity.ContentItem;
+import com.spotit.api.content.entity.ContentReference;
 import com.spotit.api.content.repository.ContentItemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,7 +41,7 @@ class ContentWriteServiceImplTest {
     @Test
     void createDefaultsToActiveWhenNotSpecified() {
         ContentItemAdminResponse response = service.create(
-                new CreateContentItemRequest("Health", "Cycle 101", "Body", null, "lifestyle", true, "Acme", 4, null));
+                new CreateContentItemRequest("Health", "Cycle 101", "Body", null, "lifestyle", true, "Acme", 4, null, null));
 
         ArgumentCaptor<ContentItem> saved = ArgumentCaptor.forClass(ContentItem.class);
         verify(contentItemRepository).save(saved.capture());
@@ -51,7 +54,7 @@ class ContentWriteServiceImplTest {
     @Test
     void createCanStartInactive() {
         ContentItemAdminResponse response = service.create(
-                new CreateContentItemRequest("Health", "Draft", "Body", null, null, false, null, 0, false));
+                new CreateContentItemRequest("Health", "Draft", "Body", null, null, false, null, 0, false, null));
 
         assertThat(response.active()).isFalse();
     }
@@ -61,7 +64,7 @@ class ContentWriteServiceImplTest {
         ContentItem item = existing();
         when(contentItemRepository.findById(id)).thenReturn(Optional.of(item));
 
-        service.update(id, new UpdateContentItemRequest(null, "New", null, null, null, null, null, 9, null));
+        service.update(id, new UpdateContentItemRequest(null, "New", null, null, null, null, null, 9, null, null));
 
         assertThat(item.getTitle()).isEqualTo("New");
         assertThat(item.getSortOrder()).isEqualTo(9);
@@ -77,10 +80,10 @@ class ContentWriteServiceImplTest {
         when(contentItemRepository.findById(id)).thenReturn(Optional.of(item));
 
         ContentItemAdminResponse response = service.update(id,
-                new UpdateContentItemRequest("Nutrition", "T", "New body", "https://img", "lifestyle", true, "Acme", 2, false));
+                new UpdateContentItemRequest("Nutrition", "T", "New body", "https://img", "lifestyle", true, "Acme", 2, false, null));
 
         assertThat(response).isEqualTo(
-                new ContentItemAdminResponse(id, "Nutrition", "T", "New body", "https://img", "lifestyle", true, "Acme", 2, false));
+                new ContentItemAdminResponse(id, "Nutrition", "T", "New body", "https://img", "lifestyle", true, "Acme", 2, false, List.of()));
     }
 
     @Test
@@ -88,16 +91,61 @@ class ContentWriteServiceImplTest {
         ContentItem item = existing();
         when(contentItemRepository.findById(id)).thenReturn(Optional.of(item));
 
-        service.update(id, new UpdateContentItemRequest(null, null, "  ", null, null, null, null, null, null));
+        service.update(id, new UpdateContentItemRequest(null, null, "  ", null, null, null, null, null, null, null));
 
         assertThat(item.getBody()).isEqualTo("Old body");
+    }
+
+    @Test
+    void createStoresReferencesInOrder() {
+        ContentItemAdminResponse response = service.create(new CreateContentItemRequest("Health", "Cycle 101", "Body", null, null, false, null, 0, null,
+                List.of(new ContentReferenceDto(" NHS — Periods ", "https://www.nhs.uk/conditions/periods/"),
+                        new ContentReferenceDto("ACOG", "https://www.acog.org/"))));
+
+        assertThat(response.references()).containsExactly(
+                new ContentReferenceDto("NHS — Periods", "https://www.nhs.uk/conditions/periods/"),
+                new ContentReferenceDto("ACOG", "https://www.acog.org/"));
+    }
+
+    @Test
+    void updateReplacesReferencesWhenSent() {
+        ContentItem item = existing();
+        item.getReferences().add(new ContentReference("Old", "https://old.example"));
+        when(contentItemRepository.findById(id)).thenReturn(Optional.of(item));
+
+        service.update(id, new UpdateContentItemRequest(null, null, null, null, null, null, null, null, null,
+                List.of(new ContentReferenceDto("New", "https://new.example"))));
+
+        assertThat(item.getReferences()).extracting(ContentReference::getLabel).containsExactly("New");
+    }
+
+    @Test
+    void updateKeepsReferencesWhenNotSent() {
+        ContentItem item = existing();
+        item.getReferences().add(new ContentReference("Old", "https://old.example"));
+        when(contentItemRepository.findById(id)).thenReturn(Optional.of(item));
+
+        service.update(id, new UpdateContentItemRequest(null, "New", null, null, null, null, null, null, null, null));
+
+        assertThat(item.getReferences()).extracting(ContentReference::getLabel).containsExactly("Old");
+    }
+
+    @Test
+    void updateWithAnEmptyListRemovesReferences() {
+        ContentItem item = existing();
+        item.getReferences().add(new ContentReference("Old", "https://old.example"));
+        when(contentItemRepository.findById(id)).thenReturn(Optional.of(item));
+
+        service.update(id, new UpdateContentItemRequest(null, null, null, null, null, null, null, null, null, List.of()));
+
+        assertThat(item.getReferences()).isEmpty();
     }
 
     @Test
     void updateForAnUnknownIdIs404() {
         when(contentItemRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.update(id, new UpdateContentItemRequest(null, null, null, null, null, null, null, null, null)))
+        assertThatThrownBy(() -> service.update(id, new UpdateContentItemRequest(null, null, null, null, null, null, null, null, null, null)))
                 .isInstanceOf(ApiException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
     }

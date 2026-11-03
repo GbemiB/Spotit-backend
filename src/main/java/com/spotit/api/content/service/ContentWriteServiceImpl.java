@@ -4,6 +4,7 @@ import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.content.dto.ContentItemAdminResponse;
+import com.spotit.api.content.dto.ContentReferenceDto;
 import com.spotit.api.content.dto.CreateContentItemRequest;
 import com.spotit.api.content.dto.UpdateContentItemRequest;
 import com.spotit.api.content.entity.ContentItem;
@@ -32,6 +33,7 @@ public class ContentWriteServiceImpl implements ContentWriteService {
                 .advertiser(request.advertiser())
                 .sortOrder(request.sortOrder())
                 .active(request.active() == null ? true : request.active())
+                .references(ContentReferenceDto.toEntities(request.references()))
                 .build();
         contentItemRepository.save(item);
         return toAdminResponse(item);
@@ -69,6 +71,10 @@ public class ContentWriteServiceImpl implements ContentWriteService {
         if (request.active() != null) {
             item.setActive(request.active());
         }
+        if (request.references() != null) {
+            item.getReferences().clear();
+            item.getReferences().addAll(ContentReferenceDto.toEntities(request.references()));
+        }
         contentItemRepository.save(item);
         return toAdminResponse(item);
     }
@@ -84,6 +90,6 @@ public class ContentWriteServiceImpl implements ContentWriteService {
 
     private ContentItemAdminResponse toAdminResponse(ContentItem i) {
         return new ContentItemAdminResponse(i.getId(), i.getTag(), i.getTitle(), i.getBody(), i.getImageUrl(), i.getImageKey(), i.isSponsored(),
-                i.getAdvertiser(), i.getSortOrder(), i.isActive());
+                i.getAdvertiser(), i.getSortOrder(), i.isActive(), ContentReferenceDto.fromEntities(i.getReferences()));
     }
 }

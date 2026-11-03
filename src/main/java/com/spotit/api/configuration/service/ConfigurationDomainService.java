@@ -24,6 +24,66 @@ public interface ConfigurationDomainService {
 
     int getPointsWatchAd();
 
+    int getQuizRounds();
+
+    int getQuizLives();
+
+    int getQuizHintCost();
+
+    boolean isSpotlightInviteEnabled();
+
+    int getSpotlightInviteEveryDays();
+
+    int getSpotlightInviteMaxDismissals();
+
+    int getQuizTopicsPageSize();
+
+    int getGivedayDayStart();
+
+    int getGivedayDayEnd();
+
+    int getGivedayVisitMinutes();
+
+    int getGivedayUnitsPerKm();
+
+    int getGivedayGoodPicks();
+
+    String getGivedayTitleThree();
+
+    String getGivedayTitleTwo();
+
+    String getGivedayTitleOne();
+
+    String getGivedayTitleZero();
+
+    int getPadbankFreeVisitors();
+
+    int getPadbankHearts();
+
+    int getPadbankDeliveryCost();
+
+    int getPadbankVisitorFee();
+
+    String getPadbankTitleGreat();
+
+    String getPadbankTitleOk();
+
+    String getPadbankTitleOops();
+
+    String getQuizTitleWon();
+
+    String getQuizTitlePerfect();
+
+    String getQuizTitleLost();
+
+    String getPadbankDayTitlePerfect();
+
+    String getPadbankDayTitleDone();
+
+    String getPadbankDayTitleLost();
+
+    int getSpotlightAdminPageSize();
+
     long getAccountPurgeGraceDays();
 
     int getBadgeKnowYourBodyThreshold();
@@ -53,6 +113,8 @@ public interface ConfigurationDomainService {
     long getAppMinBuildIos();
 
     String getAppStoreUrlAndroid();
+
+    String getAppSupportEmail();
 
     String getAppStoreUrlIos();
 

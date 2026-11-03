@@ -33,7 +33,7 @@ public class ChallengeWriteServiceImpl implements ChallengeWriteService {
     public ChallengeClaimResponse claim(UUID userId, String challengeId) {
         ChallengeDefinition def = challengeDefinitionRepository.findById(challengeId)
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.CHALLENGE_NOT_FOUND));
-        LocalDate weekStart = calculator.currentWeekStart();
+        LocalDate weekStart = calculator.currentWeekStart(userId);
         int done = calculator.computeDone(userId, def);
 
         if (done < def.getTotal()) {
