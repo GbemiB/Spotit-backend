@@ -72,7 +72,7 @@ public class PadBankService {
         }
         int day = request == null || request.day() == null ? nextDay(userId) : request.day();
         List<PadBankVisitor> visitors = visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(day);
-        List<PadBankPack> packs = packRepository.findByActiveTrueOrderBySortOrderAsc();
+        List<PadBankPack> packs = packRepository.findByActiveTrueOrderBySortOrderAsc().stream().filter(p -> p.getFromDay() <= day).toList();
         if (visitors.isEmpty() || packs.isEmpty()) {
             throw new ApiException(ErrorCode.NOT_YET_COMPLETE, ErrorMessage.PADBANK_DAY_EMPTY);
         }
@@ -95,7 +95,8 @@ public class PadBankService {
                 config.getPadbankDeliveryCost(),
                 packs.stream().map(p -> new PadBankPackView(p.getId(), p.getName(), p.getCost(), p.getStock(), p.getColor(),
                         PadBankRules.decodeLines(p.getContents()))).toList(),
-                visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), PadBankRules.decodeClues(v.getClues()))).toList(),
+                visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), Math.max(1, PadBankRules.decodePacks(v.getPacks()).size()),
+                        PadBankRules.decodeClues(v.getClues()))).toList(),
                 new PadBankDayTitles(config.getPadbankDayTitlePerfect(), config.getPadbankDayTitleDone(), config.getPadbankDayTitleLost()));
     }
 
@@ -153,16 +154,28 @@ public class PadBankService {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_ROUTE);
         }
         Map<String, Integer> stock = PadBankRules.decodeStock(run.getStock());
-        String packId = request.pack().strip();
-        PadBankPack pack = packRepository.findById(packId).filter(p -> stock.containsKey(p.getId()))
-                .orElseThrow(() -> new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_PACK));
-        if (stock.get(packId) <= 0) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_OUT_OF_STOCK);
+        List<String> picked = request.picked();
+        if (picked.isEmpty()) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_PACK);
+        }
+        Map<String, Integer> counts = PadBankRules.count(picked);
+        int packCost = 0;
+        for (Map.Entry<String, Integer> e : counts.entrySet()) {
+            PadBankPack pack = packRepository.findById(e.getKey()).filter(p -> stock.containsKey(p.getId()))
+                    .orElseThrow(() -> new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_PACK));
+            if (stock.get(pack.getId()) < e.getValue()) {
+                throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_OUT_OF_STOCK);
+            }
+            packCost += pack.getCost() * e.getValue();
         }
         List<String> ids = Arrays.asList(run.getVisitorIds().split(","));
         PadBankVisitor visitor = visitorRepository.findById(ids.get(run.getRound()))
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PADBANK_RUN_NOT_FOUND));
-        int spent = PadBankRules.price(run.getRound(), config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(), pack.getCost(),
+        List<String> wanted = PadBankRules.decodePacks(visitor.getPacks());
+        if (picked.size() > Math.max(1, wanted.size())) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_PACK);
+        }
+        int spent = PadBankRules.price(run.getRound(), config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(), packCost,
                 PadBankVisitor.DELIVERY.equals(route), config.getPadbankDeliveryCost());
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
         long balance = user.getPoints();
@@ -173,10 +186,10 @@ public class PadBankService {
             balance = pointsWriteService.adjust(userId, -spent, SPEND_ICON, "Pad Bank Run: visitor " + (run.getRound() + 1));
             run.setSpSpent(run.getSpSpent() + spent);
         }
-        boolean packOk = visitor.getPack().equals(packId);
+        boolean packOk = PadBankRules.samePacks(wanted, picked);
         boolean routeOk = visitor.getRoute().equals(route);
         String result = PadBankRules.result(packOk, routeOk);
-        stock.put(packId, stock.get(packId) - 1);
+        counts.forEach((id, n) -> stock.put(id, stock.get(id) - n));
         run.setStock(PadBankRules.encodeStock(stock));
         run.setRightPack(run.getRightPack() + (packOk ? 1 : 0));
         run.setRightWay(run.getRightWay() + (routeOk ? 1 : 0));
@@ -203,7 +216,7 @@ public class PadBankService {
         String tip = switch (result) {
             case PadBankRules.GREAT -> GREAT_TIP;
             case PadBankRules.OK -> visitor.getRouteWhy();
-            default -> PadBankRules.decodeMap(visitor.getWrongWhy()).getOrDefault(packId, OOPS_TIP);
+            default -> PadBankRules.oopsTip(wanted, picked, PadBankRules.decodeMap(visitor.getWrongWhy()), visitor.getGroupWhy(), OOPS_TIP);
         };
         String speech = PadBankRules.OOPS.equals(result) ? OOPS_SPEECH : visitor.getThanks();
         String title = switch (result) {

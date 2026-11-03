@@ -1,5 +1,7 @@
 package com.spotit.api.spotlight.padbank;
 
+import com.spotit.api.spotlight.padbank.entity.PadBankPack;
+import com.spotit.api.spotlight.padbank.entity.PadBankVisitor;
 import com.spotit.api.spotlight.padbank.repository.PadBankPackRepository;
 import com.spotit.api.spotlight.padbank.repository.PadBankVisitorRepository;
 import com.spotit.api.spotlight.padbank.service.PadBankRules;
@@ -12,6 +14,11 @@ import org.springframework.test.context.ActiveProfiles;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,23 +30,32 @@ class PadBankContentScriptTest {
     @Autowired PadBankVisitorRepository visitorRepository;
 
     @Test
-    void dayOneLoadsFourPacksAndFiveVisitorsAndTheSpUpdateCanBeRunTwice() throws Exception {
+    void contentLoadsEightPacksAndTwentyDaysOfVisitorsAndCanBeRunTwice() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/day1.sql"));
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/u67_sp_only.sql"));
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/u67_sp_only.sql"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/content.sql"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/content.sql"));
         }
 
-        assertThat(packRepository.findByActiveTrueOrderBySortOrderAsc()).extracting("id", "cost").containsExactly(
-                org.assertj.core.groups.Tuple.tuple("starter", 3), org.assertj.core.groups.Tuple.tuple("school", 5),
-                org.assertj.core.groups.Tuple.tuple("comfort", 6), org.assertj.core.groups.Tuple.tuple("reusable", 10));
-        assertThat(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(1)).extracting("pack", "route")
-                .containsExactly(org.assertj.core.groups.Tuple.tuple("starter", "pickup"), org.assertj.core.groups.Tuple.tuple("comfort", "delivery"),
-                        org.assertj.core.groups.Tuple.tuple("school", "pickup"), org.assertj.core.groups.Tuple.tuple("reusable", "pickup"),
-                        org.assertj.core.groups.Tuple.tuple("comfort", "delivery"));
-        assertThat(visitorRepository.findById("day1-student").orElseThrow().getRouteWhy()).contains("SP she didn’t need");
-        assertThat(visitorRepository.activeDays()).containsExactly(1);
+        List<PadBankPack> packs = packRepository.findByActiveTrueOrderBySortOrderAsc();
+        assertThat(packs).extracting("id").containsExactly("starter", "school", "comfort", "reusable", "liners", "night", "sport", "newmum");
+        assertThat(packs).extracting("fromDay").containsExactly(1, 1, 1, 1, 3, 5, 7, 9);
+        assertThat(visitorRepository.activeDays()).hasSize(20);
+        assertThat(visitorRepository.findAll()).hasSize(100);
+        for (int day = 1; day <= 20; day++) {
+            int open = day;
+            Set<String> openPacks = packs.stream().filter(p -> p.getFromDay() <= open).map(PadBankPack::getId).collect(Collectors.toSet());
+            List<PadBankVisitor> visitors = visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(day);
+            assertThat(visitors).hasSize(5);
+            Map<String, Integer> needed = new HashMap<>();
+            visitors.forEach(v -> PadBankRules.decodePacks(v.getPacks()).forEach(p -> needed.merge(p, 1, Integer::sum)));
+            assertThat(openPacks).containsAll(needed.keySet());
+            packs.forEach(p -> assertThat(needed.getOrDefault(p.getId(), 0)).isLessThanOrEqualTo(p.getStock()));
+        }
+        PadBankVisitor teens = visitorRepository.findById("d13-teens").orElseThrow();
+        assertThat(PadBankRules.decodePacks(teens.getPacks())).containsExactly("sport", "sport", "comfort");
+        assertThat(teens.getGroupWhy()).isNotBlank();
         assertThat(PadBankRules.decodeClues(visitorRepository.findById("day1-woman").orElseThrow().getClues())).hasSize(3);
-        assertThat(PadBankRules.decodeMap(visitorRepository.findById("day1-girl").orElseThrow().getWrongWhy())).containsOnlyKeys("reusable", "comfort", "school");
+        assertThat(PadBankRules.decodeMap(visitorRepository.findById("day1-girl").orElseThrow().getWrongWhy())).containsOnlyKeys("reusable", "comfort",
+                "school");
     }
 }

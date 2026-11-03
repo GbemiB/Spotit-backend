@@ -64,7 +64,7 @@ class PadBankServiceTest {
     SpotlightChallenge challenge;
 
     static PadBankVisitor visitor(String id, String pack, String route) {
-        return PadBankVisitor.builder().id(id).day(1).who("Girl, 13").look("girl").clues("drop|First period").pack(pack).route(route)
+        return PadBankVisitor.builder().id(id).day(1).who("Girl, 13").look("girl").clues("drop|First period").packs(pack).route(route)
                 .thanks("Thank you!").routeWhy("Pickup was free.").wrongWhy("comfort|Too much for a first period.").active(true).build();
     }
 
@@ -183,61 +183,100 @@ class PadBankServiceTest {
     void aFullDayEndsWithStarsAndTheBadge() {
         PadBankRun r = run(0, 3, "starter:4,comfort:1");
 
-        PadBankServeResponse first = service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", "pickup"));
+        PadBankServeResponse first = service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", null, "pickup"));
         assertThat(first.title()).isEqualTo("PERFECT!");
         assertThat(first).extracting("result", "tip", "speech", "balance", "spent", "served", "right", "finished")
                 .containsExactly("great", PadBankService.GREAT_TIP, "Thank you!", 50L, 0, 1, 1, false);
         verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
 
-        PadBankServeResponse last = service.serve(userId, r.getId(), new PadBankServeRequest(1, "comfort", "delivery"));
+        PadBankServeResponse last = service.serve(userId, r.getId(), new PadBankServeRequest(1, "comfort", null, "delivery"));
         verify(pointsWriteService).adjust(eq(userId), eq(-32), anyString(), eq("Pad Bank Run: visitor 2"));
         assertThat(last).extracting("result", "balance", "spent", "spentToday", "rightPack", "rightWay", "finished", "stars", "badge")
                 .containsExactly("great", 40L, 32, 32, 2, 2, true, 3, true);
         assertThat(last.stock()).containsEntry("comfort", 0);
         assertThat(r.getStatus()).isEqualTo(PadBankRun.DONE);
-        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(2, "starter", "pickup")))
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(2, "starter", null, "pickup")))
                 .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 
     @Test
     void theRightPackTheWrongWayIsOkAndAWrongPackCostsAHeart() {
         PadBankRun r = run(0, 1, "starter:4,comfort:1");
-        PadBankServeResponse ok = service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", "Delivery"));
+        PadBankServeResponse ok = service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", null, "Delivery"));
         assertThat(ok.title()).isEqualTo("GOOD!");
         assertThat(ok).extracting("result", "tip", "hearts", "served", "right").containsExactly("ok", "Pickup was free.", 1, 1, 0);
 
-        PadBankServeResponse oops = service.serve(userId, r.getId(), new PadBankServeRequest(1, "starter", "pickup"));
+        PadBankServeResponse oops = service.serve(userId, r.getId(), new PadBankServeRequest(1, "starter", null, "pickup"));
         assertThat(oops.title()).isEqualTo("OOPS!");
         assertThat(oops).extracting("result", "speech", "hearts", "finished", "stars").containsExactly("oops", PadBankService.OOPS_SPEECH, 0, true, 0);
 
         PadBankRun other = run(0, 3, "starter:4,comfort:1");
-        PadBankServeResponse why = service.serve(userId, other.getId(), new PadBankServeRequest(0, "comfort", "pickup"));
+        PadBankServeResponse why = service.serve(userId, other.getId(), new PadBankServeRequest(0, "comfort", null, "pickup"));
         assertThat(why.tip()).isEqualTo("Too much for a first period.");
     }
 
     @Test
     void badMovesAreRefused() {
         PadBankRun r = run(0, 3, "starter:0,comfort:1");
-        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(1, "starter", "pickup")))
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(1, "starter", null, "pickup")))
                 .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
-        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", "bike")))
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", null, "bike")))
                 .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
-        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "mystery", "pickup")))
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "mystery", null, "pickup")))
                 .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
-        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", "pickup")))
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", null, "pickup")))
                 .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
-        assertThatThrownBy(() -> service.serve(UUID.randomUUID(), r.getId(), new PadBankServeRequest(0, "comfort", "pickup")))
+        assertThatThrownBy(() -> service.serve(UUID.randomUUID(), r.getId(), new PadBankServeRequest(0, "comfort", null, "pickup")))
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
         when(visitorRepository.findById("v1")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "comfort", "pickup")))
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "comfort", null, "pickup")))
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void aGroupTakesSeveralPacksAndOnlyTheWholeSetIsRight() {
+        PadBankVisitor group = PadBankVisitor.builder().id("g1").day(1).who("Grandmother").look("grandma").clues("girls|Two girls").packs("starter,starter")
+                .route("pickup").thanks("Thanks!").routeWhy("Pickup was free.").groupWhy("Each girl needs her own Starter Bag.")
+                .wrongWhy("comfort|Too much for a first period.").active(true).build();
+        when(visitorRepository.findById("g1")).thenReturn(Optional.of(group));
+        PadBankRun r = run(0, 3, "starter:9,comfort:1");
+        r.setVisitorIds("g1,g1,g1,g1");
+
+        PadBankServeResponse right = service.serve(userId, r.getId(), new PadBankServeRequest(0, null, List.of("starter", " starter "), "pickup"));
+        assertThat(right).extracting("result", "rightPack").containsExactly("great", 1);
+        assertThat(right.stock()).containsEntry("starter", 7);
+
+        PadBankServeResponse few = service.serve(userId, r.getId(), new PadBankServeRequest(1, "starter", List.of(), "pickup"));
+        assertThat(few).extracting("result", "tip").containsExactly("oops", "Each girl needs her own Starter Bag.");
+
+        PadBankServeResponse wrong = service.serve(userId, r.getId(), new PadBankServeRequest(2, null, List.of("comfort", "starter"), "pickup"));
+        verify(pointsWriteService).adjust(eq(userId), eq(-32), anyString(), eq("Pad Bank Run: visitor 3"));
+        assertThat(wrong).extracting("result", "tip", "spent").containsExactly("oops", "Too much for a first period.", 32);
+
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(3, null, List.of("starter", "starter", "starter"), "pickup")))
+                .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(3, null, null, "pickup")))
+                .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(3, null, List.of("comfort", "comfort"), "pickup")))
+                .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+    }
+
+    @Test
+    void newPacksOnlyAppearFromTheirDayAndGroupsShowTheirSize() {
+        when(packRepository.findByActiveTrueOrderBySortOrderAsc()).thenReturn(List.of(
+                PadBankPack.builder().id("starter").name("Starter Bag").cost(3).stock(4).color("pink").fromDay(1).build(),
+                PadBankPack.builder().id("newmum").name("New Mum Pack").cost(7).stock(1).color("pink").fromDay(9).build()));
+        when(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(1)).thenReturn(List.of(visitor("v1", "starter,starter", "pickup")));
+        PadBankStartResponse start = service.start(userId, new PadBankStartRequest(1));
+        assertThat(start.packs()).extracting("id").containsExactly("starter");
+        assertThat(start.visitors()).extracting("size").containsExactly(2);
     }
 
     @Test
     void paidVisitorsNeedEnoughSp() {
         user.setPoints(20);
         PadBankRun r = run(1, 3, "starter:4,comfort:1");
-        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(1, "comfort", "delivery")))
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(1, "comfort", null, "delivery")))
                 .extracting("errorCode").isEqualTo(ErrorCode.INSUFFICIENT_POINTS);
         assertThat(r.getRound()).isEqualTo(1);
         verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());

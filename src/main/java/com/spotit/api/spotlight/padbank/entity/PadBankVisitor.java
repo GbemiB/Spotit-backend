@@ -31,7 +31,7 @@ public class PadBankVisitor {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false, length = 60)
     private String who;
 
     @Column(name = "look", nullable = false, length = 20)
@@ -40,8 +40,8 @@ public class PadBankVisitor {
     @Column(nullable = false, columnDefinition = "text")
     private String clues;
 
-    @Column(nullable = false, length = 20)
-    private String pack;
+    @Column(nullable = false, length = 200)
+    private String packs;
 
     @Column(nullable = false, length = 10)
     private String route;
@@ -51,6 +51,9 @@ public class PadBankVisitor {
 
     @Column(name = "route_why", nullable = false, length = 300)
     private String routeWhy;
+
+    @Column(name = "group_why", length = 300)
+    private String groupWhy;
 
     @Column(name = "wrong_why", nullable = false, columnDefinition = "text")
     private String wrongWhy;

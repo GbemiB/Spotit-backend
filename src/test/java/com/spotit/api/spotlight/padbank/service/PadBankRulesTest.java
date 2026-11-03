@@ -56,4 +56,26 @@ class PadBankRulesTest {
         assertThat(PadBankRules.decodeStock(" ")).isEmpty();
         assertThat(PadBankRules.decodeStock("bad,ok:2")).containsOnlyKeys("ok");
     }
+
+    @Test
+    void groupPacksRoundTripAndMatchInAnyOrder() {
+        assertThat(PadBankRules.encodePacks(List.of(" sport ", "", "a,b", "comfort"))).isEqualTo("sport,ab,comfort");
+        assertThat(PadBankRules.encodePacks(null)).isEmpty();
+        assertThat(PadBankRules.decodePacks("sport, comfort,,")).containsExactly("sport", "comfort");
+        assertThat(PadBankRules.decodePacks(" ")).isEmpty();
+        assertThat(PadBankRules.decodePacks(null)).isEmpty();
+        assertThat(PadBankRules.samePacks(List.of("sport", "sport", "comfort"), List.of("comfort", "sport", "sport"))).isTrue();
+        assertThat(PadBankRules.samePacks(List.of("sport", "sport"), List.of("sport"))).isFalse();
+        assertThat(PadBankRules.count(List.of("a", "b", "a"))).containsEntry("a", 2).containsEntry("b", 1);
+    }
+
+    @Test
+    void theOopsTipExplainsTheGroupFirstThenTheWrongPack() {
+        Map<String, String> why = Map.of("school", "Not a term.");
+        assertThat(PadBankRules.oopsTip(List.of("a", "a"), List.of("a"), why, "One each.", "Look again.")).isEqualTo("One each.");
+        assertThat(PadBankRules.oopsTip(List.of("a", "a"), List.of("a", "school"), why, "One each.", "Look again.")).isEqualTo("Not a term.");
+        assertThat(PadBankRules.oopsTip(List.of("a", "a"), List.of("a", "b"), why, "One each.", "Look again.")).isEqualTo("One each.");
+        assertThat(PadBankRules.oopsTip(List.of("a"), List.of("b"), why, null, "Look again.")).isEqualTo("Look again.");
+        assertThat(PadBankRules.oopsTip(List.of("a"), List.of("b"), Map.of("b", " "), " ", "Look again.")).isEqualTo("Look again.");
+    }
 }

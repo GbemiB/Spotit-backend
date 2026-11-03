@@ -3,6 +3,7 @@ package com.spotit.api.spotlight.padbank.service;
 import com.spotit.api.spotlight.padbank.dto.PadBankClue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,58 @@ public final class PadBankRules {
             return 0;
         }
         return visitorFee + packCost + (delivery ? deliveryCost : 0);
+    }
+
+    public static String encodePacks(List<String> packs) {
+        List<String> clean = new ArrayList<>();
+        for (String p : packs == null ? List.<String>of() : packs) {
+            String c = clean(p).replace(",", "");
+            if (!c.isEmpty()) {
+                clean.add(c);
+            }
+        }
+        return String.join(",", clean);
+    }
+
+    public static List<String> decodePacks(String raw) {
+        List<String> packs = new ArrayList<>();
+        if (raw == null || raw.isBlank()) {
+            return packs;
+        }
+        for (String p : raw.split(",")) {
+            if (!p.isBlank()) {
+                packs.add(p.strip());
+            }
+        }
+        return packs;
+    }
+
+    public static boolean samePacks(List<String> wanted, List<String> picked) {
+        List<String> a = new ArrayList<>(wanted);
+        List<String> b = new ArrayList<>(picked);
+        Collections.sort(a);
+        Collections.sort(b);
+        return a.equals(b);
+    }
+
+    public static Map<String, Integer> count(List<String> picked) {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        picked.forEach(p -> counts.merge(p, 1, Integer::sum));
+        return counts;
+    }
+
+    public static String oopsTip(List<String> wanted, List<String> picked, Map<String, String> wrongWhy, String groupWhy, String fallback) {
+        boolean hasGroupWhy = groupWhy != null && !groupWhy.isBlank();
+        if (hasGroupWhy && picked.size() != wanted.size()) {
+            return groupWhy;
+        }
+        for (String p : picked) {
+            String why = wrongWhy.get(p);
+            if (why != null && !why.isBlank()) {
+                return why;
+            }
+        }
+        return hasGroupWhy ? groupWhy : fallback;
     }
 
     public static int stars(List<Boolean> goals, int hearts) {

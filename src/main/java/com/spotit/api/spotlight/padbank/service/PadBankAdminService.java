@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -39,7 +40,7 @@ public class PadBankAdminService {
         PadBankPack pack = packRepository.findById(id).orElse(null);
         if (pack == null) {
             requireAll(body.name(), body.cost());
-            pack = PadBankPack.builder().id(id).stock(1).color("pink").sortOrder(NEW_SORT_ORDER).active(true).build();
+            pack = PadBankPack.builder().id(id).stock(1).color("pink").fromDay(1).sortOrder(NEW_SORT_ORDER).active(true).build();
         }
         if (body.name() != null) {
             pack.setName(body.name().strip());
@@ -55,6 +56,9 @@ public class PadBankAdminService {
         }
         if (body.contents() != null) {
             pack.setContents(PadBankRules.encodeLines(body.contents()));
+        }
+        if (body.fromDay() != null) {
+            pack.setFromDay(Math.max(1, body.fromDay()));
         }
         if (body.sortOrder() != null) {
             pack.setSortOrder(body.sortOrder());
@@ -75,7 +79,7 @@ public class PadBankAdminService {
     public PadBankVisitorAdmin saveVisitor(String id, PadBankVisitorAdmin body) {
         PadBankVisitor visitor = visitorRepository.findById(id).orElse(null);
         if (visitor == null) {
-            requireAll(body.who(), body.look(), body.pack(), body.route(), body.thanks(), body.routeWhy(), body.clues());
+            requireAll(body.who(), body.look(), body.packs(), body.route(), body.thanks(), body.routeWhy(), body.clues());
             visitor = PadBankVisitor.builder().id(id).day(1).sortOrder(NEW_SORT_ORDER).wrongWhy("").active(true).build();
         }
         if (body.route() != null) {
@@ -85,11 +89,12 @@ public class PadBankAdminService {
             }
             visitor.setRoute(route);
         }
-        if (body.pack() != null) {
-            if (!packRepository.existsById(body.pack().strip())) {
+        if (body.packs() != null) {
+            List<String> packs = PadBankRules.decodePacks(PadBankRules.encodePacks(body.packs()));
+            if (packs.isEmpty() || packs.stream().anyMatch(p -> !packRepository.existsById(p))) {
                 throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_PACK);
             }
-            visitor.setPack(body.pack().strip());
+            visitor.setPacks(String.join(",", packs));
         }
         if (body.day() != null) {
             visitor.setDay(Math.max(1, body.day()));
@@ -111,6 +116,9 @@ public class PadBankAdminService {
         }
         if (body.routeWhy() != null) {
             visitor.setRouteWhy(body.routeWhy().strip());
+        }
+        if (body.groupWhy() != null) {
+            visitor.setGroupWhy(body.groupWhy().isBlank() ? null : body.groupWhy().strip());
         }
         if (body.wrongWhy() != null) {
             visitor.setWrongWhy(PadBankRules.encodeMap(body.wrongWhy()));

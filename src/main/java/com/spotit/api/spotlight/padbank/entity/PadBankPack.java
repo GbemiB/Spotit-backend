@@ -37,6 +37,9 @@ public class PadBankPack {
     @Column(length = 400)
     private String contents;
 
+    @Column(name = "from_day", nullable = false, columnDefinition = "integer default 1")
+    private int fromDay;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
