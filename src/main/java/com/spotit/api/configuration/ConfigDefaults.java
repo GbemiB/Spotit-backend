@@ -25,10 +25,10 @@ public final class ConfigDefaults {
     public static final String GIVEDAY_TITLE_TWO = "Lovely work";
     public static final String GIVEDAY_TITLE_ONE = "A good start";
     public static final String GIVEDAY_TITLE_ZERO = "Something important is missing";
-    public static final long PADBANK_BUDGET = 100L;
+    public static final long PADBANK_FREE_VISITORS = 2L;
     public static final long PADBANK_HEARTS = 3L;
-    public static final long PADBANK_DELIVERY_COST = 10L;
-    public static final long PADBANK_BUDGET_GOAL = 40L;
+    public static final long PADBANK_DELIVERY_COST = 2L;
+    public static final long PADBANK_VISITOR_FEE = 2L;
     public static final String PADBANK_TITLE_GREAT = "PERFECT!";
     public static final String PADBANK_TITLE_OK = "GOOD!";
     public static final String PADBANK_TITLE_OOPS = "OOPS!";

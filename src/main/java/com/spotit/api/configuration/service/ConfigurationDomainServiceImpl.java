@@ -97,17 +97,11 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         if (global.getGivedayGoodPicks() == 0) {
             global.setGivedayGoodPicks(ConfigDefaults.GIVEDAY_GOOD_PICKS);
         }
-        if (global.getPadbankBudget() == 0) {
-            global.setPadbankBudget(ConfigDefaults.PADBANK_BUDGET);
-        }
         if (global.getPadbankHearts() == 0) {
             global.setPadbankHearts(ConfigDefaults.PADBANK_HEARTS);
         }
         if (global.getPadbankDeliveryCost() == 0) {
             global.setPadbankDeliveryCost(ConfigDefaults.PADBANK_DELIVERY_COST);
-        }
-        if (global.getPadbankBudgetGoal() == 0) {
-            global.setPadbankBudgetGoal(ConfigDefaults.PADBANK_BUDGET_GOAL);
         }
         if (global.getQuizTopicsPageSize() == 0) {
             global.setQuizTopicsPageSize(ConfigDefaults.QUIZ_TOPICS_PAGE_SIZE);
@@ -308,8 +302,8 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
-    public int getPadbankBudget() {
-        return (int) loadGlobal().getPadbankBudget();
+    public int getPadbankFreeVisitors() {
+        return (int) Math.max(0, loadGlobal().getPadbankFreeVisitors());
     }
 
     @Override
@@ -326,8 +320,8 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
-    public int getPadbankBudgetGoal() {
-        return (int) loadGlobal().getPadbankBudgetGoal();
+    public int getPadbankVisitorFee() {
+        return (int) Math.max(0, loadGlobal().getPadbankVisitorFee());
     }
 
     @Override

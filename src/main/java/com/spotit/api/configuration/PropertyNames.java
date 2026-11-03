@@ -27,10 +27,10 @@ public final class PropertyNames {
     public static final String GIVEDAY_TITLE_TWO = "giveday-title-two";
     public static final String GIVEDAY_TITLE_ONE = "giveday-title-one";
     public static final String GIVEDAY_TITLE_ZERO = "giveday-title-zero";
-    public static final String PADBANK_BUDGET = "padbank-budget";
+    public static final String PADBANK_FREE_VISITORS = "padbank-free-visitors";
     public static final String PADBANK_HEARTS = "padbank-hearts";
     public static final String PADBANK_DELIVERY_COST = "padbank-delivery-cost";
-    public static final String PADBANK_BUDGET_GOAL = "padbank-budget-goal";
+    public static final String PADBANK_VISITOR_FEE = "padbank-visitor-fee";
     public static final String PADBANK_TITLE_GREAT = "padbank-title-great";
     public static final String PADBANK_TITLE_OK = "padbank-title-ok";
     public static final String PADBANK_TITLE_OOPS = "padbank-title-oops";

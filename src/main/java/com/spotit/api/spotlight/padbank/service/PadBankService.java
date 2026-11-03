@@ -9,6 +9,7 @@ import com.spotit.api.rewards.service.PointsWriteService;
 import com.spotit.api.spotlight.core.entity.SpotlightChallenge;
 import com.spotit.api.spotlight.core.repository.SpotlightChallengeRepository;
 import com.spotit.api.spotlight.core.service.SpotlightRules;
+import com.spotit.api.spotlight.padbank.dto.PadBankCloseResponse;
 import com.spotit.api.spotlight.padbank.dto.PadBankDayRules;
 import com.spotit.api.spotlight.padbank.dto.PadBankDayTitles;
 import com.spotit.api.spotlight.padbank.dto.PadBankPackView;
@@ -85,13 +86,13 @@ public class PadBankService {
         }
         Map<String, Integer> stock = new LinkedHashMap<>();
         packs.forEach(p -> stock.put(p.getId(), p.getStock()));
-        int budget = config.getPadbankBudget();
         int hearts = config.getPadbankHearts();
         PadBankRun run = runRepository.save(PadBankRun.builder().userId(userId).day(day)
                 .visitorIds(String.join(",", visitors.stream().map(PadBankVisitor::getId).toList()))
-                .round(0).hearts(hearts).budget(budget).served(0).rightCount(0).stock(PadBankRules.encodeStock(stock)).results("")
+                .round(0).hearts(hearts).budget(0).served(0).rightCount(0).rightPack(0).rightWay(0).stock(PadBankRules.encodeStock(stock)).results("")
                 .status(PadBankRun.PLAYING).stars(0).spSpent(cost).playedOn(today).startedAt(Instant.now()).build());
-        return new PadBankStartResponse(run.getId(), day, balance, cost, budget, hearts, config.getPadbankDeliveryCost(), config.getPadbankBudgetGoal(),
+        return new PadBankStartResponse(run.getId(), day, balance, cost, hearts, config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(),
+                config.getPadbankDeliveryCost(),
                 packs.stream().map(p -> new PadBankPackView(p.getId(), p.getName(), p.getCost(), p.getStock(), p.getColor(),
                         PadBankRules.decodeLines(p.getContents()))).toList(),
                 visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), PadBankRules.decodeClues(v.getClues()))).toList(),
@@ -102,8 +103,8 @@ public class PadBankService {
     public PadBankDayRules rules(UUID userId) {
         int day = nextDay(userId);
         int visitors = visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(day).size();
-        return new PadBankDayRules(day, visitors, config.getPadbankBudget(), config.getPadbankHearts(),
-                config.getPadbankDeliveryCost(), config.getPadbankBudgetGoal());
+        return new PadBankDayRules(day, visitors, config.getPadbankHearts(), config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(),
+                config.getPadbankDeliveryCost());
     }
 
     int nextDay(UUID userId) {
@@ -120,13 +121,30 @@ public class PadBankService {
         return days.stream().filter(d -> !cleared.contains(d)).findFirst().orElse(days.get(0));
     }
 
-    @Transactional
-    public PadBankServeResponse serve(UUID userId, UUID runId, PadBankServeRequest request) {
+    private PadBankRun playing(UUID userId, UUID runId) {
         PadBankRun run = runRepository.findById(runId).filter(r -> r.getUserId().equals(userId))
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PADBANK_RUN_NOT_FOUND));
         if (!PadBankRun.PLAYING.equals(run.getStatus())) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.QUIZ_GAME_OVER);
         }
+        return run;
+    }
+
+    @Transactional
+    public PadBankCloseResponse close(UUID userId, UUID runId) {
+        PadBankRun run = playing(userId, runId);
+        int total = run.getVisitorIds().split(",").length;
+        List<Boolean> goals = PadBankRules.goals(run.getServed(), run.getRightPack(), run.getRightWay(), run.getHearts(), total);
+        run.setStatus(PadBankRun.DONE);
+        run.setStars(PadBankRules.stars(goals, run.getHearts()));
+        run.setFinishedAt(Instant.now());
+        runRepository.save(run);
+        return new PadBankCloseResponse(run.getServed(), run.getRightPack(), run.getRightWay(), run.getSpSpent(), run.getStars(), goals);
+    }
+
+    @Transactional
+    public PadBankServeResponse serve(UUID userId, UUID runId, PadBankServeRequest request) {
+        PadBankRun run = playing(userId, runId);
         if (request.round() != run.getRound()) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.QUIZ_WRONG_ROUND);
         }
@@ -144,11 +162,24 @@ public class PadBankService {
         List<String> ids = Arrays.asList(run.getVisitorIds().split(","));
         PadBankVisitor visitor = visitorRepository.findById(ids.get(run.getRound()))
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.PADBANK_RUN_NOT_FOUND));
-        int spent = pack.getCost() + (PadBankVisitor.DELIVERY.equals(route) ? config.getPadbankDeliveryCost() : 0);
-        String result = PadBankRules.result(visitor.getPack().equals(packId), visitor.getRoute().equals(route));
+        int spent = PadBankRules.price(run.getRound(), config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(), pack.getCost(),
+                PadBankVisitor.DELIVERY.equals(route), config.getPadbankDeliveryCost());
+        User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
+        long balance = user.getPoints();
+        if (spent > 0) {
+            if (balance < spent) {
+                throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);
+            }
+            balance = pointsWriteService.adjust(userId, -spent, SPEND_ICON, "Pad Bank Run: visitor " + (run.getRound() + 1));
+            run.setSpSpent(run.getSpSpent() + spent);
+        }
+        boolean packOk = visitor.getPack().equals(packId);
+        boolean routeOk = visitor.getRoute().equals(route);
+        String result = PadBankRules.result(packOk, routeOk);
         stock.put(packId, stock.get(packId) - 1);
         run.setStock(PadBankRules.encodeStock(stock));
-        run.setBudget(Math.max(0, run.getBudget() - spent));
+        run.setRightPack(run.getRightPack() + (packOk ? 1 : 0));
+        run.setRightWay(run.getRightWay() + (routeOk ? 1 : 0));
         if (!PadBankRules.OOPS.equals(result)) {
             run.setServed(run.getServed() + 1);
         } else {
@@ -162,8 +193,7 @@ public class PadBankService {
         run.setResults(String.join(",", results));
         run.setRound(run.getRound() + 1);
         boolean finished = run.getHearts() <= 0 || run.getRound() >= ids.size();
-        List<Boolean> goals = PadBankRules.goals(run.getServed(), run.getRightCount(), run.getBudget(), run.getHearts(), ids.size(),
-                config.getPadbankBudgetGoal(), finished);
+        List<Boolean> goals = PadBankRules.goals(run.getServed(), run.getRightPack(), run.getRightWay(), run.getHearts(), ids.size());
         if (finished) {
             run.setStatus(PadBankRun.DONE);
             run.setStars(PadBankRules.stars(goals, run.getHearts()));
@@ -181,8 +211,8 @@ public class PadBankService {
             case PadBankRules.OK -> config.getPadbankTitleOk();
             default -> config.getPadbankTitleOops();
         };
-        return new PadBankServeResponse(run.getRound(), result, title, tip, speech, run.getHearts(), run.getBudget(), spent, run.getServed(),
-                run.getRightCount(), stock, finished, finished ? run.getStars() : 0, goals,
+        return new PadBankServeResponse(run.getRound(), result, title, tip, speech, run.getHearts(), balance, spent, run.getSpSpent(), run.getServed(),
+                run.getRightCount(), run.getRightPack(), run.getRightWay(), stock, finished, finished ? run.getStars() : 0, goals,
                 finished && run.getRightCount() >= ids.size() && run.getHearts() > 0);
     }
 }

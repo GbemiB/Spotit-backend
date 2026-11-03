@@ -24,8 +24,15 @@ public final class PadBankRules {
         return packOk ? OK : OOPS;
     }
 
-    public static List<Boolean> goals(int served, int right, int budget, int hearts, int total, int budgetGoal, boolean finished) {
-        return List.of(served >= total, right >= total, finished && hearts > 0 && budget >= budgetGoal);
+    public static List<Boolean> goals(int served, int rightPack, int rightWay, int hearts, int total) {
+        return List.of(served >= total, hearts > 0 && rightPack >= total, hearts > 0 && rightWay >= total);
+    }
+
+    public static int price(int round, int freeVisitors, int visitorFee, int packCost, boolean delivery, int deliveryCost) {
+        if (round < freeVisitors) {
+            return 0;
+        }
+        return visitorFee + packCost + (delivery ? deliveryCost : 0);
     }
 
     public static int stars(List<Boolean> goals, int hearts) {

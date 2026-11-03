@@ -8,10 +8,10 @@ public record PadBankStartResponse(
         int day,
         long balance,
         int cost,
-        int budget,
         int hearts,
+        int freeVisitors,
+        int visitorFee,
         int deliveryCost,
-        int budgetGoal,
         List<PadBankPackView> packs,
         List<PadBankVisitorView> visitors,
         PadBankDayTitles dayTitles

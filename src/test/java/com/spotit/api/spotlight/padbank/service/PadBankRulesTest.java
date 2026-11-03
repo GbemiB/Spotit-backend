@@ -19,12 +19,21 @@ class PadBankRulesTest {
 
     @Test
     void starsCountTheGoalsUnlessEveryHeartIsLost() {
-        List<Boolean> all = PadBankRules.goals(3, 3, 45, 3, 3, 40, true);
+        List<Boolean> all = PadBankRules.goals(3, 3, 3, 3, 3);
         assertThat(all).containsExactly(true, true, true);
         assertThat(PadBankRules.stars(all, 3)).isEqualTo(3);
-        assertThat(PadBankRules.goals(3, 1, 30, 2, 3, 40, true)).containsExactly(true, false, false);
-        assertThat(PadBankRules.goals(3, 3, 80, 3, 3, 40, false).get(2)).isFalse();
+        assertThat(PadBankRules.goals(3, 1, 3, 2, 3)).containsExactly(true, false, true);
+        assertThat(PadBankRules.goals(2, 3, 3, 0, 3)).containsExactly(false, false, false);
         assertThat(PadBankRules.stars(all, 0)).isZero();
+    }
+
+    @Test
+    void theFirstVisitorsAreFreeThenTheFeePackAndDeliveryAreCharged() {
+        assertThat(PadBankRules.price(0, 2, 2, 5, true, 2)).isZero();
+        assertThat(PadBankRules.price(1, 2, 2, 5, false, 2)).isZero();
+        assertThat(PadBankRules.price(2, 2, 2, 5, false, 2)).isEqualTo(7);
+        assertThat(PadBankRules.price(2, 2, 2, 5, true, 2)).isEqualTo(9);
+        assertThat(PadBankRules.price(0, 0, 3, 6, false, 2)).isEqualTo(9);
     }
 
     @Test

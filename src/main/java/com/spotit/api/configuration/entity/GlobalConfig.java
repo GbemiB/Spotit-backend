@@ -1,5 +1,6 @@
 package com.spotit.api.configuration.entity;
 
+import com.spotit.api.configuration.ConfigDefaults;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -85,17 +86,19 @@ public class GlobalConfig {
     @Column(name = "giveday_title_zero", length = 60)
     private String givedayTitleZero;
 
-    @Column(name = "padbank_budget", nullable = false, columnDefinition = "bigint default 100")
-    private long padbankBudget;
+    @Column(name = "padbank_free_visitors", nullable = false, columnDefinition = "bigint default 2")
+    @Builder.Default
+    private long padbankFreeVisitors = ConfigDefaults.PADBANK_FREE_VISITORS;
 
     @Column(name = "padbank_hearts", nullable = false, columnDefinition = "bigint default 3")
     private long padbankHearts;
 
-    @Column(name = "padbank_delivery_cost", nullable = false, columnDefinition = "bigint default 10")
+    @Column(name = "padbank_delivery_cost", nullable = false, columnDefinition = "bigint default 2")
     private long padbankDeliveryCost;
 
-    @Column(name = "padbank_budget_goal", nullable = false, columnDefinition = "bigint default 40")
-    private long padbankBudgetGoal;
+    @Column(name = "padbank_visitor_fee", nullable = false, columnDefinition = "bigint default 2")
+    @Builder.Default
+    private long padbankVisitorFee = ConfigDefaults.PADBANK_VISITOR_FEE;
 
     @Column(name = "padbank_title_great", length = 40)
     private String padbankTitleGreat;

@@ -2,6 +2,7 @@ package com.spotit.api.spotlight.padbank.controller;
 
 import com.spotit.api.spotlight.core.dto.AdminPage;
 import com.spotit.api.spotlight.padbank.dto.PadBankClue;
+import com.spotit.api.spotlight.padbank.dto.PadBankCloseResponse;
 import com.spotit.api.spotlight.padbank.dto.PadBankDayRules;
 import com.spotit.api.spotlight.padbank.dto.PadBankDayTitles;
 import com.spotit.api.spotlight.padbank.dto.PadBankPackAdmin;
@@ -55,14 +56,15 @@ class PadBankControllerTest {
     void playersOpenTheBankAndServeVisitors() throws Exception {
         MockMvc mvc = mockMvc(new PadBankController(service));
         authenticate();
-        when(service.start(USER_ID, new PadBankStartRequest(1))).thenReturn(new PadBankStartResponse(runId, 1, 40, 10, 100, 3, 10, 40,
+        when(service.start(USER_ID, new PadBankStartRequest(1))).thenReturn(new PadBankStartResponse(runId, 1, 40, 10, 3, 2, 2, 2,
                 List.of(new PadBankPackView("starter", "Starter Bag", 10, 4, "pink", List.of("10 day pads"))),
                 List.of(new PadBankVisitorView("v1", "Girl, 13", "girl", List.of(new PadBankClue("drop", "First period")))),
                 new PadBankDayTitles("Perfect day!", "Bank closed for today", "Out of hearts")));
         when(service.serve(USER_ID, runId, new PadBankServeRequest(0, "starter", "pickup"))).thenReturn(new PadBankServeResponse(1, "great", "PERFECT!", "Tip",
-                "Thanks", 3, 90, 10, 1, 1, Map.of("starter", 3), false, 0, List.of(false, false, false), false));
+                "Thanks", 3, 90L, 0, 0, 1, 1, 1, 1, Map.of("starter", 3), false, 0, List.of(false, false, false), false));
+        when(service.close(USER_ID, runId)).thenReturn(new PadBankCloseResponse(1, 1, 1, 7, 1, List.of(false, true, true)));
 
-        when(service.rules(USER_ID)).thenReturn(new PadBankDayRules(1, 3, 100, 3, 10, 40));
+        when(service.rules(USER_ID)).thenReturn(new PadBankDayRules(1, 3, 3, 2, 2, 2));
         mvc.perform(get("/api/v1/padbank/rules")).andExpect(status().isOk()).andExpect(jsonPath("$.data.visitors").value(3));
         mvc.perform(post("/api/v1/padbank/runs").contentType(MediaType.APPLICATION_JSON).content(json(new PadBankStartRequest(1))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.visitors[0].clues[0].icon").value("drop"))
@@ -72,6 +74,8 @@ class PadBankControllerTest {
                 .andExpect(jsonPath("$.data.title").value("PERFECT!"));
         mvc.perform(post("/api/v1/padbank/runs/" + runId + "/serve").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"round\":0,\"pack\":\"\",\"route\":\"pickup\"}")).andExpect(status().isUnprocessableEntity());
+        mvc.perform(post("/api/v1/padbank/runs/" + runId + "/close")).andExpect(status().isOk()).andExpect(jsonPath("$.data.stars").value(1))
+                .andExpect(jsonPath("$.data.spentToday").value(7));
     }
 
     @Test

@@ -118,22 +118,22 @@ public class ConfigPropertyCatalog {
     }
 
     private static void addPadBankProperties(List<Property> list) {
-        list.add(new Property(PropertyNames.PADBANK_BUDGET, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: bank budget at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getPadbankBudget(),
-                (c, v) -> c.global().setPadbankBudget((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_FREE_VISITORS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: visitors served free at the start of each day (0 = none)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankFreeVisitors(),
+                (c, v) -> c.global().setPadbankFreeVisitors((Long) v)));
         list.add(new Property(PropertyNames.PADBANK_HEARTS, PropertyNames.GROUP_PADBANK,
                 "Pad Bank Run: hearts at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankHearts(),
                 (c, v) -> c.global().setPadbankHearts((Long) v)));
         list.add(new Property(PropertyNames.PADBANK_DELIVERY_COST, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: budget a scooter delivery costs", Kind.LONG, Section.GLOBAL, false, false,
+                "Pad Bank Run: SP a scooter delivery costs, after the free visitors", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankDeliveryCost(),
                 (c, v) -> c.global().setPadbankDeliveryCost((Long) v)));
-        list.add(new Property(PropertyNames.PADBANK_BUDGET_GOAL, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: budget left needed for the third star", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getPadbankBudgetGoal(),
-                (c, v) -> c.global().setPadbankBudgetGoal((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_VISITOR_FEE, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: SP fee for each visitor after the free ones, on top of the pack price", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankVisitorFee(),
+                (c, v) -> c.global().setPadbankVisitorFee((Long) v)));
         list.add(new Property(PropertyNames.PADBANK_TITLE_GREAT, PropertyNames.GROUP_PADBANK,
                 "Pad Bank Run: heading shown for right pack and route; unset uses PERFECT!",
                 Kind.STRING, Section.GLOBAL, false, false,

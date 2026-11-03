@@ -134,12 +134,12 @@ class ConfigurationReadTest {
     @Test
     void padBankSettingsAreReturned() {
         lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
-                .id(GlobalConfig.SINGLETON_ID).padbankBudget(120).padbankHearts(2).padbankDeliveryCost(15).padbankBudgetGoal(30).padbankTitleOops(" ").build()));
+                .id(GlobalConfig.SINGLETON_ID).padbankFreeVisitors(0).padbankHearts(2).padbankDeliveryCost(15).padbankVisitorFee(3).padbankTitleOops(" ").build()));
 
-        assertThat(service.getPadbankBudget()).isEqualTo(120);
+        assertThat(service.getPadbankFreeVisitors()).isZero();
         assertThat(service.getPadbankHearts()).isEqualTo(2);
         assertThat(service.getPadbankDeliveryCost()).isEqualTo(15);
-        assertThat(service.getPadbankBudgetGoal()).isEqualTo(30);
+        assertThat(service.getPadbankVisitorFee()).isEqualTo(3);
         assertThat(service.getPadbankTitleGreat()).isEqualTo("PERFECT!");
         assertThat(service.getPadbankTitleOk()).isEqualTo("GOOD!");
         assertThat(service.getPadbankTitleOops()).isEqualTo("OOPS!");

@@ -55,6 +55,12 @@ public class PadBankRun {
     @Column(name = "right_count", nullable = false)
     private int rightCount;
 
+    @Column(name = "right_pack", nullable = false, columnDefinition = "integer default 0")
+    private int rightPack;
+
+    @Column(name = "right_way", nullable = false, columnDefinition = "integer default 0")
+    private int rightWay;
+
     @Column(nullable = false, columnDefinition = "text")
     private String stock;
 

@@ -31,7 +31,7 @@ public class PadBankConfigController {
         return padBankAdminService.packs(page, size);
     }
 
-    @Operation(summary = "Create or update a pack", description = "cost is taken from the bank budget; stock is how many are on the shelf each day.")
+    @Operation(summary = "Create or update a pack", description = "cost is the SP price paid for the pack after the free visitors; stock is how many are on the shelf each day.")
     @PutMapping("/packs/{id}")
     public PadBankPackAdmin savePack(@Parameter(example = "starter") @PathVariable String id, @RequestBody PadBankPackAdmin body) {
         return padBankAdminService.savePack(id, body);

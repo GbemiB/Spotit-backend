@@ -23,16 +23,21 @@ class PadBankContentScriptTest {
     @Autowired PadBankVisitorRepository visitorRepository;
 
     @Test
-    void dayOneLoadsFourPacksAndThreeVisitorsAndCanBeRunTwice() throws Exception {
+    void dayOneLoadsFourPacksAndFiveVisitorsAndTheSpUpdateCanBeRunTwice() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/day1.sql"));
-            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/day1.sql"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/u67_sp_only.sql"));
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/padbank/u67_sp_only.sql"));
         }
 
-        assertThat(packRepository.findByActiveTrueOrderBySortOrderAsc()).extracting("id").containsExactly("starter", "school", "comfort", "reusable");
+        assertThat(packRepository.findByActiveTrueOrderBySortOrderAsc()).extracting("id", "cost").containsExactly(
+                org.assertj.core.groups.Tuple.tuple("starter", 3), org.assertj.core.groups.Tuple.tuple("school", 5),
+                org.assertj.core.groups.Tuple.tuple("comfort", 6), org.assertj.core.groups.Tuple.tuple("reusable", 10));
         assertThat(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(1)).extracting("pack", "route")
                 .containsExactly(org.assertj.core.groups.Tuple.tuple("starter", "pickup"), org.assertj.core.groups.Tuple.tuple("comfort", "delivery"),
-                        org.assertj.core.groups.Tuple.tuple("school", "pickup"));
+                        org.assertj.core.groups.Tuple.tuple("school", "pickup"), org.assertj.core.groups.Tuple.tuple("reusable", "pickup"),
+                        org.assertj.core.groups.Tuple.tuple("comfort", "delivery"));
+        assertThat(visitorRepository.findById("day1-student").orElseThrow().getRouteWhy()).contains("SP she didn’t need");
         assertThat(visitorRepository.activeDays()).containsExactly(1);
         assertThat(PadBankRules.decodeClues(visitorRepository.findById("day1-woman").orElseThrow().getClues())).hasSize(3);
         assertThat(PadBankRules.decodeMap(visitorRepository.findById("day1-girl").orElseThrow().getWrongWhy())).containsOnlyKeys("reusable", "comfort", "school");

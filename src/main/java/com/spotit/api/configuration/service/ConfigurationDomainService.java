@@ -50,13 +50,13 @@ public interface ConfigurationDomainService {
 
     String getGivedayTitleZero();
 
-    int getPadbankBudget();
+    int getPadbankFreeVisitors();
 
     int getPadbankHearts();
 
     int getPadbankDeliveryCost();
 
-    int getPadbankBudgetGoal();
+    int getPadbankVisitorFee();
 
     String getPadbankTitleGreat();
 

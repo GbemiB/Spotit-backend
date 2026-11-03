@@ -7,6 +7,7 @@ import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.rewards.service.PointsWriteService;
 import com.spotit.api.spotlight.core.entity.SpotlightChallenge;
 import com.spotit.api.spotlight.core.repository.SpotlightChallengeRepository;
+import com.spotit.api.spotlight.padbank.dto.PadBankCloseResponse;
 import com.spotit.api.spotlight.padbank.dto.PadBankDayRules;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeRequest;
 import com.spotit.api.spotlight.padbank.dto.PadBankServeResponse;
@@ -74,10 +75,10 @@ class PadBankServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userClock.today(user)).thenReturn(today);
         when(challengeRepository.findById("pad-bank-run")).thenReturn(Optional.of(challenge));
-        when(config.getPadbankBudget()).thenReturn(100);
+        when(config.getPadbankFreeVisitors()).thenReturn(1);
+        when(config.getPadbankVisitorFee()).thenReturn(2);
         when(config.getPadbankHearts()).thenReturn(3);
         when(config.getPadbankDeliveryCost()).thenReturn(10);
-        when(config.getPadbankBudgetGoal()).thenReturn(40);
         when(config.getPadbankTitleGreat()).thenReturn("PERFECT!");
         when(config.getPadbankTitleOk()).thenReturn("GOOD!");
         when(config.getPadbankTitleOops()).thenReturn("OOPS!");
@@ -102,7 +103,7 @@ class PadBankServiceTest {
     }
 
     PadBankRun run(int round, int hearts, String stock) {
-        PadBankRun r = PadBankRun.builder().id(UUID.randomUUID()).userId(userId).day(1).visitorIds("v1,v2").round(round).hearts(hearts).budget(100)
+        PadBankRun r = PadBankRun.builder().id(UUID.randomUUID()).userId(userId).day(1).visitorIds("v1,v2").round(round).hearts(hearts).budget(0)
                 .served(0).rightCount(0).stock(stock).results("").status(PadBankRun.PLAYING).playedOn(today).build();
         when(runRepository.findById(r.getId())).thenReturn(Optional.of(r));
         return r;
@@ -113,7 +114,7 @@ class PadBankServiceTest {
         PadBankStartResponse start = service.start(userId, new PadBankStartRequest(1));
 
         verify(pointsWriteService).adjust(eq(userId), eq(-10), anyString(), eq("Pad Bank Run: day 1"));
-        assertThat(start).extracting("day", "balance", "cost", "budget", "hearts", "deliveryCost", "budgetGoal").containsExactly(1, 40L, 10, 100, 3, 10, 40);
+        assertThat(start).extracting("day", "balance", "cost", "hearts", "freeVisitors", "visitorFee", "deliveryCost").containsExactly(1, 40L, 10, 3, 1, 2, 10);
         assertThat(start.visitors()).extracting("id").containsExactly("v1", "v2");
         assertThat(start.visitors().get(0).clues()).extracting("icon").containsExactly("drop");
         assertThat(start.packs()).extracting("id", "stock").containsExactly(org.assertj.core.groups.Tuple.tuple("starter", 4),
@@ -128,7 +129,7 @@ class PadBankServiceTest {
         when(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(2)).thenReturn(List.of(visitor("a", "starter", "pickup"),
                 visitor("b", "comfort", "delivery")));
 
-        assertThat(service.rules(userId)).isEqualTo(new PadBankDayRules(2, 2, 100, 3, 10, 40));
+        assertThat(service.rules(userId)).isEqualTo(new PadBankDayRules(2, 2, 3, 1, 2, 10));
         verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
     }
 
@@ -184,11 +185,14 @@ class PadBankServiceTest {
 
         PadBankServeResponse first = service.serve(userId, r.getId(), new PadBankServeRequest(0, "starter", "pickup"));
         assertThat(first.title()).isEqualTo("PERFECT!");
-        assertThat(first).extracting("result", "tip", "speech", "budget", "spent", "served", "right", "finished")
-                .containsExactly("great", PadBankService.GREAT_TIP, "Thank you!", 90, 10, 1, 1, false);
+        assertThat(first).extracting("result", "tip", "speech", "balance", "spent", "served", "right", "finished")
+                .containsExactly("great", PadBankService.GREAT_TIP, "Thank you!", 50L, 0, 1, 1, false);
+        verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
 
         PadBankServeResponse last = service.serve(userId, r.getId(), new PadBankServeRequest(1, "comfort", "delivery"));
-        assertThat(last).extracting("result", "budget", "spent", "finished", "stars", "badge").containsExactly("great", 60, 30, true, 3, true);
+        verify(pointsWriteService).adjust(eq(userId), eq(-32), anyString(), eq("Pad Bank Run: visitor 2"));
+        assertThat(last).extracting("result", "balance", "spent", "spentToday", "rightPack", "rightWay", "finished", "stars", "badge")
+                .containsExactly("great", 40L, 32, 32, 2, 2, true, 3, true);
         assertThat(last.stock()).containsEntry("comfort", 0);
         assertThat(r.getStatus()).isEqualTo(PadBankRun.DONE);
         assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(2, "starter", "pickup")))
@@ -227,5 +231,30 @@ class PadBankServiceTest {
         when(visitorRepository.findById("v1")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(0, "comfort", "pickup")))
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void paidVisitorsNeedEnoughSp() {
+        user.setPoints(20);
+        PadBankRun r = run(1, 3, "starter:4,comfort:1");
+        assertThatThrownBy(() -> service.serve(userId, r.getId(), new PadBankServeRequest(1, "comfort", "delivery")))
+                .extracting("errorCode").isEqualTo(ErrorCode.INSUFFICIENT_POINTS);
+        assertThat(r.getRound()).isEqualTo(1);
+        verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
+    }
+
+    @Test
+    void closingTheBankEndsTheDayWithTheStarsSoFar() {
+        PadBankRun r = run(1, 3, "starter:3,comfort:1");
+        r.setServed(1);
+        r.setRightPack(1);
+        r.setRightWay(1);
+        r.setSpSpent(4);
+
+        PadBankCloseResponse closed = service.close(userId, r.getId());
+        assertThat(closed).extracting("served", "spentToday", "stars").containsExactly(1, 4, 0);
+        assertThat(closed.goals()).containsExactly(false, false, false);
+        assertThat(r.getStatus()).isEqualTo(PadBankRun.DONE);
+        assertThatThrownBy(() -> service.close(userId, r.getId())).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 }
