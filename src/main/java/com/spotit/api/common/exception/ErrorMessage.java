@@ -89,7 +89,7 @@ public final class ErrorMessage {
     public static final String GIVEDAY_BAD_TRAVEL = "Pick a way to travel.";
     public static final String GIVEDAY_NOT_THERE = "Travel to this place first.";
     public static final String GIVEDAY_BAD_RATING = "rating must be good, ok or poor.";
-    public static final String PADBANK_AGE_LOCKED = "This game opens at 18.";
+    public static final String PADBANK_AGE_LOCKED = "This game opens when you're older.";
     public static final String PADBANK_DAY_EMPTY = "This day has no visitors yet.";
     public static final String PADBANK_RUN_NOT_FOUND = "Pad Bank game not found.";
     public static final String PADBANK_BAD_PACK = "That pack isn't on the shelf.";

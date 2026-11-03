@@ -168,6 +168,7 @@ class PadBankServiceTest {
         challenge.setMinAge(18);
         user.setDob(LocalDate.of(2012, 1, 1));
         assertThatThrownBy(() -> service.start(userId, null)).extracting("errorCode").isEqualTo(ErrorCode.QUIZ_LOCKED);
+        assertThatThrownBy(() -> service.start(userId, null)).hasMessage("This game opens when you're older.");
         challenge.setMinAge(13);
         assertThatThrownBy(() -> service.start(userId, new PadBankStartRequest(2))).extracting("errorCode").isEqualTo(ErrorCode.NOT_YET_COMPLETE);
         user.setPoints(5);
