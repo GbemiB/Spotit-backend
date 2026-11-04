@@ -194,7 +194,7 @@ public class GiveDayService {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.GIVEDAY_CLOSED);
         }
         boolean buyPass = passNeeded(run, level);
-        int spent = mode.getCost() + (buyPass ? level.getPassCost() : 0);
+        int spent = level.isExtrasFree() ? 0 : mode.getCost() + (buyPass ? level.getPassCost() : 0);
         long balance = user(userId).getPoints();
         if (spent > 0) {
             if (balance < spent) {

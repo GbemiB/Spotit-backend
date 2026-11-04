@@ -99,6 +99,10 @@ public class GlobalConfig {
     @Builder.Default
     private long padbankFreeVisitors = ConfigDefaults.PADBANK_FREE_VISITORS;
 
+    @Column(name = "padbank_free_days", nullable = false, columnDefinition = "bigint default 2")
+    @Builder.Default
+    private long padbankFreeDays = ConfigDefaults.PADBANK_FREE_DAYS;
+
     @Column(name = "padbank_hearts", nullable = false, columnDefinition = "bigint default 3")
     private long padbankHearts;
 

@@ -31,6 +31,7 @@ public final class PropertyNames {
     public static final String GIVEDAY_TITLE_ONE = "giveday-title-one";
     public static final String GIVEDAY_TITLE_ZERO = "giveday-title-zero";
     public static final String PADBANK_FREE_VISITORS = "padbank-free-visitors";
+    public static final String PADBANK_FREE_DAYS = "padbank-free-days";
     public static final String PADBANK_HEARTS = "padbank-hearts";
     public static final String PADBANK_DELIVERY_COST = "padbank-delivery-cost";
     public static final String PADBANK_VISITOR_FEE = "padbank-visitor-fee";

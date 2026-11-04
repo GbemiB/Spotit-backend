@@ -338,6 +338,11 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     }
 
     @Override
+    public int getPadbankFreeDays() {
+        return (int) Math.max(0, loadGlobal().getPadbankFreeDays());
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public int getPadbankHearts() {
         return (int) loadGlobal().getPadbankHearts();

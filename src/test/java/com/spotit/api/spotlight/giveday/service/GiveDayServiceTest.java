@@ -272,6 +272,11 @@ class GiveDayServiceTest {
         r.setHere(null);
         r.setPosX(1000);
         assertThat(service.travel(userId, r.getId(), new GiveDayTravelRequest("lekki-market", "car")).spent()).isEqualTo(8);
+        farLevel.setExtrasFree(true);
+        r.setHere(null);
+        r.setPosX(1000);
+        assertThat(service.travel(userId, r.getId(), new GiveDayTravelRequest("lekki-market", "car")).spent()).isZero();
+        farLevel.setExtrasFree(false);
 
         user.setPoints(5);
         GiveDayRun poor = run("yaba", "", GiveDayRun.PLAYING);

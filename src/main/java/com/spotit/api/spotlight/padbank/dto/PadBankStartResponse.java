@@ -14,6 +14,7 @@ public record PadBankStartResponse(
         int deliveryCost,
         List<PadBankPackView> packs,
         List<PadBankVisitorView> visitors,
-        PadBankDayTitles dayTitles
+        PadBankDayTitles dayTitles,
+        boolean freeDay
 ) {
 }

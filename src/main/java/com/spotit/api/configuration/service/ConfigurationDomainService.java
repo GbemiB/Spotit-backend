@@ -58,6 +58,8 @@ public interface ConfigurationDomainService {
 
     int getPadbankFreeVisitors();
 
+    int getPadbankFreeDays();
+
     int getPadbankHearts();
 
     int getPadbankDeliveryCost();

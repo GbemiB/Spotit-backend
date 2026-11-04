@@ -1,5 +1,6 @@
 package com.spotit.api.spotlight.padbank.service;
 
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.spotlight.core.service.GameSummary;
 import com.spotit.api.spotlight.core.service.SpotlightGame;
 import com.spotit.api.spotlight.padbank.repository.PadBankRunRepository;
@@ -16,10 +17,16 @@ import java.util.UUID;
 public class PadBankSpotlightGame implements SpotlightGame {
     static final int HISTORY_DAYS = 400;
     private final PadBankRunRepository runRepository;
+    private final ConfigurationDomainService config;
 
     @Override
     public String challengeId() {
         return PadBankService.CHALLENGE_ID;
+    }
+
+    @Override
+    public int freeUpTo() {
+        return config.getPadbankFreeDays();
     }
 
     @Override

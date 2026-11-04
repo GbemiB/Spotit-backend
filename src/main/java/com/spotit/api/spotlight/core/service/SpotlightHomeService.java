@@ -50,7 +50,11 @@ public class SpotlightHomeService {
         LocalDate today = userClock.today(user);
         Integer age = SpotlightRules.ageOn(user.getDob(), today);
         Map<String, GameSummary> byChallenge = new HashMap<>();
-        games.forEach(g -> byChallenge.put(g.challengeId(), g.summary(userId, today)));
+        Map<String, Integer> freeUpTo = new HashMap<>();
+        games.forEach(g -> {
+            byChallenge.put(g.challengeId(), g.summary(userId, today));
+            freeUpTo.put(g.challengeId(), g.freeUpTo());
+        });
         List<GameSummary> parts = List.copyOf(byChallenge.values());
         Set<LocalDate> days = new HashSet<>();
         parts.forEach(p -> days.addAll(p.playDays()));
@@ -65,7 +69,7 @@ public class SpotlightHomeService {
                 .map(c -> new ChallengeCard(c.getId(), c.getKind(), nameFor(c, herName), c.getBlurb(), c.getIcon(), c.getTone(),
                         SpotlightChallenge.QUIZ.equals(c.getKind()) ? null : c.getCost(), c.isCostFrom(), c.getMinAge(), c.getStatus(),
                         SpotlightRules.isLocked(c.getMinAge(), age), freePlaysLeft(c, byChallenge.get(c.getId())),
-                        starsOf(byChallenge.get(c.getId())), playsOf(byChallenge.get(c.getId()))))
+                        starsOf(byChallenge.get(c.getId())), playsOf(byChallenge.get(c.getId())), freeUpTo.getOrDefault(c.getId(), 0)))
                 .toList();
         SpotlightInvite invite = new SpotlightInvite(config.isSpotlightInviteEnabled(), config.getSpotlightInviteEveryDays(),
                 config.getSpotlightInviteMaxDismissals());

@@ -14,6 +14,7 @@ public record ChallengeCard(
         boolean locked,
         int freePlaysLeft,
         int stars,
-        long plays
+        long plays,
+        int freeUpTo
 ) {
 }

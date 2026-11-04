@@ -29,6 +29,7 @@ public final class ConfigDefaults {
     public static final String GIVEDAY_TITLE_ONE = "A good start";
     public static final String GIVEDAY_TITLE_ZERO = "Something important is missing";
     public static final long PADBANK_FREE_VISITORS = 2L;
+    public static final long PADBANK_FREE_DAYS = 2L;
     public static final long PADBANK_HEARTS = 3L;
     public static final long PADBANK_DELIVERY_COST = 2L;
     public static final long PADBANK_VISITOR_FEE = 2L;

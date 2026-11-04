@@ -1,7 +1,9 @@
 package com.spotit.api.spotlight.giveday.service;
 
 import com.spotit.api.spotlight.core.service.GameSummary;
+import com.spotit.api.spotlight.giveday.entity.GiveDayLevel;
 import com.spotit.api.spotlight.giveday.entity.GiveDayRun;
+import com.spotit.api.spotlight.giveday.repository.GiveDayLevelRepository;
 import com.spotit.api.spotlight.giveday.repository.GiveDayRunRepository;
 import org.junit.jupiter.api.Test;
 
@@ -23,11 +25,18 @@ class GiveDaySpotlightGameTest {
                 GiveDayRun.builder().visits("hope-house:2,girls-fc:0").playedOn(today).build(),
                 GiveDayRun.builder().visits("hope-house:3").playedOn(today.minusDays(500)).build()));
 
-        GiveDaySpotlightGame game = new GiveDaySpotlightGame(runs);
+        GiveDayLevelRepository levels = mock(GiveDayLevelRepository.class);
+        when(levels.findByActiveTrueOrderByNumberAsc()).thenReturn(List.of(
+                GiveDayLevel.builder().number(1).extrasFree(true).build(),
+                GiveDayLevel.builder().number(2).extrasFree(true).build(),
+                GiveDayLevel.builder().number(3).passCost(2).build(),
+                GiveDayLevel.builder().number(4).extrasFree(true).build()));
+        GiveDaySpotlightGame game = new GiveDaySpotlightGame(runs, levels);
         GameSummary summary = game.summary(userId, today);
 
         assertThat(game.challengeId()).isEqualTo("give-day");
         assertThat(summary).extracting("stars", "levelsWon", "plays").containsExactly(3, 1, 2L);
         assertThat(summary.playDays()).containsExactly(today);
+        assertThat(game.freeUpTo()).isEqualTo(2);
     }
 }

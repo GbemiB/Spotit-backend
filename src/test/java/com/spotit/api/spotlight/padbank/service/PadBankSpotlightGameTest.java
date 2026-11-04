@@ -1,5 +1,6 @@
 package com.spotit.api.spotlight.padbank.service;
 
+import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.spotlight.core.service.GameSummary;
 import com.spotit.api.spotlight.padbank.repository.PadBankRunRepository;
 import org.junit.jupiter.api.Test;
@@ -24,11 +25,14 @@ class PadBankSpotlightGameTest {
         when(runs.findPlayDaysSince(eq(userId), any())).thenReturn(List.of(today));
         when(runs.countByUserId(userId)).thenReturn(4L);
 
-        PadBankSpotlightGame game = new PadBankSpotlightGame(runs);
+        ConfigurationDomainService config = mock(ConfigurationDomainService.class);
+        when(config.getPadbankFreeDays()).thenReturn(2);
+        PadBankSpotlightGame game = new PadBankSpotlightGame(runs, config);
         GameSummary summary = game.summary(userId, today);
 
         assertThat(game.challengeId()).isEqualTo("pad-bank-run");
         assertThat(summary).extracting("stars", "levelsWon", "rightAnswers", "plays").containsExactly(3, 1, 0L, 4L);
         assertThat(summary.playDays()).containsExactly(today);
+        assertThat(game.freeUpTo()).isEqualTo(2);
     }
 }

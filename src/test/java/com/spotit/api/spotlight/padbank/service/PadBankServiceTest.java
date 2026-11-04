@@ -129,7 +129,7 @@ class PadBankServiceTest {
         when(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(2)).thenReturn(List.of(visitor("a", "starter", "pickup"),
                 visitor("b", "comfort", "delivery")));
 
-        assertThat(service.rules(userId)).isEqualTo(new PadBankDayRules(2, 2, 3, 1, 2, 10));
+        assertThat(service.rules(userId)).isEqualTo(new PadBankDayRules(2, 2, 3, 1, 2, 10, false));
         verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
     }
 
@@ -178,6 +178,22 @@ class PadBankServiceTest {
         verify(pointsWriteService, never()).adjust(eq(userId), eq(0), anyString(), anyString());
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.start(userId, null)).isInstanceOf(ApiException.class);
+    }
+
+    @Test
+    void freeDaysChargeNothingButStillShowPrices() {
+        when(config.getPadbankFreeDays()).thenReturn(2);
+
+        PadBankStartResponse start = service.start(userId, new PadBankStartRequest(1));
+        assertThat(start).extracting("cost", "freeDay", "visitorFee", "deliveryCost").containsExactly(0, true, 2, 10);
+        assertThat(start.packs()).extracting("cost").containsExactly(10, 20);
+
+        PadBankRun r = run(1, 3, "starter:4,comfort:1");
+        PadBankServeResponse served = service.serve(userId, r.getId(), new PadBankServeRequest(1, "comfort", null, "delivery"));
+        assertThat(served).extracting("spent", "balance").containsExactly(0, 50L);
+        verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
+        when(visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(1)).thenReturn(List.of(visitor("v1", "starter", "pickup")));
+        assertThat(service.rules(userId).freeDay()).isTrue();
     }
 
     @Test

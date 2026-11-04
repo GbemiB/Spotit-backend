@@ -2,7 +2,9 @@ package com.spotit.api.spotlight.giveday.service;
 
 import com.spotit.api.spotlight.core.service.GameSummary;
 import com.spotit.api.spotlight.core.service.SpotlightGame;
+import com.spotit.api.spotlight.giveday.entity.GiveDayLevel;
 import com.spotit.api.spotlight.giveday.entity.GiveDayRun;
+import com.spotit.api.spotlight.giveday.repository.GiveDayLevelRepository;
 import com.spotit.api.spotlight.giveday.repository.GiveDayRunRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -20,10 +22,23 @@ import java.util.stream.Collectors;
 public class GiveDaySpotlightGame implements SpotlightGame {
     static final int HISTORY_DAYS = 400;
     private final GiveDayRunRepository runRepository;
+    private final GiveDayLevelRepository levelRepository;
 
     @Override
     public String challengeId() {
         return GiveDayService.CHALLENGE_ID;
+    }
+
+    @Override
+    public int freeUpTo() {
+        int free = 0;
+        for (GiveDayLevel level : levelRepository.findByActiveTrueOrderByNumberAsc()) {
+            if (!level.isExtrasFree() || level.getPassCost() > 0) {
+                break;
+            }
+            free = level.getNumber();
+        }
+        return free;
     }
 
     @Override

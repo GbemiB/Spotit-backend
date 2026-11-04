@@ -77,7 +77,8 @@ public class PadBankService {
             throw new ApiException(ErrorCode.NOT_YET_COMPLETE, ErrorMessage.PADBANK_DAY_EMPTY);
         }
         long balance = user.getPoints();
-        int cost = runRepository.countByUserId(userId) < challenge.getFreePlays() ? 0 : challenge.getCost();
+        boolean freeDay = isFreeDay(day);
+        int cost = freeDay || runRepository.countByUserId(userId) < challenge.getFreePlays() ? 0 : challenge.getCost();
         if (cost > 0) {
             if (balance < cost) {
                 throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);
@@ -97,7 +98,7 @@ public class PadBankService {
                         PadBankRules.decodeLines(p.getContents()))).toList(),
                 visitors.stream().map(v -> new PadBankVisitorView(v.getId(), v.getWho(), v.getLook(), Math.max(1, PadBankRules.decodePacks(v.getPacks()).size()),
                         PadBankRules.decodeClues(v.getClues()))).toList(),
-                new PadBankDayTitles(config.getPadbankDayTitlePerfect(), config.getPadbankDayTitleDone(), config.getPadbankDayTitleLost()));
+                new PadBankDayTitles(config.getPadbankDayTitlePerfect(), config.getPadbankDayTitleDone(), config.getPadbankDayTitleLost()), freeDay);
     }
 
     @Transactional(readOnly = true)
@@ -105,7 +106,11 @@ public class PadBankService {
         int day = nextDay(userId);
         int visitors = visitorRepository.findByDayAndActiveTrueOrderBySortOrderAsc(day).size();
         return new PadBankDayRules(day, visitors, config.getPadbankHearts(), config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(),
-                config.getPadbankDeliveryCost());
+                config.getPadbankDeliveryCost(), isFreeDay(day));
+    }
+
+    boolean isFreeDay(int day) {
+        return day <= config.getPadbankFreeDays();
     }
 
     int nextDay(UUID userId) {
@@ -175,8 +180,8 @@ public class PadBankService {
         if (picked.size() > Math.max(1, wanted.size())) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.PADBANK_BAD_PACK);
         }
-        int spent = PadBankRules.price(run.getRound(), config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(), packCost,
-                PadBankVisitor.DELIVERY.equals(route), config.getPadbankDeliveryCost());
+        int spent = isFreeDay(run.getDay()) ? 0 : PadBankRules.price(run.getRound(), config.getPadbankFreeVisitors(), config.getPadbankVisitorFee(),
+                packCost, PadBankVisitor.DELIVERY.equals(route), config.getPadbankDeliveryCost());
         User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, ErrorMessage.USER_NOT_FOUND));
         long balance = user.getPoints();
         if (spent > 0) {

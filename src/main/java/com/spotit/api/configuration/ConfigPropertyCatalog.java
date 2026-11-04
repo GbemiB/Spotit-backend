@@ -135,6 +135,10 @@ public class ConfigPropertyCatalog {
                 "Pad Bank Run: visitors served free at the start of each day (0 = none)", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankFreeVisitors(),
                 (c, v) -> c.global().setPadbankFreeVisitors((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_FREE_DAYS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: days that are completely free, prices still shown (0 = none)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankFreeDays(),
+                (c, v) -> c.global().setPadbankFreeDays((Long) v)));
         list.add(new Property(PropertyNames.PADBANK_HEARTS, PropertyNames.GROUP_PADBANK,
                 "Pad Bank Run: hearts at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankHearts(),
