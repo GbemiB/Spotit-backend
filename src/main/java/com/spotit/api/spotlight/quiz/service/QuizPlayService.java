@@ -204,7 +204,7 @@ public class QuizPlayService {
             roundViews.add(new RoundView(i, picked.get(i).getStatement()));
         }
         return new StartQuizResponse(attempt.getId(), topic.getId(), topic.getName(), level.getNumber(), level.getName(), roundViews, lives,
-                config.getQuizHintCost(), level.getCost(), balance);
+                hintCostFor(level.getCost()), level.getCost(), balance);
     }
 
     @Transactional
@@ -218,11 +218,14 @@ public class QuizPlayService {
         if (question.getHint() == null || question.getHint().isBlank()) {
             return new HintResponse(attempt.getRound(), null, balance);
         }
-        int cost = config.getQuizHintCost();
+        int cost = hintCostFor(levelRepository.findByTopicIdAndNumber(attempt.getTopicId(), attempt.getLevelNumber())
+                .map(QuizLevel::getCost).orElse(1));
         if (balance < cost) {
             throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);
         }
-        balance = pointsWriteService.adjust(userId, -cost, HINT_ICON, "Quiz hint");
+        if (cost > 0) {
+            balance = pointsWriteService.adjust(userId, -cost, HINT_ICON, "Quiz hint");
+        }
         attempt.setHintRound(attempt.getRound());
         attempt.setHintsUsed(attempt.getHintsUsed() + 1);
         attempt.setSpSpent(attempt.getSpSpent() + cost);
@@ -254,6 +257,10 @@ public class QuizPlayService {
         attemptRepository.save(attempt);
         return new AnswerResponse(round, right, question.getAnswer(), question.getExplanation(), question.getFunFact(), attempt.getLives(),
                 attempt.getStreak(), attempt.getBestStreak(), attempt.getCorrect(), attempt.getStatus(), stars, nextLevel);
+    }
+
+    private int hintCostFor(int levelCost) {
+        return levelCost > 0 ? config.getQuizHintCost() : 0;
     }
 
     private int livesFor(QuizLevel level) {

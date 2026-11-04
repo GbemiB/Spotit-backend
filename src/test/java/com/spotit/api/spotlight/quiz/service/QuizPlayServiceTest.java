@@ -231,6 +231,7 @@ class QuizPlayServiceTest {
         assertThat(start.spSpent()).isZero();
         assertThat(start.balance()).isEqualTo(100);
         assertThat(start.lives()).isEqualTo(3);
+        assertThat(start.hintCost()).isZero();
         verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
         verify(seenRepository).saveAll(any());
         verify(resultRepository).save(any());
@@ -246,6 +247,7 @@ class QuizPlayServiceTest {
         assertThat(start.balance()).isEqualTo(70);
         assertThat(start.spSpent()).isEqualTo(30);
         assertThat(start.lives()).isEqualTo(3);
+        assertThat(start.hintCost()).isEqualTo(5);
     }
 
     @Test
@@ -314,6 +316,7 @@ class QuizPlayServiceTest {
     @Test
     void aHintIsChargedOncePerRound() {
         QuizAttempt a = attempt("q1,q2", 0, 3);
+        a.setLevelNumber(2);
         when(pointsWriteService.adjust(userId, -5, QuizPlayService.HINT_ICON, "Quiz hint")).thenReturn(95L);
 
         var hint = service.hint(userId, a.getId(), new HintRequest(0));
@@ -323,6 +326,20 @@ class QuizPlayServiceTest {
         assertThat(a.getSpSpent()).isEqualTo(5);
         assertThatThrownBy(() -> service.hint(userId, a.getId(), new HintRequest(0))).isInstanceOf(ApiException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.RESOURCE_ALREADY_EXISTS);
+    }
+
+    @Test
+    void hintsAreFreeOnFreeLevels() {
+        when(levelRepository.findByTopicIdAndNumber("my-cycle", 1)).thenReturn(Optional.of(level("my-cycle", 1, 0)));
+        user.setPoints(0);
+        QuizAttempt a = attempt("q1,q2", 0, 3);
+
+        var hint = service.hint(userId, a.getId(), new HintRequest(0));
+
+        assertThat(hint.hint()).isEqualTo("Hint one");
+        assertThat(hint.balance()).isZero();
+        assertThat(a.getSpSpent()).isZero();
+        verify(pointsWriteService, never()).adjust(any(), anyInt(), anyString(), anyString());
     }
 
     @Test
@@ -339,6 +356,7 @@ class QuizPlayServiceTest {
     void aHintNeedsEnoughPoints() {
         user.setPoints(2);
         QuizAttempt a = attempt("q1,q2", 0, 3);
+        a.setLevelNumber(2);
 
         assertThatThrownBy(() -> service.hint(userId, a.getId(), new HintRequest(0))).isInstanceOf(ApiException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.INSUFFICIENT_POINTS);
