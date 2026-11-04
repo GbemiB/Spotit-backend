@@ -102,11 +102,12 @@ class GiveDayAdminServiceTest {
 
         when(levelRepository.findAllByOrderByNumberAsc()).thenReturn(List.of(GiveDayLevel.builder().number(1).name("Near").build()));
         assertThat(service.levels(null, null).items()).extracting("number").containsExactly(1);
-        assertThat(service.saveLevel(3, new GiveDayLevelAdmin(null, " Across ", 0, 10, -1, 10, null)))
-                .extracting("number", "name", "radiusKm", "starsNeeded", "passCost", "giftBudget", "active").containsExactly(3, "Across", 1, 10, 0, 10, true);
+        assertThat(service.saveLevel(3, new GiveDayLevelAdmin(null, " Across ", 0, 10, -1, 5, 3, true, null)))
+                .extracting("number", "name", "radiusKm", "starsNeeded", "passCost", "giftBudget", "giftMax", "extrasFree", "active")
+                .containsExactly(3, "Across", 1, 10, 0, 5, 5, true, true);
         when(levelRepository.findById(3)).thenReturn(Optional.of(GiveDayLevel.builder().number(3).name("Across").radiusKm(15).active(true).build()));
-        assertThat(service.saveLevel(3, new GiveDayLevelAdmin(null, null, null, null, null, null, false)).active()).isFalse();
-        assertThatThrownBy(() -> service.saveLevel(9, new GiveDayLevelAdmin(null, "Far", null, 1, 0, 1, null)))
+        assertThat(service.saveLevel(3, new GiveDayLevelAdmin(null, null, null, null, null, null, null, null, false)).active()).isFalse();
+        assertThatThrownBy(() -> service.saveLevel(9, new GiveDayLevelAdmin(null, "Far", null, 1, 0, 1, 2, false, null)))
                 .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
 
         when(travelRepository.findAllByOrderBySortOrderAsc()).thenReturn(List.of(GiveDayTravel.builder().id("walk").label("Walk").build()));

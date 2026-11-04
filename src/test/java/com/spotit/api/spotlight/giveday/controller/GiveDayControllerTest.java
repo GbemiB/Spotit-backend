@@ -69,21 +69,21 @@ class GiveDayControllerTest {
         MockMvc mvc = mockMvc(new GiveDayController(service));
         authenticate();
         when(service.start(USER_ID)).thenReturn(new GiveDayStartResponse(runId, 25, 0, 480, 1080, 30, 100, null, 0, 0, 0, 1,
-                List.of(new GiveDayLevelView(1, "Near home", 3, 0, 0, 5)), List.of(new GiveDayTravelView("walk", "Walk", 0)),
+                List.of(new GiveDayLevelView(1, "Near home", 3, 0, 0, 5, 10, true)), List.of(new GiveDayTravelView("walk", "Walk", 0)),
                 List.of(new GiveDayAreaView("yaba", "Yaba", "Mainland", 7600, 2600, 9, 1, false, 0)),
                 List.of(new GiveDayProductView("pads", "Pads", 2, true))));
         GiveDayHomeRequest home = new GiveDayHomeRequest("yaba");
         when(service.home(USER_ID, home)).thenReturn(new GiveDayHomeResponse("yaba", 7600, 2600, List.of()));
-        when(service.area(USER_ID, runId, "yaba")).thenReturn(new GiveDayAreaResponse("yaba", "Yaba", 1, false, 0, false, 0, 5,
+        when(service.area(USER_ID, runId, "yaba")).thenReturn(new GiveDayAreaResponse("yaba", "Yaba", 1, false, 0, false, 0, 5, 10, true,
                 List.of(new GiveDayPlaceView("yaba-school", "Bright School", "School", "40 girls", "Help", "Miss Ada", "teacher", "girls", 40,
                         List.of(new GiveDayFact("girls", "pink", "40 girls")), 7650, 2600, 900, false, false, null))));
-        when(service.trips(USER_ID, runId, "yaba-school")).thenReturn(new GiveDayTripsResponse("yaba-school", 480, 900, 1, true, 0, false, 0, 5,
+        when(service.trips(USER_ID, runId, "yaba-school")).thenReturn(new GiveDayTripsResponse("yaba-school", 480, 900, 1, true, 0, false, 0, 5, 10, true,
                 List.of(new GiveDayTripQuote("walk", "Walk", 0, 10, 490, true))));
         GiveDayTravelRequest travel = new GiveDayTravelRequest("yaba-school", "walk");
         when(service.travel(USER_ID, runId, travel)).thenReturn(new GiveDayTravelResponse("yaba-school", "walk", 10, 490, 7650, 2600, 0, 0, 25));
         GiveDayGiveRequest give = new GiveDayGiveRequest("yaba-school", List.of("pads"));
         when(service.give(USER_ID, runId, give)).thenReturn(new GiveDayGiveResponse("yaba-school", 2, "Lovely work", "Thanks",
-                List.of(new GiveDayReview("pads", "Pads", "good", "Easy")), List.of(), 40, 2, 5, 40, 520, 2, 1));
+                List.of(new GiveDayReview("pads", "Pads", "good", "Easy")), List.of(), 40, 2, 5, 0, true, 0, 25, 40, 520, 2, 1));
         when(service.finish(USER_ID, runId)).thenReturn(new GiveDayFinishResponse(2, 40, 0, Map.of("yaba-school", 2)));
 
         mvc.perform(post("/api/v1/giveday/runs")).andExpect(status().isOk()).andExpect(jsonPath("$.data.areas[0].region").value("Mainland"));
@@ -108,7 +108,7 @@ class GiveDayControllerTest {
         GiveDayPlaceAdmin place = new GiveDayPlaceAdmin("yaba-school", "yaba", "Bright School", "School", "40 girls", null, "Miss Ada", "teacher", "girls",
                 40, null, List.of(), 7650, 2600, 900, false, 13, 1, true);
         GiveDayProductAdmin product = new GiveDayProductAdmin("pads", "Pads", 2, true, 1, true);
-        GiveDayLevelAdmin level = new GiveDayLevelAdmin(3, "Across the city", 15, 10, 10, 10, true);
+        GiveDayLevelAdmin level = new GiveDayLevelAdmin(3, "Across the city", 15, 10, 10, 10, 10, false, true);
         GiveDayTravelAdmin bike = new GiveDayTravelAdmin("bike", "Bike", 3, 25, 2, true);
         GiveDayNeedAdmin need = new GiveDayNeedAdmin("yaba-school", "pads", "good", "Easy");
         when(adminService.areas(null, null)).thenReturn(new AdminPage<>(List.of(area), 0, 50, 1));

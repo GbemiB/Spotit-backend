@@ -25,6 +25,10 @@ public final class GiveDayRules {
         return 1 + (poor == 0 ? 1 : 0) + (good >= goodPicks ? 1 : 0);
     }
 
+    public static int giftPaid(int giftCost, int giftFree, boolean extrasFree) {
+        return extrasFree ? 0 : Math.max(0, giftCost - giftFree);
+    }
+
     public static int distance(int x1, int y1, int x2, int y2) {
         return Math.abs(x1 - x2) + Math.abs(y1 - y2);
     }

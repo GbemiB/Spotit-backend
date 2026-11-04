@@ -311,6 +311,33 @@ class GiveDayServiceTest {
     }
 
     @Test
+    void giftsOverTheFreeAmountAreChargedUnlessExtrasAreFree() {
+        GiveDayLevel paid = level(1, 3, 0, 0, 2);
+        paid.setGiftMax(6);
+        when(levelRepository.findByActiveTrueOrderByNumberAsc()).thenReturn(List.of(paid, level(2, 8, 3, 0, 5)));
+        GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
+        r.setHere("akoka-school");
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "cup", "guide", "heat"))))
+                .hasMessage(ErrorMessage.GIVEDAY_OVER_BUDGET);
+        GiveDayGiveResponse give = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat")));
+        verify(pointsWriteService).adjust(userId, -2, "🎁", "Give Day: extra gifts at Bright School");
+        assertThat(give).extracting("giftCost", "giftBudget", "giftPaid", "extrasFree", "spSpent", "balance").containsExactly(4, 2, 2, false, 2, 25L);
+
+        paid.setExtrasFree(true);
+        GiveDayRun free = run("yaba", "", GiveDayRun.PLAYING);
+        free.setHere("akoka-school");
+        GiveDayGiveResponse freeGive = service.give(userId, free.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat")));
+        assertThat(freeGive).extracting("giftPaid", "extrasFree", "spSpent", "balance").containsExactly(0, true, 0, 40L);
+
+        paid.setExtrasFree(false);
+        user.setPoints(1);
+        GiveDayRun poor = run("yaba", "", GiveDayRun.PLAYING);
+        poor.setHere("akoka-school");
+        assertThatThrownBy(() -> service.give(userId, poor.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat"))))
+                .extracting("errorCode").isEqualTo(ErrorCode.INSUFFICIENT_POINTS);
+    }
+
+    @Test
     void weakerGiftsGetFewerStarsAndShowWhatWasMissed() {
         GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
         r.setHere("akoka-school");

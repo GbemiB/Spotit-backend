@@ -116,7 +116,7 @@ public class GiveDayService {
         return new GiveDayStartResponse(run.getId(), balance, cost, run.getClock(), config.getGivedayDayEnd(), config.getGivedayVisitMinutes(),
                 config.getGivedayUnitsPerKm(), run.getHomeArea(), run.getPosX(), run.getPosY(), stars, playerLevel(stars, levels),
                 levels.stream().map(l -> new GiveDayLevelView(l.getNumber(), l.getName(), l.getRadiusKm(), l.getStarsNeeded(), l.getPassCost(),
-                        l.getGiftBudget())).toList(),
+                        l.getGiftBudget(), l.getGiftMax(), l.isExtrasFree())).toList(),
                 travel.stream().map(t -> new GiveDayTravelView(t.getId(), t.getLabel(), t.getCost())).toList(),
                 areaViews(home, areas, places, levels, stars, Map.of()),
                 products.stream().map(p -> new GiveDayProductView(p.getId(), p.getName(), p.getCost(), p.isAbsorbent())).toList());
@@ -155,7 +155,7 @@ public class GiveDayService {
                         p.getWho(), p.getTotal(), GiveDayRules.decodeFacts(p.getFacts()), p.getMapX(), p.getMapY(), p.getCloses(), p.isForSelf(),
                         SpotlightRules.isLocked(p.getMinAge(), age), visits.get(p.getId()))).toList();
         return new GiveDayAreaResponse(area.getId(), area.getName(), level.getNumber(), stars < level.getStarsNeeded(), level.getStarsNeeded(),
-                passNeeded(run, level), level.getPassCost(), level.getGiftBudget(), places);
+                passNeeded(run, level), level.getPassCost(), level.getGiftBudget(), level.getGiftMax(), level.isExtrasFree(), places);
     }
 
     @Transactional(readOnly = true)
@@ -171,7 +171,8 @@ public class GiveDayService {
             return new GiveDayTripQuote(t.getId(), t.getLabel(), t.getCost(), minutes, arrive, arrive + config.getGivedayVisitMinutes() <= closesBy);
         }).toList();
         return new GiveDayTripsResponse(place.getId(), run.getClock(), place.getCloses(), level.getNumber(), stars >= level.getStarsNeeded(),
-                level.getStarsNeeded(), passNeeded(run, level), level.getPassCost(), level.getGiftBudget(), quotes);
+                level.getStarsNeeded(), passNeeded(run, level), level.getPassCost(), level.getGiftBudget(), level.getGiftMax(), level.isExtrasFree(),
+                quotes);
     }
 
     @Transactional
@@ -238,8 +239,17 @@ public class GiveDayService {
         }
         GiveDayLevel level = levelOf(run, area(place.getAreaId()));
         int giftCost = picked.stream().mapToInt(GiveDayProduct::getCost).sum();
-        if (giftCost > level.getGiftBudget()) {
+        if (giftCost > Math.max(level.getGiftMax(), level.getGiftBudget())) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.GIVEDAY_OVER_BUDGET);
+        }
+        int giftPaid = GiveDayRules.giftPaid(giftCost, level.getGiftBudget(), level.isExtrasFree());
+        long balance = user(userId).getPoints();
+        if (giftPaid > 0) {
+            if (balance < giftPaid) {
+                throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);
+            }
+            balance = pointsWriteService.adjust(userId, -giftPaid, SPEND_ICON, "Give Day: extra gifts at " + place.getName());
+            run.setSpSpent(run.getSpSpent() + giftPaid);
         }
         Map<String, GiveDayNeed> needs = needRepository.findByPlaceId(place.getId()).stream()
                 .collect(Collectors.toMap(GiveDayNeed::getProductId, Function.identity()));
@@ -266,7 +276,8 @@ public class GiveDayService {
         runRepository.save(run);
         int playerStars = playerStars(userId, run);
         return new GiveDayGiveResponse(place.getId(), stars, title(stars), place.getThanks(), review, missed, people, giftCost, level.getGiftBudget(),
-                run.getHelped(), run.getClock(), playerStars, playerLevel(playerStars, levelRepository.findByActiveTrueOrderByNumberAsc()));
+                giftPaid, level.isExtrasFree(), run.getSpSpent(), balance, run.getHelped(), run.getClock(), playerStars,
+                playerLevel(playerStars, levelRepository.findByActiveTrueOrderByNumberAsc()));
     }
 
     @Transactional

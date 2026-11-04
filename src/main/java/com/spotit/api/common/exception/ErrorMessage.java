@@ -83,7 +83,7 @@ public final class ErrorMessage {
     public static final String GIVEDAY_NO_HOME = "Pick your home area first.";
     public static final String GIVEDAY_PLACE_DONE = "You already gave at this place today.";
     public static final String GIVEDAY_BAD_PRODUCT = "That product isn't on the shelf.";
-    public static final String GIVEDAY_OVER_BUDGET = "That gift is over the budget for this place.";
+    public static final String GIVEDAY_OVER_BUDGET = "That gift is more than the most you can give at this place.";
     public static final String GIVEDAY_LEVEL_LOCKED = "Win more stars to open this part of the map.";
     public static final String GIVEDAY_CLOSED = "That place is closed by then.";
     public static final String GIVEDAY_BAD_TRAVEL = "Pick a way to travel.";

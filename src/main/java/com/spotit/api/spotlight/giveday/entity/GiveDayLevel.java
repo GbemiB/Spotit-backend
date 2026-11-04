@@ -36,6 +36,10 @@ public class GiveDayLevel {
 
     @Column(name = "gift_budget", nullable = false)
     private int giftBudget;
+    @Column(name = "gift_max", nullable = false, columnDefinition = "integer default 10")
+    private int giftMax;
+    @Column(name = "extras_free", nullable = false, columnDefinition = "boolean default false")
+    private boolean extrasFree;
 
     @Column(nullable = false)
     private boolean active;

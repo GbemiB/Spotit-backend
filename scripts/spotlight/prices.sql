@@ -19,6 +19,8 @@ UPDATE giveday_levels SET pass_cost = 2 WHERE level_number = 3;
 UPDATE giveday_levels SET pass_cost = 3 WHERE level_number = 4;
 UPDATE giveday_levels SET pass_cost = 5 WHERE level_number = 5;
 UPDATE giveday_levels SET gift_budget = 5;
+UPDATE giveday_levels SET gift_max = 10;
+UPDATE giveday_levels SET extras_free = (level_number <= 2);
 
 UPDATE global_config SET quiz_hint_cost = 1, padbank_visitor_fee = 1, padbank_delivery_cost = 1;
 

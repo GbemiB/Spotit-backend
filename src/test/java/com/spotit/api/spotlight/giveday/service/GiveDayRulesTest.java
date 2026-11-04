@@ -58,4 +58,11 @@ class GiveDayRulesTest {
         assertThat(GiveDayRules.decodeFacts(null)).isEmpty();
         assertThat(GiveDayRules.encodeFacts(null)).isEmpty();
     }
+
+    @Test
+    void onlyGiftsAboveTheFreeAmountArePaidAndNoneWhenExtrasAreFree() {
+        assertThat(GiveDayRules.giftPaid(4, 5, false)).isZero();
+        assertThat(GiveDayRules.giftPaid(9, 5, false)).isEqualTo(4);
+        assertThat(GiveDayRules.giftPaid(9, 5, true)).isZero();
+    }
 }

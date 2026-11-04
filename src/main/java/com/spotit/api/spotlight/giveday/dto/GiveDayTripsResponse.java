@@ -12,6 +12,8 @@ public record GiveDayTripsResponse(
         boolean passNeeded,
         int passCost,
         int giftBudget,
+        int giftMax,
+        boolean extrasFree,
         List<GiveDayTripQuote> quotes
 ) {
 }

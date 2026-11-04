@@ -191,7 +191,7 @@ public class GiveDayAdminService {
     public GiveDayLevelAdmin saveLevel(int number, GiveDayLevelAdmin body) {
         GiveDayLevel level = levelRepository.findById(number).orElse(null);
         if (level == null) {
-            requireAll(body.name(), body.radiusKm(), body.starsNeeded(), body.giftBudget());
+            requireAll(body.name(), body.radiusKm(), body.starsNeeded(), body.giftBudget(), body.giftMax());
             level = GiveDayLevel.builder().number(Math.max(1, number)).active(true).build();
         }
         if (body.name() != null) {
@@ -208,6 +208,13 @@ public class GiveDayAdminService {
         }
         if (body.giftBudget() != null) {
             level.setGiftBudget(Math.max(0, body.giftBudget()));
+        }
+        if (body.giftMax() != null) {
+            level.setGiftMax(Math.max(0, body.giftMax()));
+        }
+        level.setGiftMax(Math.max(level.getGiftMax(), level.getGiftBudget()));
+        if (body.extrasFree() != null) {
+            level.setExtrasFree(body.extrasFree());
         }
         if (body.active() != null) {
             level.setActive(body.active());
