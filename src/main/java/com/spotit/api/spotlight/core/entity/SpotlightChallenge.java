@@ -33,6 +33,9 @@ public class SpotlightChallenge {
     @Column(nullable = false, length = 60)
     private String name;
 
+    @Column(name = "partner_name", length = 60)
+    private String partnerName;
+
     @Column(length = 200)
     private String blurb;
 

@@ -67,7 +67,7 @@ class SpotlightControllerTest {
     void adminsListAndSaveChallengesAndRanks() throws Exception {
         MockMvc mvc = mockMvc(new SpotlightConfigController(adminService));
         SpotlightChallengeAdmin challenge = new SpotlightChallengeAdmin("pad-factory", "game", "Pad Factory", "Design pads", "pad", "pink", 10, true,
-                13, "soon", 2, true, 1);
+                13, "soon", 2, true, 1, null);
         SpotlightRankAdmin rank = new SpotlightRankAdmin("explorer", "Explorer", 15, true);
         when(adminService.challenges(null, null)).thenReturn(new AdminPage<>(List.of(challenge), 0, 50, 1));
         when(adminService.saveChallenge(eq("pad-factory"), any())).thenReturn(challenge);

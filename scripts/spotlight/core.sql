@@ -6,6 +6,8 @@ INSERT INTO spotlight_challenges (id, kind, name, blurb, icon, tone, cost, cost_
   ('give-day', 'game', 'Give Day', 'Travel across Lagos and give period kits where they’re needed.', 'pin', 'green', 0, false, 13, 'live', 4, true, 1)
 ON CONFLICT DO NOTHING;
 
+UPDATE spotlight_challenges SET partner_name = 'Know {name} better' WHERE id = 'know-yourself' AND partner_name IS NULL;
+
 INSERT INTO spotlight_ranks (id, name, min_stars, active) VALUES
   ('curious', 'Curious', 0, true),
   ('explorer', 'Explorer', 15, true),

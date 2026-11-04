@@ -2,12 +2,16 @@ package com.spotit.api.spotlight.core.service;
 
 import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.partner.entity.PartnerLink;
+import com.spotit.api.partner.entity.PartnerLinkStatus;
+import com.spotit.api.partner.repository.PartnerLinkRepository;
 import com.spotit.api.spotlight.core.dto.SpotlightHomeResponse;
 import com.spotit.api.spotlight.core.dto.SpotlightInvite;
 import com.spotit.api.spotlight.core.entity.SpotlightChallenge;
 import com.spotit.api.spotlight.core.entity.SpotlightRank;
 import com.spotit.api.spotlight.core.repository.SpotlightChallengeRepository;
 import com.spotit.api.spotlight.core.repository.SpotlightRankRepository;
+import com.spotit.api.user.entity.AccountOwner;
 import com.spotit.api.user.entity.User;
 import com.spotit.api.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -55,7 +59,8 @@ class SpotlightHomeServiceTest {
         when(config.getSpotlightInviteEveryDays()).thenReturn(3);
         when(config.getSpotlightInviteMaxDismissals()).thenReturn(3);
         when(challenges.findByActiveTrueOrderBySortOrderAsc()).thenReturn(List.of(
-                SpotlightChallenge.builder().id("know-yourself").kind("quiz").name("Know Yourself").tone("pink").minAge(13).status("live").build(),
+                SpotlightChallenge.builder().id("know-yourself").kind("quiz").name("Know Yourself").partnerName("Know {name} better")
+                        .tone("pink").minAge(13).status("live").build(),
                 SpotlightChallenge.builder().id("clinic-shift").kind("game").name("Clinic Shift").tone("pink").cost(15).minAge(18).status("soon").build(),
                 SpotlightChallenge.builder().id("pad-bank-run").kind("game").name("Pad Bank Run").tone("peach").cost(10).minAge(13).status("live").freePlays(3).build()));
         when(ranks.findByActiveTrueOrderByMinStarsAsc()).thenReturn(List.of(
@@ -64,9 +69,11 @@ class SpotlightHomeServiceTest {
         SpotlightGame quiz = game("know-yourself", new GameSummary(10, 4, 30, 5, 3, Set.of(today, today.minusDays(1)), 7));
         SpotlightGame bank = game("pad-bank-run", new GameSummary(6, 2, 0, 0, 0, Set.of(today.minusDays(2)), 1));
 
-        SpotlightHomeResponse home = new SpotlightHomeService(users, clock, config, challenges, ranks, List.of(quiz, bank)).home(userId);
+        SpotlightHomeResponse home = new SpotlightHomeService(users, clock, config, challenges, ranks, mock(PartnerLinkRepository.class),
+                List.of(quiz, bank)).home(userId);
 
         assertThat(home.balance()).isEqualTo(240);
+        assertThat(home.challenges()).extracting("name").containsExactly("Know Yourself", "Clinic Shift", "Pad Bank Run");
         assertThat(home.stats()).extracting("streak", "stars", "levelsDone", "rightAnswers", "bestRun", "topicsStarted")
                 .containsExactly(3, 16, 6, 30L, 5, 3);
         assertThat(home.stats().week()).containsExactly(false, false, false, false, true, true, true);
@@ -78,5 +85,42 @@ class SpotlightHomeServiceTest {
         assertThat(home.invite()).isEqualTo(new SpotlightInvite(true, 3, 3));
         assertThat(quiz.challengeId()).isEqualTo("know-yourself");
         assertThat(GameSummary.empty().stars()).isZero();
+    }
+
+    @Test
+    void aPartnerSeesTheQuizNamedAfterHer() {
+        UserRepository users = mock(UserRepository.class);
+        UserClock clock = mock(UserClock.class);
+        ConfigurationDomainService config = mock(ConfigurationDomainService.class);
+        SpotlightChallengeRepository challenges = mock(SpotlightChallengeRepository.class);
+        SpotlightRankRepository ranks = mock(SpotlightRankRepository.class);
+        PartnerLinkRepository links = mock(PartnerLinkRepository.class);
+        UUID ownerId = UUID.randomUUID();
+        User partner = User.builder().id(userId).accountType(AccountOwner.partner).build();
+        when(users.findById(userId)).thenReturn(Optional.of(partner));
+        when(users.findById(ownerId)).thenReturn(Optional.of(User.builder().id(ownerId).firstName("Adaeze").build()));
+        when(clock.today(partner)).thenReturn(today);
+        when(challenges.findByActiveTrueOrderBySortOrderAsc()).thenReturn(List.of(
+                SpotlightChallenge.builder().id("know-yourself").kind("quiz").name("Know Yourself").partnerName("Know {name} better").build(),
+                SpotlightChallenge.builder().id("pad-bank-run").kind("game").name("Pad Bank Run").build()));
+        SpotlightHomeService service = new SpotlightHomeService(users, clock, config, challenges, ranks, links, List.of());
+
+        when(links.findFirstByPartnerIdAndStatus(userId, PartnerLinkStatus.active))
+                .thenReturn(Optional.of(PartnerLink.builder().ownerId(ownerId).partnerNickname(" Ada ").build()));
+        assertThat(service.home(userId).challenges()).extracting("name").containsExactly("Know Ada better", "Pad Bank Run");
+
+        when(links.findFirstByPartnerIdAndStatus(userId, PartnerLinkStatus.active))
+                .thenReturn(Optional.of(PartnerLink.builder().ownerId(ownerId).partnerNickname(" ").build()));
+        assertThat(service.home(userId).challenges()).extracting("name").containsExactly("Know Adaeze better", "Pad Bank Run");
+
+        when(links.findFirstByPartnerIdAndStatus(userId, PartnerLinkStatus.active)).thenReturn(Optional.empty());
+        assertThat(service.home(userId).challenges()).extracting("name").containsExactly("Know Yourself", "Pad Bank Run");
+    }
+
+    @Test
+    void aBlankPartnerNameKeepsTheUsualName() {
+        SpotlightChallenge challenge = SpotlightChallenge.builder().name("Give Day").partnerName(" ").build();
+        assertThat(SpotlightHomeService.nameFor(challenge, "Ada")).isEqualTo("Give Day");
+        assertThat(SpotlightHomeService.nameFor(challenge, " ")).isEqualTo("Give Day");
     }
 }

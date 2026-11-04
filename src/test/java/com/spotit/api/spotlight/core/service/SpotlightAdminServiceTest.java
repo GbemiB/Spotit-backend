@@ -66,23 +66,23 @@ class SpotlightAdminServiceTest {
         assertThat(service.challenges(null, null).items()).extracting("id").containsExactly("know-yourself");
 
         SpotlightChallengeAdmin created = service.saveChallenge("pad-factory", new SpotlightChallengeAdmin(null, " Game ", " Pad Factory ", " Design pads ",
-                "pad", "pink", 10, true, 13, null, 2, null, 2));
-        assertThat(created).extracting("kind", "name", "blurb", "cost", "costFrom", "status", "active", "freePlays")
-                .containsExactly("game", "Pad Factory", "Design pads", 10, true, "soon", true, 2);
+                "pad", "pink", 10, true, 13, null, 2, null, 2, " Know {name} better "));
+        assertThat(created).extracting("kind", "name", "blurb", "cost", "costFrom", "status", "active", "freePlays", "partnerName")
+                .containsExactly("game", "Pad Factory", "Design pads", 10, true, "soon", true, 2, "Know {name} better");
 
         SpotlightChallenge existing = SpotlightChallenge.builder().id("pad-factory").kind("game").name("Pad Factory").icon("pad").tone("pink").cost(10)
                 .minAge(13).status("soon").sortOrder(2).active(true).build();
         when(challengeRepository.findById("pad-factory")).thenReturn(Optional.of(existing));
         SpotlightChallengeAdmin repriced = service.saveChallenge("pad-factory", new SpotlightChallengeAdmin(null, null, null, null, " ", "peach", -4,
-                false, 10, "LIVE", null, false, -1));
-        assertThat(repriced).extracting("cost", "costFrom", "status", "minAge", "icon", "tone", "active", "freePlays")
-                .containsExactly(0, false, "live", 13, null, "peach", false, 0);
+                false, 10, "LIVE", null, false, -1, " "));
+        assertThat(repriced).extracting("cost", "costFrom", "status", "minAge", "icon", "tone", "active", "freePlays", "partnerName")
+                .containsExactly(0, false, "live", 13, null, "peach", false, 0, null);
 
         assertThatThrownBy(() -> service.saveChallenge("pad-factory", new SpotlightChallengeAdmin(null, "board", null, null, null, null, null, null,
-                null, null, null, null, null))).isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
+                null, null, null, null, null, null))).isInstanceOf(ApiException.class).extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
         assertThatThrownBy(() -> service.saveChallenge("pad-factory", new SpotlightChallengeAdmin(null, null, null, null, null, null, null, null,
-                null, "later", null, null, null))).isInstanceOf(ApiException.class);
+                null, "later", null, null, null, null))).isInstanceOf(ApiException.class);
         assertThatThrownBy(() -> service.saveChallenge("new", new SpotlightChallengeAdmin(null, "game", null, null, null, null, null, null, null,
-                null, null, null, null))).isInstanceOf(ApiException.class);
+                null, null, null, null, null))).isInstanceOf(ApiException.class);
     }
 }

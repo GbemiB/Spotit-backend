@@ -75,6 +75,9 @@ public class SpotlightAdminService {
         if (body.name() != null) {
             challenge.setName(body.name().strip());
         }
+        if (body.partnerName() != null) {
+            challenge.setPartnerName(body.partnerName().isBlank() ? null : body.partnerName().strip());
+        }
         if (body.blurb() != null) {
             challenge.setBlurb(body.blurb().strip());
         }

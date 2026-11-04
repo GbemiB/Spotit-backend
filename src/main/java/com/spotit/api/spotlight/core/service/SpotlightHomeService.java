@@ -5,6 +5,9 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
+import com.spotit.api.partner.entity.PartnerLink;
+import com.spotit.api.partner.entity.PartnerLinkStatus;
+import com.spotit.api.partner.repository.PartnerLinkRepository;
 import com.spotit.api.spotlight.core.dto.ChallengeCard;
 import com.spotit.api.spotlight.core.dto.RankStep;
 import com.spotit.api.spotlight.core.dto.SpotlightHomeResponse;
@@ -31,11 +34,14 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class SpotlightHomeService {
+    static final String NAME_SLOT = "{name}";
+
     private final UserRepository userRepository;
     private final UserClock userClock;
     private final ConfigurationDomainService config;
     private final SpotlightChallengeRepository challengeRepository;
     private final SpotlightRankRepository rankRepository;
+    private final PartnerLinkRepository partnerLinkRepository;
     private final List<SpotlightGame> games;
 
     @Transactional(readOnly = true)
@@ -54,8 +60,9 @@ public class SpotlightHomeService {
                 parts.stream().mapToLong(GameSummary::rightAnswers).sum(), parts.stream().mapToInt(GameSummary::bestRun).max().orElse(0),
                 parts.stream().mapToInt(GameSummary::topicsStarted).sum(), SpotlightRules.week(days, today),
                 SpotlightRules.rank(rankList, stars));
+        String herName = herName(user);
         List<ChallengeCard> challenges = challengeRepository.findByActiveTrueOrderBySortOrderAsc().stream()
-                .map(c -> new ChallengeCard(c.getId(), c.getKind(), c.getName(), c.getBlurb(), c.getIcon(), c.getTone(),
+                .map(c -> new ChallengeCard(c.getId(), c.getKind(), nameFor(c, herName), c.getBlurb(), c.getIcon(), c.getTone(),
                         SpotlightChallenge.QUIZ.equals(c.getKind()) ? null : c.getCost(), c.isCostFrom(), c.getMinAge(), c.getStatus(),
                         SpotlightRules.isLocked(c.getMinAge(), age), freePlaysLeft(c, byChallenge.get(c.getId())),
                         starsOf(byChallenge.get(c.getId())), playsOf(byChallenge.get(c.getId()))))
@@ -64,6 +71,29 @@ public class SpotlightHomeService {
                 config.getSpotlightInviteMaxDismissals());
         return new SpotlightHomeResponse(user.getPoints(), stats, challenges, invite,
                 rankList.stream().map(r -> new RankStep(r.getId(), r.getName(), r.getMinStars())).toList());
+    }
+
+    private String herName(User user) {
+        if (user.getAccountType() == null || !user.getAccountType().isPartner()) {
+            return null;
+        }
+        return partnerLinkRepository.findFirstByPartnerIdAndStatus(user.getId(), PartnerLinkStatus.active)
+                .map(link -> nicknameOrFirstName(link))
+                .orElse(null);
+    }
+
+    private String nicknameOrFirstName(PartnerLink link) {
+        if (link.getPartnerNickname() != null && !link.getPartnerNickname().isBlank()) {
+            return link.getPartnerNickname().strip();
+        }
+        return userRepository.findById(link.getOwnerId()).map(User::getFirstName).orElse(null);
+    }
+
+    static String nameFor(SpotlightChallenge challenge, String herName) {
+        if (herName == null || herName.isBlank() || challenge.getPartnerName() == null || challenge.getPartnerName().isBlank()) {
+            return challenge.getName();
+        }
+        return challenge.getPartnerName().replace(NAME_SLOT, herName);
     }
 
     static int starsOf(GameSummary summary) {
