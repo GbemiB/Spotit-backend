@@ -4,26 +4,26 @@ DELETE FROM padbank_visitors;
 DELETE FROM padbank_packs;
 
 INSERT INTO padbank_packs (id, name, cost, stock, color, contents, from_day, sort_order, active) VALUES
-  ('starter', 'Starter Bag', 3, 4, 'pink', '10 day pads
+  ('starter', 'Starter Bag', 1, 4, 'pink', '10 day pads
 Simple period guide
 Small pouch', 1, 1, true),
-  ('school', 'School Kit', 5, 3, 'peach', 'Pads for a whole term
+  ('school', 'School Kit', 2, 3, 'peach', 'Pads for a whole term
 Liners for light days
 Discreet bag', 1, 2, true),
-  ('comfort', 'Comfort Kit', 6, 2, 'rose', 'Extra heavy-flow pads
+  ('comfort', 'Comfort Kit', 3, 2, 'rose', 'Extra heavy-flow pads
 Heat patch
 Comfort tips card', 1, 3, true),
-  ('reusable', 'Reusable Year', 10, 1, 'green', '4 reusable pads
+  ('reusable', 'Reusable Year', 5, 1, 'green', '4 reusable pads
 Wash bag
 Care guide', 1, 4, true),
-  ('liners', 'Light Days Pack', 2, 3, 'peach', 'Liners for light days
+  ('liners', 'Light Days Pack', 1, 3, 'peach', 'Liners for light days
 Small pouch', 3, 5, true),
-  ('night', 'Night Pack', 5, 2, 'rose', 'Long overnight pads
+  ('night', 'Night Pack', 2, 2, 'rose', 'Long overnight pads
 Night tips card', 5, 6, true),
-  ('sport', 'Active Pack', 6, 3, 'green', 'Period pants
+  ('sport', 'Active Pack', 3, 3, 'green', 'Period pants
 Tampons for swimming
 Sports guide', 7, 7, true),
-  ('newmum', 'New Mum Pack', 7, 1, 'pink', 'Maternity pads
+  ('newmum', 'New Mum Pack', 3, 1, 'pink', 'Maternity pads
 Comfort guide', 9, 8, true);
 
 INSERT INTO padbank_visitors (id, day_number, sort_order, who, look, clues, packs, route, thanks, route_why, group_why, wrong_why, active) VALUES

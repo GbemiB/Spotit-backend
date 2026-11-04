@@ -22,14 +22,14 @@ INSERT INTO giveday_products (id, name, cost, absorbent, sort_order, active) VAL
 INSERT INTO giveday_levels (level_number, name, radius_km, stars_needed, pass_cost, gift_budget, active) VALUES
   (1, 'Near home', 3, 0, 0, 5, true),
   (2, 'Your side of town', 8, 3, 0, 5, true),
-  (3, 'Across the city', 15, 10, 10, 10, true),
-  (4, 'Far side of Lagos', 30, 20, 15, 10, true),
-  (5, 'All of Lagos', 999, 30, 20, 15, true);
+  (3, 'Across the city', 15, 10, 2, 5, true),
+  (4, 'Far side of Lagos', 30, 20, 3, 5, true),
+  (5, 'All of Lagos', 999, 30, 5, 5, true);
 
 INSERT INTO giveday_travel (id, label, cost, units_per_minute, sort_order, active) VALUES
   ('walk', 'Walk', 0, 8, 1, true),
-  ('bike', 'Bike', 3, 25, 2, true),
-  ('car', 'Car', 8, 50, 3, true);
+  ('bike', 'Bike', 1, 25, 2, true),
+  ('car', 'Car', 2, 50, 3, true);
 
 INSERT INTO giveday_areas (id, name, region, map_x, map_y, sort_order, active) VALUES
   ('badagry', 'Badagry', 'Badagry', 2264, 3705, 1, true),
