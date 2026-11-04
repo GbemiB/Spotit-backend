@@ -81,9 +81,9 @@ class GiveDayControllerTest {
                 List.of(new GiveDayTripQuote("walk", "Walk", 0, 10, 490, true))));
         GiveDayTravelRequest travel = new GiveDayTravelRequest("yaba-school", "walk");
         when(service.travel(USER_ID, runId, travel)).thenReturn(new GiveDayTravelResponse("yaba-school", "walk", 10, 490, 7650, 2600, 0, 0, 25));
-        GiveDayGiveRequest give = new GiveDayGiveRequest("yaba-school", List.of("pads"));
+        GiveDayGiveRequest give = new GiveDayGiveRequest("yaba-school", List.of("pads"), null);
         when(service.give(USER_ID, runId, give)).thenReturn(new GiveDayGiveResponse("yaba-school", 2, "Lovely work", "Thanks",
-                List.of(new GiveDayReview("pads", "Pads", "good", "Easy")), List.of(), 40, 2, 5, 0, true, 0, 25, 40, 520, 2, 1));
+                List.of(new GiveDayReview("pads", "Pads", "good", "Easy")), List.of(), 40, 2, 5, 0, true, 0, 25, 40, 520, 2, 1, 0, false));
         when(service.finish(USER_ID, runId)).thenReturn(new GiveDayFinishResponse(2, 40, 0, Map.of("yaba-school", 2)));
 
         mvc.perform(post("/api/v1/giveday/runs")).andExpect(status().isOk()).andExpect(jsonPath("$.data.areas[0].region").value("Mainland"));

@@ -221,11 +221,15 @@ public class GiveDayService {
         GiveDayRun run = playing(userId, runId);
         GiveDayPlace place = place(request.placeId());
         Map<String, Integer> visits = GiveDayRules.decodeVisits(run.getVisits());
-        if (visits.containsKey(place.getId())) {
-            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.GIVEDAY_PLACE_DONE);
-        }
+        boolean repack = Boolean.TRUE.equals(request.repack());
         if (!place.getId().equals(run.getHere())) {
             throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.GIVEDAY_NOT_THERE);
+        }
+        if (repack && !canRepack(run, place, visits)) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.GIVEDAY_NO_REPACK);
+        }
+        if (!repack && visits.containsKey(place.getId())) {
+            throw new ApiException(ErrorCode.VALIDATION_ERROR, ErrorMessage.GIVEDAY_PLACE_DONE);
         }
         Map<String, GiveDayProduct> shelf = productRepository.findByActiveTrueOrderBySortOrderAsc().stream()
                 .collect(Collectors.toMap(GiveDayProduct::getId, Function.identity()));
@@ -244,6 +248,22 @@ public class GiveDayService {
         }
         int giftPaid = GiveDayRules.giftPaid(giftCost, level.getGiftBudget(), level.isExtrasFree());
         long balance = user(userId).getPoints();
+        Map<String, Integer> paidByPlace = GiveDayRules.decodeVisits(run.getGiftsPaid());
+        int refunded = repack ? paidByPlace.getOrDefault(place.getId(), 0) : 0;
+        if (balance + refunded < giftPaid) {
+            throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);
+        }
+        if (refunded > 0) {
+            balance = pointsWriteService.adjust(userId, refunded, SPEND_ICON, "Give Day: repack refund at " + place.getName());
+            run.setSpSpent(run.getSpSpent() - refunded);
+        }
+        paidByPlace.put(place.getId(), giftPaid);
+        run.setGiftsPaid(GiveDayRules.encodeVisits(paidByPlace));
+        if (repack) {
+            Set<String> done = GiveDayRules.decodeIds(run.getRepacks());
+            done.add(place.getId());
+            run.setRepacks(String.join(",", done));
+        }
         if (giftPaid > 0) {
             if (balance < giftPaid) {
                 throw new ApiException(ErrorCode.INSUFFICIENT_POINTS, ErrorMessage.INSUFFICIENT_POINTS);
@@ -270,14 +290,14 @@ public class GiveDayService {
         run.setVisits(GiveDayRules.encodeVisits(visits));
         run.setClock(run.getClock() + config.getGivedayVisitMinutes());
         int people = place.isForSelf() ? 1 : place.getTotal();
-        if (!place.isForSelf()) {
+        if (!place.isForSelf() && !repack) {
             run.setHelped(run.getHelped() + people);
         }
         runRepository.save(run);
         int playerStars = playerStars(userId, run);
         return new GiveDayGiveResponse(place.getId(), stars, title(stars), place.getThanks(), review, missed, people, giftCost, level.getGiftBudget(),
                 giftPaid, level.isExtrasFree(), run.getSpSpent(), balance, run.getHelped(), run.getClock(), playerStars,
-                playerLevel(playerStars, levelRepository.findByActiveTrueOrderByNumberAsc()));
+                playerLevel(playerStars, levelRepository.findByActiveTrueOrderByNumberAsc()), refunded, canRepack(run, place, visits));
     }
 
     @Transactional
@@ -342,6 +362,12 @@ public class GiveDayService {
 
     private int minutesTo(GiveDayRun run, GiveDayPlace place, GiveDayTravel mode) {
         return GiveDayRules.minutes(GiveDayRules.distance(run.getPosX(), run.getPosY(), place.getMapX(), place.getMapY()), mode.getUnitsPerMinute());
+    }
+
+    private boolean canRepack(GiveDayRun run, GiveDayPlace place, Map<String, Integer> visits) {
+        Integer stars = visits.get(place.getId());
+        return stars != null && stars < GiveDayRules.MAX_STARS && !GiveDayRules.decodeIds(run.getRepacks()).contains(place.getId())
+                && run.getClock() + config.getGivedayVisitMinutes() <= closesBy(place);
     }
 
     private int closesBy(GiveDayPlace place) {

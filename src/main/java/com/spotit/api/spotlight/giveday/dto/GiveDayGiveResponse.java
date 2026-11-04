@@ -19,6 +19,8 @@ public record GiveDayGiveResponse(
         int helped,
         int clock,
         int playerStars,
-        int level
+        int level,
+        int refunded,
+        boolean canRepack
 ) {
 }

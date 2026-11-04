@@ -4,6 +4,7 @@ import com.spotit.api.spotlight.giveday.dto.GiveDayFact;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +15,7 @@ public final class GiveDayRules {
     private static final String SEP = "|";
     private static final String SEP_RE = "\\|";
     private static final int MINUTE_STEP = 5;
+    public static final int MAX_STARS = 3;
 
     private GiveDayRules() {
     }
@@ -62,6 +64,19 @@ public final class GiveDayRules {
         Map<String, Integer> best = new LinkedHashMap<>();
         days.forEach(d -> d.forEach((place, stars) -> best.merge(place, stars, Math::max)));
         return best.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    public static Set<String> decodeIds(String raw) {
+        Set<String> ids = new LinkedHashSet<>();
+        if (raw == null || raw.isBlank()) {
+            return ids;
+        }
+        for (String part : raw.split(",")) {
+            if (!part.isBlank()) {
+                ids.add(part.strip());
+            }
+        }
+        return ids;
     }
 
     public static Set<Integer> decodePasses(String raw) {

@@ -5,5 +5,5 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
-public record GiveDayGiveRequest(@NotBlank String placeId, @NotEmpty List<String> products) {
+public record GiveDayGiveRequest(@NotBlank String placeId, @NotEmpty List<String> products, Boolean repack) {
 }

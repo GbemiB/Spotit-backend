@@ -160,6 +160,38 @@ class GiveDayServiceTest {
         });
     }
 
+    @Test
+    void aGiftThatWasNotPerfectCanBeRepackedOnceWithTheFirstKitRefunded() {
+        GiveDayLevel paid = level(1, 3, 0, 0, 2);
+        paid.setGiftMax(6);
+        when(levelRepository.findByActiveTrueOrderByNumberAsc()).thenReturn(List.of(paid, level(2, 8, 3, 0, 5)));
+        GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
+        r.setHere("akoka-school");
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), true)))
+                .hasMessage(ErrorMessage.GIVEDAY_NO_REPACK);
+
+        GiveDayGiveResponse first = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "heat"), null));
+        assertThat(first).extracting("stars", "giftPaid", "refunded", "canRepack", "helped", "clock").containsExactly(2, 1, 0, true, 18, 510);
+
+        GiveDayGiveResponse again = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide"), true));
+        verify(pointsWriteService).adjust(userId, 1, "🎁", "Give Day: repack refund at Bright School");
+        assertThat(again).extracting("stars", "giftPaid", "refunded", "canRepack", "helped", "clock", "spSpent").containsExactly(3, 1, 1, false, 18, 540, 1);
+        assertThat(r.getVisits()).isEqualTo("akoka-school:3");
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), true)))
+                .hasMessage(ErrorMessage.GIVEDAY_NO_REPACK);
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), false)))
+                .hasMessage(ErrorMessage.GIVEDAY_PLACE_DONE);
+    }
+
+    @Test
+    void thereIsNoRepackWhenThePlaceWouldBeClosed() {
+        GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
+        r.setHere("akoka-school");
+        r.setClock(850);
+        GiveDayGiveResponse late = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), null));
+        assertThat(late).extracting("stars", "canRepack").containsExactly(2, false);
+    }
+
     GiveDayRun run(String home, String visits, String status) {
         GiveDayRun r = GiveDayRun.builder().id(UUID.randomUUID()).userId(userId).helped(0).visits(visits).status(status).clock(480).homeArea(home)
                 .posX(1000).posY(1000).passes("").playedOn(today).build();
@@ -292,19 +324,19 @@ class GiveDayServiceTest {
     @Test
     void aWellMatchedGiftWithinBudgetEarnsThreeStars() {
         GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
-        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"))))
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), null)))
                 .hasMessage(ErrorMessage.GIVEDAY_NOT_THERE);
         service.travel(userId, r.getId(), new GiveDayTravelRequest("akoka-school", "walk"));
         verify(pointsWriteService, never()).adjust(eq(userId), anyInt(), anyString(), anyString());
-        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "cup", "guide"))))
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "cup", "guide"), null)))
                 .hasMessage(ErrorMessage.GIVEDAY_OVER_BUDGET);
 
-        GiveDayGiveResponse give = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "pads")));
+        GiveDayGiveResponse give = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "pads"), null));
         assertThat(give).extracting("stars", "title", "thanks", "people", "giftCost", "giftBudget", "helped", "clock", "playerStars", "level")
                 .containsExactly(3, "A perfect give!", "Thank you", 18, 3, 5, 18, 535, 3, 2);
         assertThat(give.missed()).isEmpty();
         assertThat(r.getVisits()).isEqualTo("akoka-school:3");
-        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"))))
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), null)))
                 .hasMessage(ErrorMessage.GIVEDAY_PLACE_DONE);
         assertThatThrownBy(() -> service.travel(userId, r.getId(), new GiveDayTravelRequest("akoka-school", "walk")))
                 .hasMessage(ErrorMessage.GIVEDAY_PLACE_DONE);
@@ -322,23 +354,23 @@ class GiveDayServiceTest {
         when(levelRepository.findByActiveTrueOrderByNumberAsc()).thenReturn(List.of(paid, level(2, 8, 3, 0, 5)));
         GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
         r.setHere("akoka-school");
-        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "cup", "guide", "heat"))))
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "cup", "guide", "heat"), null)))
                 .hasMessage(ErrorMessage.GIVEDAY_OVER_BUDGET);
-        GiveDayGiveResponse give = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat")));
+        GiveDayGiveResponse give = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat"), null));
         verify(pointsWriteService).adjust(userId, -2, "🎁", "Give Day: extra gifts at Bright School");
         assertThat(give).extracting("giftCost", "giftBudget", "giftPaid", "extrasFree", "spSpent", "balance").containsExactly(4, 2, 2, false, 2, 25L);
 
         paid.setExtrasFree(true);
         GiveDayRun free = run("yaba", "", GiveDayRun.PLAYING);
         free.setHere("akoka-school");
-        GiveDayGiveResponse freeGive = service.give(userId, free.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat")));
+        GiveDayGiveResponse freeGive = service.give(userId, free.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat"), null));
         assertThat(freeGive).extracting("giftPaid", "extrasFree", "spSpent", "balance").containsExactly(0, true, 0, 40L);
 
         paid.setExtrasFree(false);
         user.setPoints(1);
         GiveDayRun poor = run("yaba", "", GiveDayRun.PLAYING);
         poor.setHere("akoka-school");
-        assertThatThrownBy(() -> service.give(userId, poor.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat"))))
+        assertThatThrownBy(() -> service.give(userId, poor.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "guide", "heat"), null)))
                 .extracting("errorCode").isEqualTo(ErrorCode.INSUFFICIENT_POINTS);
     }
 
@@ -346,31 +378,31 @@ class GiveDayServiceTest {
     void weakerGiftsGetFewerStarsAndShowWhatWasMissed() {
         GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
         r.setHere("akoka-school");
-        GiveDayGiveResponse one = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("cup", "heat")));
+        GiveDayGiveResponse one = service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", List.of("cup", "heat"), null));
         assertThat(one).extracting("stars", "title").containsExactly(1, "A good start");
         assertThat(one.missed()).extracting("productId").containsExactlyInAnyOrder("pads", "guide");
 
         GiveDayRun two = run("yaba", "", GiveDayRun.PLAYING);
         two.setHere("akoka-school");
-        assertThat(service.give(userId, two.getId(), new GiveDayGiveRequest("akoka-school", List.of("heat"))).title())
+        assertThat(service.give(userId, two.getId(), new GiveDayGiveRequest("akoka-school", List.of("heat"), null)).title())
                 .isEqualTo("Something important is missing");
         GiveDayRun three = run("yaba", "", GiveDayRun.PLAYING);
         three.setHere("akoka-school");
-        assertThat(service.give(userId, three.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "heat"))).title()).isEqualTo("Lovely work");
+        assertThat(service.give(userId, three.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads", "heat"), null)).title()).isEqualTo("Lovely work");
     }
 
     @Test
     void badGivesAreRefused() {
         GiveDayRun r = run("yaba", "", GiveDayRun.PLAYING);
         r.setHere("akoka-school");
-        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("nowhere", List.of("pads"))))
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("nowhere", List.of("pads"), null)))
                 .hasMessage(ErrorMessage.GIVEDAY_BAD_PLACE);
-        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", java.util.Arrays.asList("glitter", null))))
+        assertThatThrownBy(() -> service.give(userId, r.getId(), new GiveDayGiveRequest("akoka-school", java.util.Arrays.asList("glitter", null), null)))
                 .hasMessage(ErrorMessage.GIVEDAY_BAD_PRODUCT);
-        assertThatThrownBy(() -> service.give(UUID.randomUUID(), r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"))))
+        assertThatThrownBy(() -> service.give(UUID.randomUUID(), r.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), null)))
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
         GiveDayRun done = run("yaba", "", GiveDayRun.DONE);
-        assertThatThrownBy(() -> service.give(userId, done.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"))))
+        assertThatThrownBy(() -> service.give(userId, done.getId(), new GiveDayGiveRequest("akoka-school", List.of("pads"), null)))
                 .extracting("errorCode").isEqualTo(ErrorCode.VALIDATION_ERROR);
     }
 }

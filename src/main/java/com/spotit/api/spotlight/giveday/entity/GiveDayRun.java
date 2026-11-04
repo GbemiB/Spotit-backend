@@ -58,6 +58,12 @@ public class GiveDayRun {
     @Column(nullable = false, columnDefinition = "text")
     private String visits;
 
+    @Column(name = "gifts_paid", columnDefinition = "text")
+    private String giftsPaid;
+
+    @Column(columnDefinition = "text")
+    private String repacks;
+
     @Column(nullable = false, length = 10)
     private String status;
 
