@@ -1,6 +1,7 @@
 package com.spotit.api.spotlight.core;
 
 import org.junit.jupiter.api.Test;
+import com.spotit.api.spotlight.core.entity.SpotlightRank;
 import com.spotit.api.spotlight.core.repository.SpotlightChallengeRepository;
 import com.spotit.api.spotlight.core.repository.SpotlightRankRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,5 +35,25 @@ class SpotlightCoreScriptTest {
         assertThat(challengeRepository.findById("give-day")).get().extracting("status", "freePlays").containsExactly("live", 1);
         assertThat(challengeRepository.findById("pad-bank-run")).get().extracting("status", "freePlays").containsExactly("live", 1);
         assertThat(rankRepository.findByActiveTrueOrderByMinStarsAsc()).extracting("minStars").containsExactly(0, 50, 100, 200);
+    }
+
+    @Test
+    void theCoreScriptRaisesOldRankStarsButKeepsAdminChanges() throws Exception {
+        try (Connection connection = dataSource.getConnection()) {
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/core.sql"));
+            setStars("explorer", 15);
+            setStars("myth-buster", 45);
+            setStars("know-it-all", 120);
+            ScriptUtils.executeSqlScript(connection, new FileSystemResource("scripts/spotlight/core.sql"));
+        }
+
+        assertThat(rankRepository.findByActiveTrueOrderByMinStarsAsc()).extracting("minStars").containsExactly(0, 50, 100, 120);
+        setStars("know-it-all", 200);
+    }
+
+    private void setStars(String id, int stars) {
+        SpotlightRank rank = rankRepository.findById(id).orElseThrow();
+        rank.setMinStars(stars);
+        rankRepository.save(rank);
     }
 }

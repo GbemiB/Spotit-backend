@@ -15,4 +15,8 @@ INSERT INTO spotlight_ranks (id, name, min_stars, active) VALUES
   ('know-it-all', 'Know-It-All', 200, true)
 ON CONFLICT DO NOTHING;
 
+UPDATE spotlight_ranks SET min_stars = 50 WHERE id = 'explorer' AND min_stars = 15;
+UPDATE spotlight_ranks SET min_stars = 100 WHERE id = 'myth-buster' AND min_stars = 45;
+UPDATE spotlight_ranks SET min_stars = 200 WHERE id = 'know-it-all' AND min_stars = 90;
+
 COMMIT;
