@@ -2,7 +2,6 @@ package com.spotit.api.shop.controller;
 
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
-import com.spotit.api.shop.dto.OrderResponse;
 import com.spotit.api.shop.dto.ProductResponse;
 import com.spotit.api.shop.dto.RedeemRequest;
 import com.spotit.api.shop.dto.RedeemResponse;
@@ -17,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -90,17 +88,5 @@ class ShopControllerTest {
         mvc.perform(post("/api/v1/shop/redeem").contentType(MediaType.APPLICATION_JSON).content(json(new RedeemRequest("rosewater_mist"))))
                 .andExpect(status().isPaymentRequired())
                 .andExpect(jsonPath("$.data.errorCode").value("insufficient_points"));
-    }
-
-    @Test
-    void ordersListsTheUsersOrders() throws Exception {
-        UUID orderId = UUID.randomUUID();
-        when(shopReadService.listOrders(USER_ID)).thenReturn(List.of(
-                new OrderResponse(orderId, "rosewater_mist", "pending", Instant.parse("2026-09-20T10:00:00Z"))));
-
-        mvc.perform(get("/api/v1/shop/orders"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].status").value("pending"))
-                .andExpect(jsonPath("$.data[0].createdAt").value("2026-09-20T10:00:00Z"));
     }
 }

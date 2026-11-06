@@ -31,8 +31,4 @@ public enum OtpPurpose {
     public boolean isSignup() {
         return this == signup;
     }
-
-    public boolean isPasswordReset() {
-        return this == password_reset;
-    }
 }

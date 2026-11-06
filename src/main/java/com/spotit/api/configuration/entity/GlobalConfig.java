@@ -29,9 +29,6 @@ public class GlobalConfig {
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
 
-    @Column(name = "ads_daily_limit", nullable = false)
-    private long adsDailyLimit;
-
     @Column(name = "cycle_default_length", nullable = false)
     private long cycleDefaultLength;
 
@@ -40,9 +37,6 @@ public class GlobalConfig {
 
     @Column(name = "points_daily_claim", nullable = false)
     private long pointsDailyClaim;
-
-    @Column(name = "points_watch_ad", nullable = false)
-    private long pointsWatchAd;
 
     @Column(name = "quiz_rounds", nullable = false, columnDefinition = "bigint default 5")
     private long quizRounds;

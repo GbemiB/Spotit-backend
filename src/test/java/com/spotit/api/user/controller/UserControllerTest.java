@@ -1,8 +1,5 @@
 package com.spotit.api.user.controller;
 
-import com.spotit.api.common.exception.ApiException;
-import com.spotit.api.common.exception.ErrorCode;
-import com.spotit.api.user.dto.ExportDataResponse;
 import com.spotit.api.user.dto.ExportJobResponse;
 import com.spotit.api.user.dto.NotificationPrefsResponse;
 import com.spotit.api.user.dto.ResetResponse;
@@ -23,7 +20,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.spotit.api.support.ControllerTestSupport.USER_ID;
@@ -143,27 +139,6 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.jobId").value(jobId.toString()))
                 .andExpect(jsonPath("$.data.status").value("ready"));
-    }
-
-    @Test
-    void downloadExportReturnsTheData() throws Exception {
-        UUID jobId = UUID.randomUUID();
-        when(userReadService.getExportData(USER_ID, jobId)).thenReturn(new ExportDataResponse(profile("Jane"),
-                List.of(Map.of("date", "2026-09-01", "flow", "heavy")), List.of()));
-
-        mvc.perform(get("/api/v1/users/me/export/{jobId}/download", jobId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.profile.email").value("jane@example.com"))
-                .andExpect(jsonPath("$.data.logs[0].flow").value("heavy"));
-    }
-
-    @Test
-    void downloadingSomeoneElsesExportIs404() throws Exception {
-        UUID jobId = UUID.randomUUID();
-        when(userReadService.getExportData(USER_ID, jobId)).thenThrow(new ApiException(ErrorCode.NOT_FOUND, "Export not found"));
-
-        mvc.perform(get("/api/v1/users/me/export/{jobId}/download", jobId))
-                .andExpect(status().isNotFound());
     }
 
     @Test

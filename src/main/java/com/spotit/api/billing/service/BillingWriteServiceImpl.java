@@ -1,7 +1,6 @@
 package com.spotit.api.billing.service;
 
 import com.spotit.api.billing.dto.CancelResponse;
-import com.spotit.api.billing.dto.RestoreRequest;
 import com.spotit.api.billing.dto.SubscribeRequest;
 import com.spotit.api.billing.dto.SubscriptionResponse;
 import com.spotit.api.billing.entity.Platform;
@@ -69,25 +68,6 @@ public class BillingWriteServiceImpl implements BillingWriteService {
         sub.setAutoRenew(false);
         subscriptionRepository.save(sub);
         return new CancelResponse(sub.getStatus() == SubscriptionStatus.active, false, sub.getRenewsAt());
-    }
-
-    @Override
-    @Transactional
-    public SubscriptionResponse restore(UUID userId, RestoreRequest request) {
-        Subscription sub = subscriptionRepository.findByUserId(userId)
-                .orElseThrow(() -> new ApiException(ErrorCode.NO_PURCHASE_FOUND, ErrorMessage.NO_PURCHASE_FOUND));
-        boolean alreadyEntitled = sub.getStatus() == SubscriptionStatus.active
-                && sub.getRenewsAt() != null && sub.getRenewsAt().isAfter(Instant.now());
-        sub.setStatus(SubscriptionStatus.active);
-        sub.setAutoRenew(true);
-        sub.setPlatform(Platform.valueOf(request.platform()));
-        sub.setReceipt(request.receipt());
-        if (!alreadyEntitled) {
-            sub.setRenewsAt(Instant.now().plus(subscriptionPeriod()));
-        }
-        subscriptionRepository.save(sub);
-        setPremium(userId, true);
-        return new SubscriptionResponse(true, sub.getPlan(), sub.getRenewsAt(), true);
     }
 
     @Override

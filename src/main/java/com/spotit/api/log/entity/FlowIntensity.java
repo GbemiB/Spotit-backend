@@ -35,16 +35,4 @@ public enum FlowIntensity {
     public boolean isSpotting() {
         return this == spotting;
     }
-
-    public boolean isLight() {
-        return this == light;
-    }
-
-    public boolean isMedium() {
-        return this == medium;
-    }
-
-    public boolean isHeavy() {
-        return this == heavy;
-    }
 }

@@ -17,7 +17,6 @@ import com.spotit.api.configuration.repository.SecurityConfigRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +28,6 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-@DependsOn("configStoreMigration")
 @RequiredArgsConstructor
 public class ConfigurationDomainServiceImpl implements ConfigurationDomainService {
     private static final int GENERATED_JWT_SECRET_BYTES = 48;
@@ -58,9 +56,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         securityConfigRepository.save(security);
 
         GlobalConfig global = loadGlobal();
-        if (global.getAdsDailyLimit() == 0) {
-            global.setAdsDailyLimit(ConfigDefaults.ADS_DAILY_LIMIT);
-        }
         if (global.getCycleDefaultLength() == 0) {
             global.setCycleDefaultLength(ConfigDefaults.CYCLE_DEFAULT_LENGTH);
         }
@@ -69,9 +64,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
         }
         if (global.getPointsDailyClaim() == 0) {
             global.setPointsDailyClaim(ConfigDefaults.POINTS_DAILY_CLAIM);
-        }
-        if (global.getPointsWatchAd() == 0) {
-            global.setPointsWatchAd(ConfigDefaults.POINTS_WATCH_AD);
         }
         if (global.getQuizRounds() == 0) {
             global.setQuizRounds(ConfigDefaults.QUIZ_ROUNDS);
@@ -205,12 +197,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
 
     @Override
     @Transactional(readOnly = true)
-    public int getAdsDailyLimit() {
-        return (int) loadGlobal().getAdsDailyLimit();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public int getCycleDefaultLength() {
         return (int) loadGlobal().getCycleDefaultLength();
     }
@@ -225,12 +211,6 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     @Transactional(readOnly = true)
     public int getPointsDailyClaim() {
         return (int) loadGlobal().getPointsDailyClaim();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int getPointsWatchAd() {
-        return (int) loadGlobal().getPointsWatchAd();
     }
 
     @Override

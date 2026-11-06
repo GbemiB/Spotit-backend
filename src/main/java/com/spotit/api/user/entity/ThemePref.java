@@ -29,16 +29,4 @@ public enum ThemePref {
     public String getCode() {
         return code;
     }
-
-    public boolean isLight() {
-        return this == light;
-    }
-
-    public boolean isDark() {
-        return this == dark;
-    }
-
-    public boolean isSystem() {
-        return this == system;
-    }
 }

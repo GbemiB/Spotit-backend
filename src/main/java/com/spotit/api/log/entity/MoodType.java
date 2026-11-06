@@ -39,36 +39,4 @@ public enum MoodType {
     public String getCode() {
         return code;
     }
-
-    public boolean isHappy() {
-        return this == happy;
-    }
-
-    public boolean isCalm() {
-        return this == calm;
-    }
-
-    public boolean isEnergetic() {
-        return this == energetic;
-    }
-
-    public boolean isNeutral() {
-        return this == neutral;
-    }
-
-    public boolean isSad() {
-        return this == sad;
-    }
-
-    public boolean isAnxious() {
-        return this == anxious;
-    }
-
-    public boolean isIrritable() {
-        return this == irritable;
-    }
-
-    public boolean isEmotional() {
-        return this == emotional;
-    }
 }

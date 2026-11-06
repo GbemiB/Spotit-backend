@@ -5,7 +5,6 @@ import com.spotit.api.configuration.repository.SecurityConfigRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -18,7 +17,6 @@ import java.util.Base64;
 
 @Service
 @Slf4j
-@DependsOn("configStoreMigration")
 @RequiredArgsConstructor
 public class AesGcmEncryptionService implements EncryptionService {
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";

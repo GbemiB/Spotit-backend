@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-@Tag(name = "Billing", description = "Premium subscription status, purchase, cancellation, and restore.")
+@Tag(name = "Billing", description = "Premium subscription status, purchase and cancellation.")
 @RestController
 @RequestMapping("/api/v1/billing")
 @RequiredArgsConstructor
@@ -72,23 +72,5 @@ public class BillingController {
     @PostMapping("/subscription/cancel")
     public CancelResponse cancel(@CurrentUserId UUID userId) {
         return billingWriteService.cancel(userId);
-    }
-
-    @Operation(summary = BillingControllerSwagger.RESTORE_SUMMARY, description = BillingControllerSwagger.RESTORE_DESCRIPTION,
-            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
-            schema = @Schema(implementation = RestoreRequest.class),
-            examples = @ExampleObject(value = BillingControllerSwagger.RESTORE_REQUEST_EXAMPLE)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Subscription restored.", content = @Content(
-                    schema = @Schema(implementation = SubscriptionResponse.class),
-                    examples = @ExampleObject(value = BillingControllerSwagger.RESTORE_200_EXAMPLE))),
-            @ApiResponse(responseCode = "404", description = "No previous purchase found for this account.", content = @Content(
-                    schema = @Schema(implementation = ErrorDetail.class),
-                    examples = @ExampleObject(value = BillingControllerSwagger.RESTORE_404_EXAMPLE)))
-    })
-    @PostMapping("/restore")
-    public SubscriptionResponse restore(@CurrentUserId UUID userId, @Valid @RequestBody RestoreRequest request) {
-        return billingWriteService.restore(userId, request);
     }
 }

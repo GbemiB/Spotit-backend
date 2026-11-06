@@ -120,22 +120,6 @@ public class PointsWriteServiceImpl implements PointsWriteService {
 
     @Override
     @Transactional
-    public AdWatchResult watchAd(UUID userId) {
-        User user = requireUserForUpdate(userId);
-        LocalDate today = userClock.today(user);
-        long watchedToday = pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad");
-        if (watchedToday >= configurationDomainService.getAdsDailyLimit()) {
-            throw new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, ErrorMessage.DAILY_AD_LIMIT_REACHED);
-        }
-        int points = configurationDomainService.getPointsWatchAd();
-        user.setPoints(user.getPoints() + points);
-        userRepository.save(user);
-        recordHistory(userId, "🎬", "Watched a rewarded ad", points, today);
-        return new AdWatchResult(points, user.getPoints());
-    }
-
-    @Override
-    @Transactional
     public long adjust(UUID userId, int delta, String icon, String label) {
         User user = requireUserForUpdate(userId);
         user.setPoints(user.getPoints() + delta);

@@ -52,7 +52,6 @@ public final class ErrorMessage {
     public static final String CHALLENGE_NOT_FOUND = "Challenge not found.";
     public static final String CHALLENGE_NOT_YET_COMPLETE = "This challenge isn't complete yet.";
     public static final String CHALLENGE_ALREADY_CLAIMED = "This challenge's reward has already been claimed this week.";
-    public static final String DAILY_AD_LIMIT_REACHED = "You've reached today's rewarded-ad limit.";
 
     public static final String PRODUCT_NOT_FOUND = "Product not found.";
     public static final String PREMIUM_REQUIRED = "This item requires Premium.";
@@ -110,7 +109,6 @@ public final class ErrorMessage {
     public static final String RECEIPT_INVALID = "Receipt could not be verified.";
     public static final String ALREADY_SUBSCRIBED = "You already have an active subscription.";
     public static final String SUBSCRIPTION_NOT_FOUND = "No subscription found.";
-    public static final String NO_PURCHASE_FOUND = "No previous purchase found for this account.";
 
     public static final String NO_SUCH_ENDPOINT = "No such endpoint.";
     public static final String INTERNAL_ERROR = "Something went wrong. Please try again.";

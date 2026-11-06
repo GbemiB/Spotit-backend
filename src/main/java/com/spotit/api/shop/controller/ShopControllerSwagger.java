@@ -61,20 +61,4 @@ final class ShopControllerSwagger {
             }
             """;
 
-    static final String ORDERS_SUMMARY = "List orders";
-    static final String ORDERS_DESCRIPTION = "Returns the current user's redemption order history, most recent first.";
-    static final String ORDERS_200_EXAMPLE = """
-            {
-              "code": 200,
-              "message": "OK",
-              "data": [
-                {
-                  "orderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                  "productId": "theme_dark_rose",
-                  "status": "processing",
-                  "createdAt": "2026-07-10T09:00:00Z"
-                }
-              ]
-            }
-            """;
 }

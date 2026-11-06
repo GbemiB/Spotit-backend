@@ -2,7 +2,6 @@ package com.spotit.api.shop.controller;
 
 import com.spotit.api.common.dto.ErrorDetail;
 import com.spotit.api.common.security.CurrentUserId;
-import com.spotit.api.shop.dto.OrderResponse;
 import com.spotit.api.shop.dto.ProductResponse;
 import com.spotit.api.shop.dto.RedeemRequest;
 import com.spotit.api.shop.dto.RedeemResponse;
@@ -64,17 +63,5 @@ public class ShopController {
     @PostMapping("/redeem")
     public RedeemResponse redeem(@CurrentUserId UUID userId, @Valid @RequestBody RedeemRequest request) {
         return shopWriteService.redeem(userId, request.productId());
-    }
-
-    @Operation(summary = ShopControllerSwagger.ORDERS_SUMMARY, description = ShopControllerSwagger.ORDERS_DESCRIPTION,
-            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Order history.", content = @Content(
-                    schema = @Schema(implementation = OrderResponse.class),
-                    examples = @ExampleObject(value = ShopControllerSwagger.ORDERS_200_EXAMPLE)))
-    })
-    @GetMapping("/orders")
-    public List<OrderResponse> orders(@CurrentUserId UUID userId) {
-        return shopReadService.listOrders(userId);
     }
 }

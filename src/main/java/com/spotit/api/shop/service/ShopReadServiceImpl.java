@@ -5,7 +5,6 @@ import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.LevelUtil;
 import com.spotit.api.rewards.service.LevelDefinitionService;
-import com.spotit.api.shop.dto.OrderResponse;
 import com.spotit.api.shop.dto.ProductAdminResponse;
 import com.spotit.api.shop.dto.ProductResponse;
 import com.spotit.api.shop.entity.Product;
@@ -37,14 +36,6 @@ public class ShopReadServiceImpl implements ShopReadService {
 
         return productRepository.findByActiveTrue().stream()
                 .map(p -> toResponse(p, levelName, levelOrder, user.isPremium()))
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<OrderResponse> listOrders(UUID userId) {
-        return shopOrderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(o -> new OrderResponse(o.getId(), o.getProductId(), o.getStatus().name(), o.getCreatedAt()))
                 .toList();
     }
 

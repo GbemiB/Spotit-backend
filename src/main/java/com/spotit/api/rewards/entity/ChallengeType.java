@@ -27,12 +27,4 @@ public enum ChallengeType {
     public String getCode() {
         return code;
     }
-
-    public boolean isWeeklyLog() {
-        return this == WEEKLY_LOG;
-    }
-
-    public boolean isStatic() {
-        return this == STATIC;
-    }
 }

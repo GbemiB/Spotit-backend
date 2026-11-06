@@ -8,11 +8,9 @@ public final class ConfigDefaults {
     public static final long JWT_REFRESH_TOKEN_TTL_SECONDS = 315_360_000L;
     public static final long OTP_TTL_SECONDS = 600L;
 
-    public static final long ADS_DAILY_LIMIT = 5L;
     public static final long CYCLE_DEFAULT_LENGTH = 28L;
     public static final long CYCLE_DEFAULT_PERIOD_LENGTH = 5L;
     public static final long POINTS_DAILY_CLAIM = 5L;
-    public static final long POINTS_WATCH_AD = 10L;
     public static final long QUIZ_ROUNDS = 5L;
     public static final long QUIZ_LIVES = 3L;
     public static final long QUIZ_HINT_COST = 5L;

@@ -9,11 +9,9 @@ public final class PropertyNames {
     public static final String JWT_ACCESS_TOKEN_TTL_SECONDS = "jwt-access-token-ttl-seconds";
     public static final String JWT_REFRESH_TOKEN_TTL_SECONDS = "jwt-refresh-token-ttl-seconds";
     public static final String OTP_TTL_SECONDS = "otp-ttl-seconds";
-    public static final String ADS_DAILY_LIMIT = "ads-daily-limit";
     public static final String CYCLE_DEFAULT_LENGTH = "cycle-default-length";
     public static final String CYCLE_DEFAULT_PERIOD_LENGTH = "cycle-default-period-length";
     public static final String POINTS_DAILY_CLAIM = "points-daily-claim";
-    public static final String POINTS_WATCH_AD = "points-watch-ad";
     public static final String QUIZ_ROUNDS = "quiz-rounds";
     public static final String QUIZ_LIVES = "quiz-lives";
     public static final String QUIZ_HINT_COST = "quiz-hint-cost";

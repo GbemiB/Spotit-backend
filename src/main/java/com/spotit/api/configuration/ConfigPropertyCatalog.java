@@ -234,18 +234,10 @@ public class ConfigPropertyCatalog {
     }
 
     private static void addGlobalProperties(List<Property> list) {
-        list.add(new Property(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS,
-                "Max rewarded ad views per user per day", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getAdsDailyLimit(),
-                (c, v) -> c.global().setAdsDailyLimit((Long) v)));
         list.add(new Property(PropertyNames.POINTS_DAILY_CLAIM, PropertyNames.GROUP_POINTS,
                 "Points awarded for the daily claim", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPointsDailyClaim(),
                 (c, v) -> c.global().setPointsDailyClaim((Long) v)));
-        list.add(new Property(PropertyNames.POINTS_WATCH_AD, PropertyNames.GROUP_POINTS,
-                "Points awarded for watching a rewarded ad", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getPointsWatchAd(),
-                (c, v) -> c.global().setPointsWatchAd((Long) v)));
         list.add(new Property(PropertyNames.CYCLE_DEFAULT_LENGTH, PropertyNames.GROUP_CYCLE,
                 "Default cycle length assumed until a user has logged enough data", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getCycleDefaultLength(),

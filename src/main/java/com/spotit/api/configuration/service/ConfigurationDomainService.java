@@ -14,15 +14,11 @@ public interface ConfigurationDomainService {
 
     long getOtpTtlSeconds();
 
-    int getAdsDailyLimit();
-
     int getCycleDefaultLength();
 
     int getCycleDefaultPeriodLength();
 
     int getPointsDailyClaim();
-
-    int getPointsWatchAd();
 
     int getQuizRounds();
 
