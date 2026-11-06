@@ -33,6 +33,6 @@ class SpotlightCoreScriptTest {
         assertThat(challengeRepository.findById("know-yourself")).get().extracting("partnerName").isEqualTo("Know {name} better");
         assertThat(challengeRepository.findById("give-day")).get().extracting("status", "freePlays").containsExactly("live", 1);
         assertThat(challengeRepository.findById("pad-bank-run")).get().extracting("status", "freePlays").containsExactly("live", 1);
-        assertThat(rankRepository.findByActiveTrueOrderByMinStarsAsc()).extracting("minStars").containsExactly(0, 15, 45, 90);
+        assertThat(rankRepository.findByActiveTrueOrderByMinStarsAsc()).extracting("minStars").containsExactly(0, 50, 100, 200);
     }
 }

@@ -10,9 +10,9 @@ UPDATE spotlight_challenges SET partner_name = 'Know {name} better' WHERE id = '
 
 INSERT INTO spotlight_ranks (id, name, min_stars, active) VALUES
   ('curious', 'Curious', 0, true),
-  ('explorer', 'Explorer', 15, true),
-  ('myth-buster', 'Myth Buster', 45, true),
-  ('know-it-all', 'Know-It-All', 90, true)
+  ('explorer', 'Explorer', 50, true),
+  ('myth-buster', 'Myth Buster',100, true),
+  ('know-it-all', 'Know-It-All', 200, true)
 ON CONFLICT DO NOTHING;
 
 COMMIT;
