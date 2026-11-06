@@ -59,7 +59,7 @@ class PadBankControllerTest {
         when(service.start(USER_ID, new PadBankStartRequest(1))).thenReturn(new PadBankStartResponse(runId, 1, 40, 10, 3, 2, 2, 2,
                 List.of(new PadBankPackView("starter", "Starter Bag", 10, 4, "pink", List.of("10 day pads"))),
                 List.of(new PadBankVisitorView("v1", "Girl, 13", "girl", 1, List.of(new PadBankClue("drop", "First period")))),
-                new PadBankDayTitles("Perfect day!", "Bank closed for today", "Out of hearts"), false));
+                new PadBankDayTitles("Perfect level!", "Bank closed", "Out of hearts"), false));
         when(service.serve(USER_ID, runId, new PadBankServeRequest(0, "starter", null, "pickup"))).thenReturn(new PadBankServeResponse(1, "great", "PERFECT!", "Tip",
                 "Thanks", 3, 90L, 0, 0, 1, 1, 1, 1, Map.of("starter", 3), false, 0, List.of(false, false, false), false));
         when(service.close(USER_ID, runId)).thenReturn(new PadBankCloseResponse(1, 1, 1, 7, 1, List.of(false, true, true)));
@@ -68,7 +68,7 @@ class PadBankControllerTest {
         mvc.perform(get("/api/v1/padbank/rules")).andExpect(status().isOk()).andExpect(jsonPath("$.data.visitors").value(3));
         mvc.perform(post("/api/v1/padbank/runs").contentType(MediaType.APPLICATION_JSON).content(json(new PadBankStartRequest(1))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.visitors[0].clues[0].icon").value("drop"))
-                .andExpect(jsonPath("$.data.packs[0].contents[0]").value("10 day pads")).andExpect(jsonPath("$.data.dayTitles.done").value("Bank closed for today"));
+                .andExpect(jsonPath("$.data.packs[0].contents[0]").value("10 day pads")).andExpect(jsonPath("$.data.dayTitles.done").value("Bank closed"));
         mvc.perform(post("/api/v1/padbank/runs/" + runId + "/serve").contentType(MediaType.APPLICATION_JSON)
                 .content(json(new PadBankServeRequest(0, "starter", null, "pickup")))).andExpect(status().isOk()).andExpect(jsonPath("$.data.result").value("great"))
                 .andExpect(jsonPath("$.data.title").value("PERFECT!"));

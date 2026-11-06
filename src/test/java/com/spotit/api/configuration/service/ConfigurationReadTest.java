@@ -144,8 +144,8 @@ class ConfigurationReadTest {
         assertThat(service.getPadbankTitleGreat()).isEqualTo("PERFECT!");
         assertThat(service.getPadbankTitleOk()).isEqualTo("GOOD!");
         assertThat(service.getPadbankTitleOops()).isEqualTo("OOPS!");
-        assertThat(service.getPadbankDayTitlePerfect()).isEqualTo("Perfect day!");
-        assertThat(service.getPadbankDayTitleDone()).isEqualTo("Bank closed for today");
+        assertThat(service.getPadbankDayTitlePerfect()).isEqualTo("Perfect level!");
+        assertThat(service.getPadbankDayTitleDone()).isEqualTo("Bank closed");
         assertThat(service.getPadbankDayTitleLost()).isEqualTo("Out of hearts");
     }
 

@@ -167,17 +167,17 @@ public class ConfigPropertyCatalog {
                 c -> c.global().getPadbankTitleOops(),
                 (c, v) -> c.global().setPadbankTitleOops((String) v)));
         list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_PERFECT, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: end-of-day title with all three stars; unset uses Perfect day!",
+                "Pad Bank Run: end-of-level title with all three stars; unset uses Perfect level!",
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankDayTitlePerfect(),
                 (c, v) -> c.global().setPadbankDayTitlePerfect((String) v)));
         list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_DONE, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: end-of-day title with hearts left; unset uses Bank closed for today",
+                "Pad Bank Run: end-of-level title with hearts left; unset uses Bank closed",
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankDayTitleDone(),
                 (c, v) -> c.global().setPadbankDayTitleDone((String) v)));
         list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_LOST, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: end-of-day title when the hearts run out; unset uses Out of hearts",
+                "Pad Bank Run: end-of-level title when the hearts run out; unset uses Out of hearts",
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankDayTitleLost(),
                 (c, v) -> c.global().setPadbankDayTitleLost((String) v)));
