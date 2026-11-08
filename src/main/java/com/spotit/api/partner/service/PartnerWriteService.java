@@ -2,6 +2,7 @@ package com.spotit.api.partner.service;
 
 import com.spotit.api.partner.dto.AcceptInviteRequest;
 import com.spotit.api.partner.dto.InviteRequest;
+import com.spotit.api.partner.dto.PartnerCodeResponse;
 import com.spotit.api.partner.dto.PartnerSettingsRequest;
 import com.spotit.api.partner.dto.PartnerStatusResponse;
 
@@ -13,6 +14,8 @@ public interface PartnerWriteService {
     PartnerStatusResponse resendInvite(UUID ownerId);
 
     void cancelInvite(UUID ownerId);
+
+    PartnerCodeResponse sendJoinCode(UUID userId);
 
     PartnerStatusResponse accept(UUID userId, AcceptInviteRequest request);
 

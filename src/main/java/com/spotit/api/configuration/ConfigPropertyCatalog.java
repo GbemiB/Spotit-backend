@@ -294,6 +294,18 @@ public class ConfigPropertyCatalog {
                 "Default number of items returned by the content feed", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getContentFeedDefaultLimit(),
                 (c, v) -> c.global().setContentFeedDefaultLimit((Long) v)));
+        list.add(new Property(PropertyNames.PARTNER_CODE_TTL_SECONDS, PropertyNames.GROUP_PARTNER,
+                "Partner invite: seconds the emailed join code stays valid", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPartnerCodeTtlSeconds(),
+                (c, v) -> c.global().setPartnerCodeTtlSeconds((Long) v)));
+        list.add(new Property(PropertyNames.PARTNER_CODE_RESEND_SECONDS, PropertyNames.GROUP_PARTNER,
+                "Partner invite: seconds before the join screen can send a new code", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPartnerCodeResendSeconds(),
+                (c, v) -> c.global().setPartnerCodeResendSeconds((Long) v)));
+        list.add(new Property(PropertyNames.PARTNER_CODE_MAX_SENDS, PropertyNames.GROUP_PARTNER,
+                "Partner invite: most join codes one invite can send", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPartnerCodeMaxSends(),
+                (c, v) -> c.global().setPartnerCodeMaxSends((Long) v)));
         list.add(new Property(PropertyNames.APP_MIN_BUILD_ANDROID, PropertyNames.GROUP_APP,
                 "Lowest Android build number (versionCode) allowed to run; older builds must update. 0 or unset turns the check off",
                 Kind.LONG, Section.GLOBAL, false, false,

@@ -6,7 +6,7 @@ import java.util.Locale;
 public final class InviteCodes {
     public static final int LENGTH = 6;
 
-    private static final String ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final String ALPHABET = "0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private InviteCodes() {

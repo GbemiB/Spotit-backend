@@ -97,6 +97,18 @@ public class GlobalConfig {
     @Builder.Default
     private long padbankFreeDays = ConfigDefaults.PADBANK_FREE_DAYS;
 
+    @Column(name = "partner_code_ttl_seconds", nullable = false, columnDefinition = "bigint default 600")
+    @Builder.Default
+    private long partnerCodeTtlSeconds = ConfigDefaults.PARTNER_CODE_TTL_SECONDS;
+
+    @Column(name = "partner_code_resend_seconds", nullable = false, columnDefinition = "bigint default 60")
+    @Builder.Default
+    private long partnerCodeResendSeconds = ConfigDefaults.PARTNER_CODE_RESEND_SECONDS;
+
+    @Column(name = "partner_code_max_sends", nullable = false, columnDefinition = "bigint default 5")
+    @Builder.Default
+    private long partnerCodeMaxSends = ConfigDefaults.PARTNER_CODE_MAX_SENDS;
+
     @Column(name = "padbank_hearts", nullable = false, columnDefinition = "bigint default 3")
     private long padbankHearts;
 

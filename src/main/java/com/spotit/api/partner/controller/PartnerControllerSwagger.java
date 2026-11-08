@@ -46,7 +46,26 @@ final class PartnerControllerSwagger {
             """;
 
     static final String RESEND_SUMMARY = "Resend the partner invite";
-    static final String RESEND_DESCRIPTION = "Sends a new code with a fresh 48 hours to the pending invite's email. The old code stops working.";
+    static final String RESEND_DESCRIPTION = "Sends the invite email again with a fresh 48 hours. The join code is sent later, from the join screen.";
+
+    static final String SEND_CODE_SUMMARY = "Email the join code to the invited partner";
+    static final String SEND_CODE_DESCRIPTION = "Called when the invited partner opens the join screen. Emails a fresh 6-digit code to the signed-in "
+            + "email and replaces any older code. Within the resend wait it sends nothing and says how long to wait. How long a code lasts, "
+            + "the wait and the most codes per invite are admin settings.";
+    static final String SEND_CODE_200_EXAMPLE = """
+            {
+              "code": 200,
+              "message": "OK",
+              "data": { "email": "tobi@example.com", "sent": true, "expiresInSeconds": 600, "resendInSeconds": 60 }
+            }
+            """;
+    static final String SEND_CODE_429_EXAMPLE = """
+            {
+              "code": 429,
+              "message": "We've sent the most codes we can for this invite. Ask your partner to send you a new invite.",
+              "data": { "errorCode": "invite_limit_reached" }
+            }
+            """;
 
     static final String CANCEL_SUMMARY = "Cancel the partner invite";
     static final String CANCEL_DESCRIPTION = "Cancels the pending invite so its code no longer works.";
@@ -63,7 +82,7 @@ final class PartnerControllerSwagger {
             + "partner account and skips cycle onboarding. Five wrong codes cancel the invite.";
     static final String ACCEPT_REQUEST_EXAMPLE = """
             {
-              "code": "K7P2QX",
+              "code": "482913",
               "nickname": "Amaka"
             }
             """;
@@ -87,7 +106,7 @@ final class PartnerControllerSwagger {
     static final String ACCEPT_400_EXAMPLE = """
             {
               "code": 400,
-              "message": "That invite code isn't right. Check the email and try again.",
+              "message": "That code isn't right. Check the latest email from Spot it and try again.",
               "data": { "errorCode": "invalid_code" }
             }
             """;

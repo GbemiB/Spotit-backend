@@ -318,6 +318,24 @@ public class ConfigurationDomainServiceImpl implements ConfigurationDomainServic
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public long getPartnerCodeTtlSeconds() {
+        return Math.max(60, loadGlobal().getPartnerCodeTtlSeconds());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getPartnerCodeResendSeconds() {
+        return Math.max(0, loadGlobal().getPartnerCodeResendSeconds());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getPartnerCodeMaxSends() {
+        return (int) Math.max(1, loadGlobal().getPartnerCodeMaxSends());
+    }
+
+    @Override
     public int getPadbankFreeDays() {
         return (int) Math.max(0, loadGlobal().getPadbankFreeDays());
     }

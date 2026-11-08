@@ -114,6 +114,12 @@ public interface ConfigurationDomainService {
 
     String getAppSupportEmail();
 
+    long getPartnerCodeTtlSeconds();
+
+    long getPartnerCodeResendSeconds();
+
+    int getPartnerCodeMaxSends();
+
     String getAppStoreUrlIos();
 
     List<GlobalConfigurationResponse> listAll();

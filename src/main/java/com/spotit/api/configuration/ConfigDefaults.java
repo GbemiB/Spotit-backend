@@ -28,6 +28,9 @@ public final class ConfigDefaults {
     public static final String GIVEDAY_TITLE_ZERO = "Something important is missing";
     public static final long PADBANK_FREE_VISITORS = 2L;
     public static final long PADBANK_FREE_DAYS = 2L;
+    public static final long PARTNER_CODE_TTL_SECONDS = 600L;
+    public static final long PARTNER_CODE_RESEND_SECONDS = 60L;
+    public static final long PARTNER_CODE_MAX_SENDS = 5L;
     public static final long PADBANK_HEARTS = 3L;
     public static final long PADBANK_DELIVERY_COST = 2L;
     public static final long PADBANK_VISITOR_FEE = 2L;

@@ -5,6 +5,7 @@ import com.spotit.api.common.dto.MessageResponse;
 import com.spotit.api.common.security.CurrentUserId;
 import com.spotit.api.partner.dto.AcceptInviteRequest;
 import com.spotit.api.partner.dto.InviteRequest;
+import com.spotit.api.partner.dto.PartnerCodeResponse;
 import com.spotit.api.partner.dto.PartnerCheckInRequest;
 import com.spotit.api.partner.dto.PartnerCheckInResponse;
 import com.spotit.api.partner.dto.LoveReplyRequest;
@@ -95,6 +96,21 @@ public class PartnerController {
     public MessageResponse cancelInvite(@CurrentUserId UUID userId) {
         partnerWriteService.cancelInvite(userId);
         return new MessageResponse("Invite cancelled.");
+    }
+
+    @Operation(summary = PartnerControllerSwagger.SEND_CODE_SUMMARY, description = PartnerControllerSwagger.SEND_CODE_DESCRIPTION,
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Code sent, or still waiting before a new one.", content = @Content(
+                    schema = @Schema(implementation = PartnerCodeResponse.class),
+                    examples = @ExampleObject(value = PartnerControllerSwagger.SEND_CODE_200_EXAMPLE))),
+            @ApiResponse(responseCode = "429", description = "Too many codes for this invite.", content = @Content(
+                    schema = @Schema(implementation = ErrorDetail.class),
+                    examples = @ExampleObject(value = PartnerControllerSwagger.SEND_CODE_429_EXAMPLE)))
+    })
+    @PostMapping("/invite/code")
+    public PartnerCodeResponse sendJoinCode(@CurrentUserId UUID userId) {
+        return partnerWriteService.sendJoinCode(userId);
     }
 
     @Operation(summary = PartnerControllerSwagger.ACCEPT_SUMMARY, description = PartnerControllerSwagger.ACCEPT_DESCRIPTION,

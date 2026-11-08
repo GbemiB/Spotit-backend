@@ -53,6 +53,15 @@ public class PartnerLink {
     @Column(name = "failed_attempts", nullable = false, columnDefinition = "integer default 0")
     private int failedAttempts;
 
+    @Column(name = "code_expires_at")
+    private Instant codeExpiresAt;
+
+    @Column(name = "code_sent_at")
+    private Instant codeSentAt;
+
+    @Column(name = "code_sends", nullable = false, columnDefinition = "integer default 0")
+    private int codeSends;
+
     @Column(name = "last_reminded_period_date")
     private LocalDate lastRemindedPeriodDate;
 

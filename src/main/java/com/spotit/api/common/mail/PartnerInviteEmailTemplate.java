@@ -8,7 +8,6 @@ public final class PartnerInviteEmailTemplate {
     private static final String INK = "#2E2429";
     private static final String MUTED = "#8A7377";
     private static final String PAGE_BG = "#F4EEEE";
-    private static final String CODE_TILE_BG = "#FCE0DE";
 
     private PartnerInviteEmailTemplate() {
     }
@@ -17,7 +16,7 @@ public final class PartnerInviteEmailTemplate {
         return ownerFirstName + " invited you to Spot it";
     }
 
-    public static String html(String ownerFirstName, String code, String storeUrl, long ttlHours) {
+    public static String html(String ownerFirstName, String storeUrl, long ttlHours) {
         String name = HtmlUtils.htmlEscape(ownerFirstName);
         String url = HtmlUtils.htmlEscape(storeUrl);
         return """
@@ -41,20 +40,8 @@ public final class PartnerInviteEmailTemplate {
                               </td>
                             </tr>
                             <tr>
-                              <td style="padding:22px 36px 4px 36px;">
-                                <table role="presentation" width="100%%" cellpadding="0" cellspacing="0">
-                                  <tr>
-                                    <td align="center" style="background:%s;border-radius:14px;padding:18px 12px;">
-                                      <span style="display:inline-block;white-space:nowrap;font-size:26px;line-height:32px;font-weight:700;letter-spacing:6px;\
-                margin-right:-6px;color:%s;font-family:'SF Mono',Consolas,Menlo,monospace;">%s</span>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                            <tr>
                               <td style="padding:14px 36px 0 36px;text-align:center;">
-                                <p style="margin:0;font-size:12px;line-height:18px;color:%s;">This code expires in <strong style="color:%s;">%d hours</strong>.</p>
+                                <p style="margin:0;font-size:12px;line-height:18px;color:%s;">This invite is open for <strong style="color:%s;">%d hours</strong>.</p>
                               </td>
                             </tr>
                             <tr>
@@ -63,6 +50,7 @@ public final class PartnerInviteEmailTemplate {
                 <a href="%s" style="color:%s;font-weight:600;">Google Play</a>.</p>
                                 <p style="margin:0;font-size:13px;line-height:19px;color:%s;">2. Tap <strong>I have a partner invite</strong> \
                 and sign up with this email address.</p>
+                                <p style="margin:8px 0 0 0;font-size:13px;line-height:19px;color:%s;">3. We'll email you a code when you get to the join screen.</p>
                               </td>
                             </tr>
                             <tr>
@@ -82,31 +70,30 @@ public final class PartnerInviteEmailTemplate {
                 INK, ACCENT_SOFT,
                 INK,
                 MUTED, name,
-                CODE_TILE_BG, ACCENT, code,
                 MUTED, ACCENT, ttlHours,
                 INK, url, ACCENT,
+                INK,
                 INK,
                 MUTED, name,
                 MUTED
         );
     }
 
-    public static String text(String ownerFirstName, String code, String storeUrl, long ttlHours) {
+    public static String text(String ownerFirstName, String storeUrl, long ttlHours) {
         return """
                 You're invited to Spot it
 
                 Hi there, %s wants to share her cycle with you on Spot it.
 
-                Your invite code: %s
-
-                This code expires in %d hours.
+                This invite is open for %d hours.
 
                 1. Get Spot it from Google Play: %s
                 2. Tap "I have a partner invite" and sign up with this email address.
+                3. We'll email you a code when you get to the join screen.
 
                 If you don't know %s, you can safely ignore this email.
 
                 — Spot it
-                """.formatted(ownerFirstName, code, ttlHours, storeUrl, ownerFirstName);
+                """.formatted(ownerFirstName, ttlHours, storeUrl, ownerFirstName);
     }
 }

@@ -42,6 +42,9 @@ public final class PropertyNames {
     public static final String PADBANK_DAY_TITLE_PERFECT = "padbank-day-title-perfect";
     public static final String PADBANK_DAY_TITLE_DONE = "padbank-day-title-done";
     public static final String PADBANK_DAY_TITLE_LOST = "padbank-day-title-lost";
+    public static final String PARTNER_CODE_TTL_SECONDS = "partner-code-ttl-seconds";
+    public static final String PARTNER_CODE_RESEND_SECONDS = "partner-code-resend-seconds";
+    public static final String PARTNER_CODE_MAX_SENDS = "partner-code-max-sends";
     public static final String SPOTLIGHT_ADMIN_PAGE_SIZE = "spotlight-admin-page-size";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";
@@ -77,6 +80,7 @@ public final class PropertyNames {
     public static final String GROUP_SPOTLIGHT = "spotlight";
     public static final String GROUP_PADBANK = "padbank";
     public static final String GROUP_GIVEDAY = "giveday";
+    public static final String GROUP_PARTNER = "partner";
 
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";
