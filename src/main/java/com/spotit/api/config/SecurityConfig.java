@@ -66,7 +66,11 @@ public class SecurityConfig {
             "/api/v1/shop/**",
             "/api/v1/billing/**",
             "/api/v1/content/**",
-            "/api/v1/users/me/export/**"
+            "/api/v1/users/me/export/**",
+            "/api/v1/spotlight/**",
+            "/api/v1/quiz/**",
+            "/api/v1/padbank/**",
+            "/api/v1/giveday/**"
     };
 
     private static final String[] PARTNER_READ_PATHS = {

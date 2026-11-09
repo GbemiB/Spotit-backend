@@ -119,6 +119,28 @@ class SecurityRulesTest {
     }
 
     @Test
+    void aPartnerCanPlaySpotlightGames() throws Exception {
+        String token = partnerToken();
+        for (String path : new String[]{"/api/v1/spotlight/home", "/api/v1/quiz/home", "/api/v1/quiz/topics", "/api/v1/padbank/rules"}) {
+            int code = mockMvc.perform(get(path).header("Authorization", token)).andReturn().getResponse().getStatus();
+            assertThat(code).as(path).isNotIn(401, 403);
+        }
+        for (String path : new String[]{"/api/v1/padbank/runs", "/api/v1/giveday/runs"}) {
+            int code = mockMvc.perform(post(path).header("Authorization", token).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                    .andReturn().getResponse().getStatus();
+            assertThat(code).as(path).isNotIn(401, 403);
+        }
+    }
+
+    @Test
+    void aPartnerCannotReachSpotlightAdminSettings() throws Exception {
+        String token = partnerToken();
+        for (String path : new String[]{"/api/v1/config/spotlight", "/api/v1/config/quiz", "/api/v1/config/padbank", "/api/v1/config/giveday"}) {
+            mockMvc.perform(get(path).header("Authorization", token)).andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
     void anOwnerIsNotAffectedByThePartnerRule() throws Exception {
         String token = ownerToken();
         for (String path : new String[]{"/api/v1/cycle/current", "/api/v1/rewards/summary", "/api/v1/users/me/notifications"}) {
