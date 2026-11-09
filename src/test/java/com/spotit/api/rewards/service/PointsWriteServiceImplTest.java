@@ -1,7 +1,5 @@
 package com.spotit.api.rewards.service;
 
-import com.spotit.api.common.exception.ApiException;
-import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.time.UserClock;
 import com.spotit.api.configuration.service.ConfigurationDomainService;
 import com.spotit.api.rewards.repository.PointsHistoryRepository;
@@ -19,7 +17,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -182,34 +179,6 @@ class PointsWriteServiceImplTest {
         assertThat(result.alreadyClaimedToday()).isFalse();
         assertThat(result.pointsAwarded()).isEqualTo(50);
         assertThat(result.newBalance()).isEqualTo(150);
-    }
-
-    @Test
-    void watchingAnAdBeyondTheDailyLimitIsRejected() {
-        userWith(100, 0, 0, null);
-        when(configurationDomainService.getAdsDailyLimit()).thenReturn(5);
-        when(pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad"))
-                .thenReturn(5L);
-
-        assertThatThrownBy(() -> service.watchAd(userId))
-                .isInstanceOf(ApiException.class)
-                .extracting(e -> ((ApiException) e).getErrorCode())
-                .isEqualTo(ErrorCode.DAILY_AD_LIMIT_REACHED);
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void watchingAnAdUnderTheLimitAwardsPoints() {
-        userWith(100, 0, 0, null);
-        when(configurationDomainService.getAdsDailyLimit()).thenReturn(5);
-        when(configurationDomainService.getPointsWatchAd()).thenReturn(25);
-        when(pointsHistoryRepository.countByUserIdAndOccurredOnAndLabel(userId, today, "Watched a rewarded ad"))
-                .thenReturn(2L);
-
-        var result = service.watchAd(userId);
-
-        assertThat(result.pointsAwarded()).isEqualTo(25);
-        assertThat(result.newBalance()).isEqualTo(125);
     }
 
     @Test

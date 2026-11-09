@@ -31,20 +31,4 @@ public enum OrderStatus {
     public String getCode() {
         return code;
     }
-
-    public boolean isProcessing() {
-        return this == processing;
-    }
-
-    public boolean isShipped() {
-        return this == shipped;
-    }
-
-    public boolean isDelivered() {
-        return this == delivered;
-    }
-
-    public boolean isCancelled() {
-        return this == cancelled;
-    }
 }

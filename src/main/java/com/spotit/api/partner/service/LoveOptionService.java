@@ -37,10 +37,6 @@ public class LoveOptionService {
         return loveOptionRepository.findById(id).filter(o -> kind.equals(o.getKind()) && o.isActive());
     }
 
-    public Optional<LoveOption> option(String id) {
-        return id == null ? Optional.empty() : loveOptionRepository.findById(id);
-    }
-
     @Transactional(readOnly = true)
     public List<LoveOptionAdminResponse> listForAdmin() {
         return loveOptionRepository.findAllByOrderByKindAscSortOrderAsc().stream().map(LoveOptionService::admin).toList();

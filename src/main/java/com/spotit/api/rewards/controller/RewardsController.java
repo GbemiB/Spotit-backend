@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,24 +68,6 @@ public class RewardsController {
     @PostMapping("/daily-claim")
     public DailyClaimResponse dailyClaim(@CurrentUserId UUID userId) {
         return rewardsWriteService.claimDaily(userId);
-    }
-
-    @Operation(summary = RewardsControllerSwagger.WATCH_AD_SUMMARY, description = RewardsControllerSwagger.WATCH_AD_DESCRIPTION,
-            security = @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth"))
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(
-            schema = @Schema(implementation = AdWatchRequest.class),
-            examples = @ExampleObject(value = RewardsControllerSwagger.WATCH_AD_REQUEST_EXAMPLE)))
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Ad-watch points awarded.", content = @Content(
-                    schema = @Schema(implementation = AdWatchResponse.class),
-                    examples = @ExampleObject(value = RewardsControllerSwagger.WATCH_AD_200_EXAMPLE))),
-            @ApiResponse(responseCode = "429", description = "You've reached today's rewarded-ad limit.", content = @Content(
-                    schema = @Schema(implementation = ErrorDetail.class),
-                    examples = @ExampleObject(value = RewardsControllerSwagger.WATCH_AD_429_EXAMPLE)))
-    })
-    @PostMapping("/watch-ad")
-    public AdWatchResponse watchAd(@CurrentUserId UUID userId, @Valid @RequestBody AdWatchRequest request) {
-        return rewardsWriteService.watchAd(userId);
     }
 
     @Operation(summary = RewardsControllerSwagger.HISTORY_SUMMARY, description = RewardsControllerSwagger.HISTORY_DESCRIPTION,

@@ -32,10 +32,6 @@ public enum PartnerLinkStatus {
         return code;
     }
 
-    public boolean isPending() {
-        return this == pending;
-    }
-
     public boolean isActive() {
         return this == active;
     }

@@ -29,9 +29,6 @@ public class GlobalConfig {
     @Column(name = "id", nullable = false, updatable = false)
     private Integer id;
 
-    @Column(name = "ads_daily_limit", nullable = false)
-    private long adsDailyLimit;
-
     @Column(name = "cycle_default_length", nullable = false)
     private long cycleDefaultLength;
 
@@ -40,9 +37,6 @@ public class GlobalConfig {
 
     @Column(name = "points_daily_claim", nullable = false)
     private long pointsDailyClaim;
-
-    @Column(name = "points_watch_ad", nullable = false)
-    private long pointsWatchAd;
 
     @Column(name = "quiz_rounds", nullable = false, columnDefinition = "bigint default 5")
     private long quizRounds;
@@ -98,6 +92,22 @@ public class GlobalConfig {
     @Column(name = "padbank_free_visitors", nullable = false, columnDefinition = "bigint default 2")
     @Builder.Default
     private long padbankFreeVisitors = ConfigDefaults.PADBANK_FREE_VISITORS;
+
+    @Column(name = "padbank_free_days", nullable = false, columnDefinition = "bigint default 2")
+    @Builder.Default
+    private long padbankFreeDays = ConfigDefaults.PADBANK_FREE_DAYS;
+
+    @Column(name = "partner_code_ttl_seconds", nullable = false, columnDefinition = "bigint default 600")
+    @Builder.Default
+    private long partnerCodeTtlSeconds = ConfigDefaults.PARTNER_CODE_TTL_SECONDS;
+
+    @Column(name = "partner_code_resend_seconds", nullable = false, columnDefinition = "bigint default 60")
+    @Builder.Default
+    private long partnerCodeResendSeconds = ConfigDefaults.PARTNER_CODE_RESEND_SECONDS;
+
+    @Column(name = "partner_code_max_sends", nullable = false, columnDefinition = "bigint default 5")
+    @Builder.Default
+    private long partnerCodeMaxSends = ConfigDefaults.PARTNER_CODE_MAX_SENDS;
 
     @Column(name = "padbank_hearts", nullable = false, columnDefinition = "bigint default 3")
     private long padbankHearts;

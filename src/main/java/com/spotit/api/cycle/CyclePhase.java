@@ -29,16 +29,4 @@ public enum CyclePhase {
     public String getCode() {
         return code;
     }
-
-    public boolean isPeriod() {
-        return this == period;
-    }
-
-    public boolean isFertile() {
-        return this == fertile;
-    }
-
-    public boolean isOvulation() {
-        return this == ovulation;
-    }
 }

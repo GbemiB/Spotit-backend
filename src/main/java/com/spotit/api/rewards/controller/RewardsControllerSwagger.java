@@ -37,33 +37,6 @@ final class RewardsControllerSwagger {
             }
             """;
 
-    static final String WATCH_AD_SUMMARY = "Claim rewarded-ad points";
-    static final String WATCH_AD_DESCRIPTION = "Awards points for watching a rewarded ad, up to the configured daily limit.";
-    static final String WATCH_AD_REQUEST_EXAMPLE = """
-            {
-              "adNetwork": "admob",
-              "adUnitId": "ca-app-pub-xxx/yyy",
-              "verificationToken": "srv-verif-token-example"
-            }
-            """;
-    static final String WATCH_AD_200_EXAMPLE = """
-            {
-              "code": 200,
-              "message": "OK",
-              "data": {
-                "pointsAwarded": 100,
-                "newBalance": 630
-              }
-            }
-            """;
-    static final String WATCH_AD_429_EXAMPLE = """
-            {
-              "code": 429,
-              "message": "You've reached today's rewarded-ad limit.",
-              "data": { "errorCode": "daily_ad_limit_reached" }
-            }
-            """;
-
     static final String HISTORY_SUMMARY = "Get points history";
     static final String HISTORY_DESCRIPTION = "Returns a cursor-paginated feed of points-earning/spending events, most recent first.";
     static final String HISTORY_200_EXAMPLE = """

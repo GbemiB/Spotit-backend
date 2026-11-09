@@ -27,7 +27,9 @@ public final class ErrorMessage {
     public static final String PARTNER_INVITE_LIMIT_REACHED = "You've sent 5 invites in the last 24 hours. Please try again later.";
     public static final String PARTNER_INVITE_NOT_FOUND = "There's no pending partner invite.";
     public static final String PARTNER_NO_INVITE_FOR_EMAIL = "We couldn't find an invite for this email. Ask your partner to invite the email you signed up with.";
-    public static final String PARTNER_INVITE_CODE_INVALID = "That invite code isn't right. Check the email and try again.";
+    public static final String PARTNER_INVITE_CODE_INVALID = "That code isn't right. Check the latest email from Spot it and try again.";
+    public static final String PARTNER_CODE_EXPIRED = "This code has expired. Tap Send a new code.";
+    public static final String PARTNER_CODE_LIMIT_REACHED = "We've sent the most codes we can for this invite. Ask your partner to send you a new invite.";
     public static final String PARTNER_INVITE_EXPIRED = "This invite has expired. Ask your partner to send a new one.";
     public static final String PARTNER_ACCOUNT_TRACKS_CYCLE = "This account tracks its own cycle, so it can't be linked as a partner. Sign up with the invited email instead.";
     public static final String PARTNER_LINK_NOT_FOUND = "You're not sharing with a partner.";
@@ -52,7 +54,6 @@ public final class ErrorMessage {
     public static final String CHALLENGE_NOT_FOUND = "Challenge not found.";
     public static final String CHALLENGE_NOT_YET_COMPLETE = "This challenge isn't complete yet.";
     public static final String CHALLENGE_ALREADY_CLAIMED = "This challenge's reward has already been claimed this week.";
-    public static final String DAILY_AD_LIMIT_REACHED = "You've reached today's rewarded-ad limit.";
 
     public static final String PRODUCT_NOT_FOUND = "Product not found.";
     public static final String PREMIUM_REQUIRED = "This item requires Premium.";
@@ -82,8 +83,9 @@ public final class ErrorMessage {
     public static final String GIVEDAY_BAD_AREA = "That area isn't on the map.";
     public static final String GIVEDAY_NO_HOME = "Pick your home area first.";
     public static final String GIVEDAY_PLACE_DONE = "You already gave at this place today.";
+    public static final String GIVEDAY_NO_REPACK = "You can repack once at each place, only when the gift was not perfect.";
     public static final String GIVEDAY_BAD_PRODUCT = "That product isn't on the shelf.";
-    public static final String GIVEDAY_OVER_BUDGET = "That gift is over the budget for this place.";
+    public static final String GIVEDAY_OVER_BUDGET = "That gift is more than the most you can give at this place.";
     public static final String GIVEDAY_LEVEL_LOCKED = "Win more stars to open this part of the map.";
     public static final String GIVEDAY_CLOSED = "That place is closed by then.";
     public static final String GIVEDAY_BAD_TRAVEL = "Pick a way to travel.";
@@ -109,7 +111,6 @@ public final class ErrorMessage {
     public static final String RECEIPT_INVALID = "Receipt could not be verified.";
     public static final String ALREADY_SUBSCRIBED = "You already have an active subscription.";
     public static final String SUBSCRIPTION_NOT_FOUND = "No subscription found.";
-    public static final String NO_PURCHASE_FOUND = "No previous purchase found for this account.";
 
     public static final String NO_SUCH_ENDPOINT = "No such endpoint.";
     public static final String INTERNAL_ERROR = "Something went wrong. Please try again.";

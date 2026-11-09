@@ -15,10 +15,12 @@ public record SpotlightChallengeAdmin(
         String status,
         Integer sortOrder,
         Boolean active,
-        Integer freePlays
+        Integer freePlays,
+        String partnerName
 ) {
     public static SpotlightChallengeAdmin of(SpotlightChallenge c) {
         return new SpotlightChallengeAdmin(c.getId(), c.getKind(), c.getName(), c.getBlurb(), c.getIcon(), c.getTone(), c.getCost(),
-                c.isCostFrom(), c.getMinAge(), c.getStatus(), c.getSortOrder(), c.isActive(), c.getFreePlays());
+                c.isCostFrom(), c.getMinAge(), c.getStatus(), c.getSortOrder(), c.isActive(), c.getFreePlays(),
+                c.getPartnerName());
     }
 }

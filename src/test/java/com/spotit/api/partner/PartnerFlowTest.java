@@ -55,14 +55,15 @@ class PartnerFlowTest {
         User partner = save("Tunde", false);
 
         partnerWriteService.invite(owner.getId(), new InviteRequest(partner.getEmail()));
+        assertThat(partnerWriteService.sendJoinCode(partner.getId()).sent()).isTrue();
         ArgumentCaptor<String> text = ArgumentCaptor.forClass(String.class);
-        verify(emailService).send(eq(partner.getEmail()), anyString(), anyString(), text.capture());
-        Matcher code = Pattern.compile("Your invite code: ([A-Z2-9]{6})").matcher(text.getValue());
+        verify(emailService).send(eq(partner.getEmail()), eq("Your Spot it partner code"), anyString(), text.capture());
+        Matcher code = Pattern.compile("Your code: ([0-9]{6})").matcher(text.getValue());
         assertThat(code.find()).isTrue();
         assertThat(partnerReadService.getStatus(owner.getId()).state()).isEqualTo("pending");
         assertThat(partnerReadService.getStatus(partner.getId()).state()).isEqualTo("invited");
 
-        partnerWriteService.accept(partner.getId(), new AcceptInviteRequest(code.group(1).toLowerCase(), "Amaka"));
+        partnerWriteService.accept(partner.getId(), new AcceptInviteRequest(code.group(1), "Amaka"));
 
         User linked = userRepository.findById(partner.getId()).orElseThrow();
         assertThat(linked.getAccountType()).isEqualTo(AccountOwner.partner);
@@ -96,9 +97,10 @@ class PartnerFlowTest {
         User owner = save("Ngozi", true);
         User partner = save("Emeka", false);
         partnerWriteService.invite(owner.getId(), new InviteRequest(partner.getEmail()));
+        assertThat(partnerWriteService.sendJoinCode(partner.getId()).sent()).isTrue();
         ArgumentCaptor<String> text = ArgumentCaptor.forClass(String.class);
-        verify(emailService).send(eq(partner.getEmail()), anyString(), anyString(), text.capture());
-        Matcher code = Pattern.compile("Your invite code: ([A-Z2-9]{6})").matcher(text.getValue());
+        verify(emailService).send(eq(partner.getEmail()), eq("Your Spot it partner code"), anyString(), text.capture());
+        Matcher code = Pattern.compile("Your code: ([0-9]{6})").matcher(text.getValue());
         assertThat(code.find()).isTrue();
         partnerWriteService.accept(partner.getId(), new AcceptInviteRequest(code.group(1), "Ngozi"));
 

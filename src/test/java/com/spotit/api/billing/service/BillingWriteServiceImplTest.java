@@ -1,7 +1,6 @@
 package com.spotit.api.billing.service;
 
 import com.spotit.api.billing.dto.CancelResponse;
-import com.spotit.api.billing.dto.RestoreRequest;
 import com.spotit.api.billing.dto.SubscribeRequest;
 import com.spotit.api.billing.dto.SubscriptionResponse;
 import com.spotit.api.billing.entity.Platform;
@@ -126,42 +125,6 @@ class BillingWriteServiceImplTest {
         assertThatThrownBy(() -> service.cancel(userId))
                 .isInstanceOf(ApiException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
-    }
-
-    @Test
-    void restoreKeepsTheCurrentRenewalDateWhenStillEntitled() {
-        Instant renewsAt = Instant.now().plusSeconds(86_400);
-        Subscription sub = subscription(SubscriptionStatus.active, renewsAt);
-        when(subscriptionRepository.findByUserId(userId)).thenReturn(Optional.of(sub));
-        stubUser();
-
-        SubscriptionResponse response = service.restore(userId, new RestoreRequest("android", "receipt"));
-
-        assertThat(response.renewsAt()).isEqualTo(renewsAt);
-        assertThat(sub.getPlatform()).isEqualTo(Platform.android);
-        assertThat(user.isPremium()).isTrue();
-    }
-
-    @Test
-    void restoreExtendsALapsedSubscription() {
-        Subscription sub = subscription(SubscriptionStatus.expired, Instant.now().minusSeconds(86_400));
-        when(configurationDomainService.getSubscriptionPeriodDays()).thenReturn(30L);
-        when(subscriptionRepository.findByUserId(userId)).thenReturn(Optional.of(sub));
-        stubUser();
-
-        service.restore(userId, new RestoreRequest("ios", "receipt"));
-
-        assertThat(sub.getStatus()).isEqualTo(SubscriptionStatus.active);
-        assertThat(sub.getRenewsAt()).isAfter(Instant.now().plus(Duration.ofDays(29)));
-    }
-
-    @Test
-    void restoreWithoutAnyPurchaseIsRejected() {
-        when(subscriptionRepository.findByUserId(userId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.restore(userId, new RestoreRequest("ios", "receipt")))
-                .isInstanceOf(ApiException.class)
-                .extracting("errorCode").isEqualTo(ErrorCode.NO_PURCHASE_FOUND);
     }
 
     @Test

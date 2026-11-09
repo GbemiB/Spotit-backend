@@ -2,8 +2,6 @@ package com.spotit.api.rewards.controller;
 
 import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
-import com.spotit.api.rewards.dto.AdWatchRequest;
-import com.spotit.api.rewards.dto.AdWatchResponse;
 import com.spotit.api.rewards.dto.BadgeResponse;
 import com.spotit.api.rewards.dto.ChallengeClaimResponse;
 import com.spotit.api.rewards.dto.ChallengeResponse;
@@ -24,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -33,9 +30,7 @@ import java.util.List;
 import static com.spotit.api.support.ControllerTestSupport.USER_ID;
 import static com.spotit.api.support.ControllerTestSupport.authenticate;
 import static com.spotit.api.support.ControllerTestSupport.clearAuthentication;
-import static com.spotit.api.support.ControllerTestSupport.json;
 import static com.spotit.api.support.ControllerTestSupport.mockMvc;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -95,35 +90,6 @@ class RewardsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.pointsAwarded").value(5))
                 .andExpect(jsonPath("$.data.alreadyClaimedToday").value(false));
-    }
-
-    @Test
-    void watchAdAwardsPoints() throws Exception {
-        when(rewardsWriteService.watchAd(USER_ID)).thenReturn(new AdWatchResponse(3, 628));
-
-        mvc.perform(post("/api/v1/rewards/watch-ad").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new AdWatchRequest("admob", "unit-1", "token"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.newBalance").value(628));
-    }
-
-    @Test
-    void watchAdRequiresTheAdNetwork() throws Exception {
-        mvc.perform(post("/api/v1/rewards/watch-ad").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new AdWatchRequest("", null, null))))
-                .andExpect(status().isUnprocessableEntity());
-
-        verifyNoInteractions(rewardsWriteService);
-    }
-
-    @Test
-    void watchAdOverTheDailyLimitIs429() throws Exception {
-        when(rewardsWriteService.watchAd(USER_ID)).thenThrow(new ApiException(ErrorCode.DAILY_AD_LIMIT_REACHED, "Limit reached"));
-
-        mvc.perform(post("/api/v1/rewards/watch-ad").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new AdWatchRequest("admob", null, null))))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.data.errorCode").value("daily_ad_limit_reached"));
     }
 
     @Test

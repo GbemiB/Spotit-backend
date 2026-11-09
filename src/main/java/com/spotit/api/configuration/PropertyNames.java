@@ -9,11 +9,9 @@ public final class PropertyNames {
     public static final String JWT_ACCESS_TOKEN_TTL_SECONDS = "jwt-access-token-ttl-seconds";
     public static final String JWT_REFRESH_TOKEN_TTL_SECONDS = "jwt-refresh-token-ttl-seconds";
     public static final String OTP_TTL_SECONDS = "otp-ttl-seconds";
-    public static final String ADS_DAILY_LIMIT = "ads-daily-limit";
     public static final String CYCLE_DEFAULT_LENGTH = "cycle-default-length";
     public static final String CYCLE_DEFAULT_PERIOD_LENGTH = "cycle-default-period-length";
     public static final String POINTS_DAILY_CLAIM = "points-daily-claim";
-    public static final String POINTS_WATCH_AD = "points-watch-ad";
     public static final String QUIZ_ROUNDS = "quiz-rounds";
     public static final String QUIZ_LIVES = "quiz-lives";
     public static final String QUIZ_HINT_COST = "quiz-hint-cost";
@@ -31,6 +29,7 @@ public final class PropertyNames {
     public static final String GIVEDAY_TITLE_ONE = "giveday-title-one";
     public static final String GIVEDAY_TITLE_ZERO = "giveday-title-zero";
     public static final String PADBANK_FREE_VISITORS = "padbank-free-visitors";
+    public static final String PADBANK_FREE_DAYS = "padbank-free-days";
     public static final String PADBANK_HEARTS = "padbank-hearts";
     public static final String PADBANK_DELIVERY_COST = "padbank-delivery-cost";
     public static final String PADBANK_VISITOR_FEE = "padbank-visitor-fee";
@@ -43,6 +42,9 @@ public final class PropertyNames {
     public static final String PADBANK_DAY_TITLE_PERFECT = "padbank-day-title-perfect";
     public static final String PADBANK_DAY_TITLE_DONE = "padbank-day-title-done";
     public static final String PADBANK_DAY_TITLE_LOST = "padbank-day-title-lost";
+    public static final String PARTNER_CODE_TTL_SECONDS = "partner-code-ttl-seconds";
+    public static final String PARTNER_CODE_RESEND_SECONDS = "partner-code-resend-seconds";
+    public static final String PARTNER_CODE_MAX_SENDS = "partner-code-max-sends";
     public static final String SPOTLIGHT_ADMIN_PAGE_SIZE = "spotlight-admin-page-size";
 
     public static final String ACCOUNT_PURGE_GRACE_DAYS = "account-purge-grace-days";
@@ -78,6 +80,7 @@ public final class PropertyNames {
     public static final String GROUP_SPOTLIGHT = "spotlight";
     public static final String GROUP_PADBANK = "padbank";
     public static final String GROUP_GIVEDAY = "giveday";
+    public static final String GROUP_PARTNER = "partner";
 
     public static final String BADGE_DEFINITION_PREFIX = "badge-definition-";
     public static final String CHALLENGE_DEFINITION_PREFIX = "challenge-definition-";

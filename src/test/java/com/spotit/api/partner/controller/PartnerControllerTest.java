@@ -5,6 +5,7 @@ import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.common.exception.ErrorMessage;
 import com.spotit.api.partner.dto.AcceptInviteRequest;
 import com.spotit.api.partner.dto.InviteRequest;
+import com.spotit.api.partner.dto.PartnerCodeResponse;
 import com.spotit.api.partner.dto.PartnerCheckInRequest;
 import com.spotit.api.partner.dto.PartnerCheckInResponse;
 import com.spotit.api.partner.dto.PartnerProfileResponse;
@@ -88,6 +89,28 @@ class PartnerControllerTest {
         mvc.perform(post("/api/v1/partner/invite").contentType(MediaType.APPLICATION_JSON).content(json(request)))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.message").value(ErrorMessage.PARTNER_INVITE_LIMIT_REACHED));
+    }
+
+    @Test
+    void theJoinScreenAsksForACode() throws Exception {
+        when(partnerWriteService.sendJoinCode(USER_ID)).thenReturn(new PartnerCodeResponse("tobi@example.com", true, 600, 60));
+
+        mvc.perform(post("/api/v1/partner/invite/code"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.sent").value(true))
+                .andExpect(jsonPath("$.data.email").value("tobi@example.com"))
+                .andExpect(jsonPath("$.data.expiresInSeconds").value(600))
+                .andExpect(jsonPath("$.data.resendInSeconds").value(60));
+    }
+
+    @Test
+    void tooManyCodesReturns429() throws Exception {
+        when(partnerWriteService.sendJoinCode(USER_ID))
+                .thenThrow(new ApiException(ErrorCode.INVITE_LIMIT_REACHED, ErrorMessage.PARTNER_CODE_LIMIT_REACHED));
+
+        mvc.perform(post("/api/v1/partner/invite/code"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.data.errorCode").value("invite_limit_reached"));
     }
 
     @Test

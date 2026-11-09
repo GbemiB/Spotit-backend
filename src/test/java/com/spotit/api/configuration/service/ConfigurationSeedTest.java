@@ -51,7 +51,6 @@ class ConfigurationSeedTest {
 
         ArgumentCaptor<GlobalConfig> global = ArgumentCaptor.forClass(GlobalConfig.class);
         verify(globalConfigRepository).save(global.capture());
-        assertThat(global.getValue().getAdsDailyLimit()).isEqualTo(ConfigDefaults.ADS_DAILY_LIMIT);
         assertThat(global.getValue().getCycleDefaultLength()).isEqualTo(ConfigDefaults.CYCLE_DEFAULT_LENGTH);
         assertThat(global.getValue().getContentFeedDefaultLimit()).isEqualTo(ConfigDefaults.CONTENT_FEED_DEFAULT_LIMIT);
         assertThat(global.getValue().getSpotlightInviteEnabled()).isTrue();
@@ -65,7 +64,7 @@ class ConfigurationSeedTest {
     void valuesAnAdminAlreadyTunedAreLeftAlone() {
         SecurityConfig security = SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).jwtSecret("existing")
                 .jwtAccessTokenTtlSeconds(60).jwtRefreshTokenTtlSeconds(120).otpTtlSeconds(30).build();
-        GlobalConfig global = GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).adsDailyLimit(9).cycleDefaultLength(31)
+        GlobalConfig global = GlobalConfig.builder().id(GlobalConfig.SINGLETON_ID).pointsDailyClaim(9).cycleDefaultLength(31)
                 .spotlightInviteEnabled(false).build();
         when(securityConfigRepository.findById(SecurityConfig.SINGLETON_ID)).thenReturn(Optional.of(security));
         when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(global));
@@ -75,7 +74,7 @@ class ConfigurationSeedTest {
         assertThat(security.getJwtSecret()).isEqualTo("existing");
         assertThat(security.getJwtAccessTokenTtlSeconds()).isEqualTo(60);
         assertThat(security.getOtpTtlSeconds()).isEqualTo(30);
-        assertThat(global.getAdsDailyLimit()).isEqualTo(9);
+        assertThat(global.getPointsDailyClaim()).isEqualTo(9);
         assertThat(global.getCycleDefaultLength()).isEqualTo(31);
         assertThat(global.getSpotlightInviteEnabled()).isFalse();
         verify(encryptionService, never()).encrypt(anyString());

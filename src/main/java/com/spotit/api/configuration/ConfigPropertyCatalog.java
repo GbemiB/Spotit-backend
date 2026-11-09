@@ -135,6 +135,10 @@ public class ConfigPropertyCatalog {
                 "Pad Bank Run: visitors served free at the start of each day (0 = none)", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankFreeVisitors(),
                 (c, v) -> c.global().setPadbankFreeVisitors((Long) v)));
+        list.add(new Property(PropertyNames.PADBANK_FREE_DAYS, PropertyNames.GROUP_PADBANK,
+                "Pad Bank Run: days that are completely free, prices still shown (0 = none)", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPadbankFreeDays(),
+                (c, v) -> c.global().setPadbankFreeDays((Long) v)));
         list.add(new Property(PropertyNames.PADBANK_HEARTS, PropertyNames.GROUP_PADBANK,
                 "Pad Bank Run: hearts at the start of a day", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankHearts(),
@@ -163,17 +167,17 @@ public class ConfigPropertyCatalog {
                 c -> c.global().getPadbankTitleOops(),
                 (c, v) -> c.global().setPadbankTitleOops((String) v)));
         list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_PERFECT, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: end-of-day title with all three stars; unset uses Perfect day!",
+                "Pad Bank Run: end-of-level title with all three stars; unset uses Perfect level!",
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankDayTitlePerfect(),
                 (c, v) -> c.global().setPadbankDayTitlePerfect((String) v)));
         list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_DONE, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: end-of-day title with hearts left; unset uses Bank closed for today",
+                "Pad Bank Run: end-of-level title with hearts left; unset uses Bank closed",
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankDayTitleDone(),
                 (c, v) -> c.global().setPadbankDayTitleDone((String) v)));
         list.add(new Property(PropertyNames.PADBANK_DAY_TITLE_LOST, PropertyNames.GROUP_PADBANK,
-                "Pad Bank Run: end-of-day title when the hearts run out; unset uses Out of hearts",
+                "Pad Bank Run: end-of-level title when the hearts run out; unset uses Out of hearts",
                 Kind.STRING, Section.GLOBAL, false, false,
                 c -> c.global().getPadbankDayTitleLost(),
                 (c, v) -> c.global().setPadbankDayTitleLost((String) v)));
@@ -230,18 +234,10 @@ public class ConfigPropertyCatalog {
     }
 
     private static void addGlobalProperties(List<Property> list) {
-        list.add(new Property(PropertyNames.ADS_DAILY_LIMIT, PropertyNames.GROUP_POINTS,
-                "Max rewarded ad views per user per day", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getAdsDailyLimit(),
-                (c, v) -> c.global().setAdsDailyLimit((Long) v)));
         list.add(new Property(PropertyNames.POINTS_DAILY_CLAIM, PropertyNames.GROUP_POINTS,
                 "Points awarded for the daily claim", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getPointsDailyClaim(),
                 (c, v) -> c.global().setPointsDailyClaim((Long) v)));
-        list.add(new Property(PropertyNames.POINTS_WATCH_AD, PropertyNames.GROUP_POINTS,
-                "Points awarded for watching a rewarded ad", Kind.LONG, Section.GLOBAL, false, false,
-                c -> c.global().getPointsWatchAd(),
-                (c, v) -> c.global().setPointsWatchAd((Long) v)));
         list.add(new Property(PropertyNames.CYCLE_DEFAULT_LENGTH, PropertyNames.GROUP_CYCLE,
                 "Default cycle length assumed until a user has logged enough data", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getCycleDefaultLength(),
@@ -298,6 +294,18 @@ public class ConfigPropertyCatalog {
                 "Default number of items returned by the content feed", Kind.LONG, Section.GLOBAL, false, false,
                 c -> c.global().getContentFeedDefaultLimit(),
                 (c, v) -> c.global().setContentFeedDefaultLimit((Long) v)));
+        list.add(new Property(PropertyNames.PARTNER_CODE_TTL_SECONDS, PropertyNames.GROUP_PARTNER,
+                "Partner invite: seconds the emailed join code stays valid", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPartnerCodeTtlSeconds(),
+                (c, v) -> c.global().setPartnerCodeTtlSeconds((Long) v)));
+        list.add(new Property(PropertyNames.PARTNER_CODE_RESEND_SECONDS, PropertyNames.GROUP_PARTNER,
+                "Partner invite: seconds before the join screen can send a new code", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPartnerCodeResendSeconds(),
+                (c, v) -> c.global().setPartnerCodeResendSeconds((Long) v)));
+        list.add(new Property(PropertyNames.PARTNER_CODE_MAX_SENDS, PropertyNames.GROUP_PARTNER,
+                "Partner invite: most join codes one invite can send", Kind.LONG, Section.GLOBAL, false, false,
+                c -> c.global().getPartnerCodeMaxSends(),
+                (c, v) -> c.global().setPartnerCodeMaxSends((Long) v)));
         list.add(new Property(PropertyNames.APP_MIN_BUILD_ANDROID, PropertyNames.GROUP_APP,
                 "Lowest Android build number (versionCode) allowed to run; older builds must update. 0 or unset turns the check off",
                 Kind.LONG, Section.GLOBAL, false, false,

@@ -34,10 +34,6 @@ public enum SubscriptionStatus {
         return this == active;
     }
 
-    public boolean isCancelled() {
-        return this == cancelled;
-    }
-
     public boolean isExpired() {
         return this == expired;
     }

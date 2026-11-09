@@ -68,16 +68,8 @@ public class ExportJob {
             return code;
         }
 
-        public boolean isProcessing() {
-            return this == processing;
-        }
-
         public boolean isReady() {
             return this == ready;
-        }
-
-        public boolean isFailed() {
-            return this == failed;
         }
     }
 }

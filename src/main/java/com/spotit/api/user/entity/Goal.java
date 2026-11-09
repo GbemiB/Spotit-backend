@@ -37,20 +37,4 @@ public enum Goal {
     public String getDescriptionCode() {
         return descriptionCode;
     }
-
-    public boolean isTrack() {
-        return this == track;
-    }
-
-    public boolean isConceive() {
-        return this == conceive;
-    }
-
-    public boolean isAvoid() {
-        return this == avoid;
-    }
-
-    public boolean isCurious() {
-        return this == curious;
-    }
 }

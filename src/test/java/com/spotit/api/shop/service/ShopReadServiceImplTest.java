@@ -4,12 +4,9 @@ import com.spotit.api.common.exception.ApiException;
 import com.spotit.api.common.exception.ErrorCode;
 import com.spotit.api.rewards.LevelUtil;
 import com.spotit.api.rewards.service.LevelDefinitionService;
-import com.spotit.api.shop.dto.OrderResponse;
 import com.spotit.api.shop.dto.ProductAdminResponse;
 import com.spotit.api.shop.dto.ProductResponse;
-import com.spotit.api.shop.entity.OrderStatus;
 import com.spotit.api.shop.entity.Product;
-import com.spotit.api.shop.entity.ShopOrder;
 import com.spotit.api.shop.repository.ProductRepository;
 import com.spotit.api.shop.repository.ShopOrderRepository;
 import com.spotit.api.user.entity.User;
@@ -20,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -84,16 +80,6 @@ class ShopReadServiceImplTest {
         assertThatThrownBy(() -> service.listProducts(userId))
                 .isInstanceOf(ApiException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.NOT_FOUND);
-    }
-
-    @Test
-    void ordersAreMappedNewestFirst() {
-        UUID orderId = UUID.randomUUID();
-        Instant createdAt = Instant.parse("2026-09-20T10:00:00Z");
-        when(shopOrderRepository.findByUserIdOrderByCreatedAtDesc(userId)).thenReturn(List.of(ShopOrder.builder()
-                .id(orderId).userId(userId).productId("mist").pointsSpent(100).status(OrderStatus.processing).createdAt(createdAt).build()));
-
-        assertThat(service.listOrders(userId)).containsExactly(new OrderResponse(orderId, "mist", "processing", createdAt));
     }
 
     @Test

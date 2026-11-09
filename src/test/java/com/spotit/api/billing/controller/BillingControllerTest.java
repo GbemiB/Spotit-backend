@@ -1,7 +1,6 @@
 package com.spotit.api.billing.controller;
 
 import com.spotit.api.billing.dto.CancelResponse;
-import com.spotit.api.billing.dto.RestoreRequest;
 import com.spotit.api.billing.dto.SubscribeRequest;
 import com.spotit.api.billing.dto.SubscriptionResponse;
 import com.spotit.api.billing.service.BillingReadService;
@@ -101,24 +100,5 @@ class BillingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.autoRenew").value(false))
                 .andExpect(jsonPath("$.data.accessUntil").value("2026-10-24T00:00:00Z"));
-    }
-
-    @Test
-    void restoreReappliesAPreviousPurchase() throws Exception {
-        RestoreRequest request = new RestoreRequest("android", "receipt-data");
-        when(billingWriteService.restore(USER_ID, request)).thenReturn(new SubscriptionResponse(true, "yearly", renewsAt, true));
-
-        mvc.perform(post("/api/v1/billing/restore").contentType(MediaType.APPLICATION_JSON).content(json(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.plan").value("yearly"));
-    }
-
-    @Test
-    void restoreRequiresAReceipt() throws Exception {
-        mvc.perform(post("/api/v1/billing/restore").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(new RestoreRequest("android", ""))))
-                .andExpect(status().isUnprocessableEntity());
-
-        verifyNoInteractions(billingWriteService);
     }
 }

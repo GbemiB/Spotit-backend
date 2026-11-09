@@ -119,44 +119,6 @@ final class UserControllerSwagger {
             }
             """;
 
-    static final String DOWNLOAD_EXPORT_SUMMARY = "Download export data";
-    static final String DOWNLOAD_EXPORT_DESCRIPTION = "Returns the exported profile, logs, and points history for a previously-created export job.";
-    static final String DOWNLOAD_EXPORT_200_EXAMPLE = """
-            {
-              "code": 200,
-              "message": "OK",
-              "data": {
-                "profile": {
-                  "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                  "firstName": "Amara",
-                  "lastName": "Okafor",
-                  "email": "amara@example.com",
-                  "dob": "1998-04-12",
-                  "goal": "track",
-                  "cycleLength": 28,
-                  "periodLength": 5,
-                  "lastPeriodDate": "2026-06-28",
-                  "themePref": "system",
-                  "onboarded": true,
-                  "isPremium": false
-                },
-                "logs": [
-                  { "date": "2026-07-10", "flow": "medium", "mood": "calm", "symptoms": ["cramps"], "notes": "" }
-                ],
-                "pointsHistory": [
-                  { "label": "Logged flow, mood & symptoms", "delta": 80, "date": "2026-07-10" }
-                ]
-              }
-            }
-            """;
-    static final String DOWNLOAD_EXPORT_404_EXAMPLE = """
-            {
-              "code": 404,
-              "message": "Export job not found.",
-              "data": { "errorCode": "not_found" }
-            }
-            """;
-
     static final String RESET_SUMMARY = "Reset all data";
     static final String RESET_DESCRIPTION = "Deletes the current user's logs, points history, badges, and challenge progress, and resets profile " +
             "settings to defaults. Does not delete the account itself.";

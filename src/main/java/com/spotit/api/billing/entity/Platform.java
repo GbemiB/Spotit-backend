@@ -27,12 +27,4 @@ public enum Platform {
     public String getCode() {
         return code;
     }
-
-    public boolean isIos() {
-        return this == ios;
-    }
-
-    public boolean isAndroid() {
-        return this == android;
-    }
 }

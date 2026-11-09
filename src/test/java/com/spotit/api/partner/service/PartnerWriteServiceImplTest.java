@@ -65,6 +65,7 @@ class PartnerWriteServiceImplTest {
     PartnerLink pendingInvite(String code, Instant expiresAt) {
         return PartnerLink.builder().id(UUID.randomUUID()).ownerId(ownerId).inviteEmail("tunde@example.com")
                 .inviteCodeHash(TokenHasher.sha256Hex(code)).inviteExpiresAt(expiresAt)
+                .codeSentAt(Instant.now().minusSeconds(120)).codeExpiresAt(Instant.now().plusSeconds(480))
                 .status(PartnerLinkStatus.pending).partnerReminder(true).build();
     }
 
@@ -85,7 +86,7 @@ class PartnerWriteServiceImplTest {
     }
 
     @Test
-    void inviteSavesAPendingLinkAndEmailsTheCode() {
+    void inviteSavesAPendingLinkAndEmailsTheInviteWithoutACode() {
         ownerCanInvite();
         when(configurationDomainService.getAppStoreUrlAndroid()).thenReturn("https://play.example/spotit");
 
@@ -102,9 +103,9 @@ class PartnerWriteServiceImplTest {
 
         ArgumentCaptor<String> text = ArgumentCaptor.forClass(String.class);
         verify(emailService).send(eq("tunde@example.com"), eq("Amaka invited you to Spot it"), anyString(), text.capture());
-        Matcher code = Pattern.compile("Your invite code: ([A-Z2-9]{6})").matcher(text.getValue());
-        assertThat(code.find()).isTrue();
-        assertThat(link.getInviteCodeHash()).isEqualTo(TokenHasher.sha256Hex(code.group(1)));
+        assertThat(text.getValue()).doesNotContain("code:").contains("We'll email you a code when you get to the join screen.");
+        assertThat(link.getInviteCodeHash()).hasSize(64);
+        assertThat(link.getCodeExpiresAt()).isNull();
         assertThat(text.getValue()).contains("48 hours").contains("https://play.example/spotit");
         verify(partnerReadService).getStatus(ownerId);
     }
@@ -249,6 +250,140 @@ class PartnerWriteServiceImplTest {
         assertThat(user.isOnboarded()).isTrue();
         verify(userRepository).save(user);
         verify(partnerReadService).getStatus(partnerId);
+    }
+
+    void codeSettings(long ttl, long wait, int maxSends) {
+        when(configurationDomainService.getPartnerCodeTtlSeconds()).thenReturn(ttl);
+        when(configurationDomainService.getPartnerCodeResendSeconds()).thenReturn(wait);
+        when(configurationDomainService.getPartnerCodeMaxSends()).thenReturn(maxSends);
+    }
+
+    PartnerLink freshInvite() {
+        return PartnerLink.builder().id(UUID.randomUUID()).ownerId(ownerId).inviteEmail("tunde@example.com")
+                .inviteCodeHash("placeholder").inviteExpiresAt(Instant.now().plus(Duration.ofHours(40)))
+                .status(PartnerLinkStatus.pending).partnerReminder(true).build();
+    }
+
+    @Test
+    void theJoinScreenEmailsASixDigitCodeThatAcceptWorksWith() {
+        PartnerLink invite = freshInvite();
+        newcomerWithInvites(List.of(invite));
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner()));
+        codeSettings(600, 60, 5);
+
+        var response = service.sendJoinCode(partnerId);
+
+        assertThat(response.sent()).isTrue();
+        assertThat(response.email()).isEqualTo("tunde@example.com");
+        assertThat(response.expiresInSeconds()).isEqualTo(600);
+        assertThat(response.resendInSeconds()).isEqualTo(60);
+        ArgumentCaptor<String> text = ArgumentCaptor.forClass(String.class);
+        verify(emailService).send(eq("tunde@example.com"), eq("Your Spot it partner code"), anyString(), text.capture());
+        Matcher code = Pattern.compile("Your code: ([0-9]{6})").matcher(text.getValue());
+        assertThat(code.find()).isTrue();
+        assertThat(text.getValue()).contains("Join Amaka on Spot it").contains("10 minutes");
+        assertThat(invite.getInviteCodeHash()).isEqualTo(TokenHasher.sha256Hex(code.group(1)));
+        assertThat(invite.getCodeSends()).isEqualTo(1);
+        assertThat(Duration.between(Instant.now(), invite.getCodeExpiresAt()).getSeconds()).isBetween(595L, 600L);
+
+        service.accept(partnerId, new AcceptInviteRequest(code.group(1), "Amaka"));
+        assertThat(invite.getStatus()).isEqualTo(PartnerLinkStatus.active);
+    }
+
+    @Test
+    void openingTheJoinScreenAgainSoonSendsNothingNewAndSaysHowLongToWait() {
+        PartnerLink invite = freshInvite();
+        invite.setCodeSentAt(Instant.now().minusSeconds(20));
+        invite.setCodeExpiresAt(Instant.now().plusSeconds(580));
+        invite.setCodeSends(1);
+        newcomerWithInvites(List.of(invite));
+        when(configurationDomainService.getPartnerCodeTtlSeconds()).thenReturn(600L);
+        when(configurationDomainService.getPartnerCodeResendSeconds()).thenReturn(60L);
+
+        var response = service.sendJoinCode(partnerId);
+
+        assertThat(response.sent()).isFalse();
+        assertThat(response.resendInSeconds()).isBetween(38L, 40L);
+        assertThat(response.expiresInSeconds()).isBetween(578L, 580L);
+        verify(emailService, never()).send(anyString(), anyString(), anyString(), anyString());
+        assertThat(invite.getCodeSends()).isEqualTo(1);
+    }
+
+    @Test
+    void afterTheWaitANewCodeReplacesTheOldOne() {
+        PartnerLink invite = pendingInvite("111111", Instant.now().plus(Duration.ofHours(5)));
+        invite.setCodeSends(1);
+        newcomerWithInvites(List.of(invite));
+        when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner()));
+        codeSettings(600, 60, 5);
+
+        assertThat(service.sendJoinCode(partnerId).sent()).isTrue();
+
+        assertThat(invite.getInviteCodeHash()).isNotEqualTo(TokenHasher.sha256Hex("111111"));
+        assertThat(invite.getCodeSends()).isEqualTo(2);
+    }
+
+    @Test
+    void tooManyCodesForOneInviteIsRefused() {
+        PartnerLink invite = freshInvite();
+        invite.setCodeSends(5);
+        newcomerWithInvites(List.of(invite));
+        codeSettings(600, 60, 5);
+
+        assertError(() -> service.sendJoinCode(partnerId), ErrorCode.INVITE_LIMIT_REACHED);
+        verify(emailService, never()).send(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void noCodeIsSentWithoutALiveInvite() {
+        PartnerLink expired = freshInvite();
+        expired.setInviteExpiresAt(Instant.now().minusSeconds(5));
+        newcomerWithInvites(List.of(expired));
+
+        assertError(() -> service.sendJoinCode(partnerId), ErrorCode.NOT_FOUND);
+    }
+
+    @Test
+    void anAccountThatTracksItsOwnCycleGetsNoCode() {
+        User user = newcomer();
+        user.setOnboarded(true);
+        when(userRepository.findById(partnerId)).thenReturn(Optional.of(user));
+
+        assertError(() -> service.sendJoinCode(partnerId), ErrorCode.PARTNER_NOT_ALLOWED);
+    }
+
+    @Test
+    void aCodeEmailThatFailsToSendIsLoggedAndTheCodeStillCounts() {
+        PartnerLink invite = freshInvite();
+        newcomerWithInvites(List.of(invite));
+        when(userRepository.findById(ownerId)).thenReturn(Optional.empty());
+        codeSettings(600, 60, 5);
+        doThrow(new MailSendException("down")).when(emailService).send(anyString(), anyString(), anyString(), anyString());
+
+        assertThat(service.sendJoinCode(partnerId).sent()).isTrue();
+
+        assertThat(invite.getCodeSends()).isEqualTo(1);
+        verify(emailService).send(eq("tunde@example.com"), anyString(), anyString(), org.mockito.ArgumentMatchers.contains("your partner"));
+    }
+
+    @Test
+    void anExpiredCodeIsRefusedWithoutEndingTheInvite() {
+        PartnerLink invite = pendingInvite("482913", Instant.now().plus(Duration.ofHours(5)));
+        invite.setCodeExpiresAt(Instant.now().minusSeconds(1));
+        newcomerWithInvites(List.of(invite));
+
+        assertError(() -> service.accept(partnerId, new AcceptInviteRequest("482913", "Amaka")), ErrorCode.INVALID_CODE);
+
+        assertThat(invite.getStatus()).isEqualTo(PartnerLinkStatus.pending);
+    }
+
+    @Test
+    void anInviteWithNoCodeSentYetCannotBeAccepted() {
+        PartnerLink invite = pendingInvite("482913", Instant.now().plus(Duration.ofHours(5)));
+        invite.setCodeExpiresAt(null);
+        newcomerWithInvites(List.of(invite));
+
+        assertError(() -> service.accept(partnerId, new AcceptInviteRequest("482913", "Amaka")), ErrorCode.INVALID_CODE);
     }
 
     @Test

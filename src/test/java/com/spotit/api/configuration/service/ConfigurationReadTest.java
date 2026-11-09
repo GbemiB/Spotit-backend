@@ -35,7 +35,7 @@ class ConfigurationReadTest {
                 SecurityConfig.builder().id(SecurityConfig.SINGLETON_ID).otpTtlSeconds(600).build()));
         lenient().when(globalConfigRepository.findById(GlobalConfig.SINGLETON_ID)).thenReturn(Optional.of(GlobalConfig.builder()
                 .id(GlobalConfig.SINGLETON_ID)
-                .adsDailyLimit(5).cycleDefaultLength(28).cycleDefaultPeriodLength(5).pointsDailyClaim(10).pointsWatchAd(3)
+                .cycleDefaultLength(28).cycleDefaultPeriodLength(5).pointsDailyClaim(10)
                 .accountPurgeGraceDays(30).badgeKnowYourBodyThreshold(10).badgeCycleVeteranThreshold(90)
                 .badgeWeekWarriorStreakThreshold(7).cycleHighConfidenceLogThreshold(20)
                 .insightIrregularVariationThresholdDays(7).insightUnusualPeriodLengthDeltaDays(2).insightDefaultCycles(6)
@@ -46,11 +46,9 @@ class ConfigurationReadTest {
     @Test
     void typedGettersReturnTheStoredValues() {
         assertThat(service.getOtpTtlSeconds()).isEqualTo(600);
-        assertThat(service.getAdsDailyLimit()).isEqualTo(5);
         assertThat(service.getCycleDefaultLength()).isEqualTo(28);
         assertThat(service.getCycleDefaultPeriodLength()).isEqualTo(5);
         assertThat(service.getPointsDailyClaim()).isEqualTo(10);
-        assertThat(service.getPointsWatchAd()).isEqualTo(3);
         assertThat(service.getAccountPurgeGraceDays()).isEqualTo(30);
         assertThat(service.getBadgeKnowYourBodyThreshold()).isEqualTo(10);
         assertThat(service.getBadgeCycleVeteranThreshold()).isEqualTo(90);
@@ -146,8 +144,8 @@ class ConfigurationReadTest {
         assertThat(service.getPadbankTitleGreat()).isEqualTo("PERFECT!");
         assertThat(service.getPadbankTitleOk()).isEqualTo("GOOD!");
         assertThat(service.getPadbankTitleOops()).isEqualTo("OOPS!");
-        assertThat(service.getPadbankDayTitlePerfect()).isEqualTo("Perfect day!");
-        assertThat(service.getPadbankDayTitleDone()).isEqualTo("Bank closed for today");
+        assertThat(service.getPadbankDayTitlePerfect()).isEqualTo("Perfect level!");
+        assertThat(service.getPadbankDayTitleDone()).isEqualTo("Bank closed");
         assertThat(service.getPadbankDayTitleLost()).isEqualTo("Out of hearts");
     }
 

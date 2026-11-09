@@ -14,15 +14,11 @@ public interface ConfigurationDomainService {
 
     long getOtpTtlSeconds();
 
-    int getAdsDailyLimit();
-
     int getCycleDefaultLength();
 
     int getCycleDefaultPeriodLength();
 
     int getPointsDailyClaim();
-
-    int getPointsWatchAd();
 
     int getQuizRounds();
 
@@ -57,6 +53,8 @@ public interface ConfigurationDomainService {
     String getGivedayTitleZero();
 
     int getPadbankFreeVisitors();
+
+    int getPadbankFreeDays();
 
     int getPadbankHearts();
 
@@ -115,6 +113,12 @@ public interface ConfigurationDomainService {
     String getAppStoreUrlAndroid();
 
     String getAppSupportEmail();
+
+    long getPartnerCodeTtlSeconds();
+
+    long getPartnerCodeResendSeconds();
+
+    int getPartnerCodeMaxSends();
 
     String getAppStoreUrlIos();
 

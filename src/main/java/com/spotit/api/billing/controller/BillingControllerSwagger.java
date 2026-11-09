@@ -76,31 +76,4 @@ final class BillingControllerSwagger {
             }
             """;
 
-    static final String RESTORE_SUMMARY = "Restore purchase";
-    static final String RESTORE_DESCRIPTION = "Re-verifies a store receipt for a user who reinstalled the app or switched devices and reactivates their existing subscription.";
-    static final String RESTORE_REQUEST_EXAMPLE = """
-            {
-              "platform": "ios",
-              "receipt": "MIISvAYJKoZIhvcNAQcCoIISrTC..."
-            }
-            """;
-    static final String RESTORE_200_EXAMPLE = """
-            {
-              "code": 200,
-              "message": "OK",
-              "data": {
-                "isPremium": true,
-                "plan": "annual",
-                "renewsAt": "2026-08-09T00:00:00Z",
-                "autoRenew": true
-              }
-            }
-            """;
-    static final String RESTORE_404_EXAMPLE = """
-            {
-              "code": 404,
-              "message": "No previous purchase found for this account.",
-              "data": { "errorCode": "no_purchase_found" }
-            }
-            """;
 }

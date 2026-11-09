@@ -8,11 +8,9 @@ public final class ConfigDefaults {
     public static final long JWT_REFRESH_TOKEN_TTL_SECONDS = 315_360_000L;
     public static final long OTP_TTL_SECONDS = 600L;
 
-    public static final long ADS_DAILY_LIMIT = 5L;
     public static final long CYCLE_DEFAULT_LENGTH = 28L;
     public static final long CYCLE_DEFAULT_PERIOD_LENGTH = 5L;
     public static final long POINTS_DAILY_CLAIM = 5L;
-    public static final long POINTS_WATCH_AD = 10L;
     public static final long QUIZ_ROUNDS = 5L;
     public static final long QUIZ_LIVES = 3L;
     public static final long QUIZ_HINT_COST = 5L;
@@ -29,6 +27,10 @@ public final class ConfigDefaults {
     public static final String GIVEDAY_TITLE_ONE = "A good start";
     public static final String GIVEDAY_TITLE_ZERO = "Something important is missing";
     public static final long PADBANK_FREE_VISITORS = 2L;
+    public static final long PADBANK_FREE_DAYS = 2L;
+    public static final long PARTNER_CODE_TTL_SECONDS = 600L;
+    public static final long PARTNER_CODE_RESEND_SECONDS = 60L;
+    public static final long PARTNER_CODE_MAX_SENDS = 5L;
     public static final long PADBANK_HEARTS = 3L;
     public static final long PADBANK_DELIVERY_COST = 2L;
     public static final long PADBANK_VISITOR_FEE = 2L;
@@ -38,8 +40,8 @@ public final class ConfigDefaults {
     public static final String QUIZ_TITLE_WON = "Level won!";
     public static final String QUIZ_TITLE_PERFECT = "Brilliant!";
     public static final String QUIZ_TITLE_LOST = "Out of hearts";
-    public static final String PADBANK_DAY_TITLE_PERFECT = "Perfect day!";
-    public static final String PADBANK_DAY_TITLE_DONE = "Bank closed for today";
+    public static final String PADBANK_DAY_TITLE_PERFECT = "Perfect level!";
+    public static final String PADBANK_DAY_TITLE_DONE = "Bank closed";
     public static final String PADBANK_DAY_TITLE_LOST = "Out of hearts";
     public static final long SPOTLIGHT_ADMIN_PAGE_SIZE = 50L;
     public static final long ACCOUNT_PURGE_GRACE_DAYS = 30L;
